@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>联邦投顾 · 市场日报 2026-05-16</title>
+<style>
+:root {
+  --bg: #0a0e14;
+  --card-bg: #12161e;
+  --border: #1e2430;
+  --text: #c8ccd4;
+  --text-dim: #6c7280;
+  --red: #e0556a;
+  --green: #4db87a;
+  --yellow: #d4a843;
+  --accent: #3a7bd5;
+  --gold: #d4a843;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  line-height: 1.6;
+  padding: 20px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.header {
+  text-align: center;
+  padding: 32px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+.header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.header .date {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-top: 6px;
+}
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 6px;
+}
+.badge-red { background: rgba(224,85,106,0.15); color: var(--red); }
+.badge-yellow { background: rgba(212,168,67,0.15); color: var(--yellow); }
+.badge-green { background: rgba(77,184,122,0.15); color: var(--green); }
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  letter-spacing: 0.3px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(30,36,48,0.5);
+  white-space: nowrap;
+}
+tr:last-child td { border-bottom: none; }
+.up { color: var(--red); }  /* A股习惯红涨 */
+.down { color: var(--green); }  /* 绿跌 */
+.neutral { color: var(--text-dim); }
+.arrow-up::before { content: '▲ '; }
+.arrow-down::before { content: '▼ '; }
+.arrow-flat::before { content: '→ '; }
+.highlight { color: var(--yellow); font-weight: 600; }
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
+}
+.exec-list {
+  list-style: none;
+  padding: 0;
+}
+.exec-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(30,36,48,0.4);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.exec-list li:last-child { border-bottom: none; }
+.exec-num {
+  background: var(--border);
+  color: var(--text-dim);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.exec-num.red { background: rgba(224,85,106,0.2); color: var(--red); }
+.exec-num.yellow { background: rgba(212,168,67,0.2); color: var(--yellow); }
+.exec-num.green { background: rgba(77,184,122,0.2); color: var(--green); }
+.summary-box {
+  background: rgba(58,123,213,0.08);
+  border: 1px solid rgba(58,123,213,0.2);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+.summary-box .label {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.footer {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 11px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 28px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🟡 联邦投顾 · 市场日报</h1>
+  <div class="date">2026年5月16日 周六 | 数据截止：5/15收盘（A股+美股） | 报告由联邦投顾系统自动生成</div>
+</div>
+
+<!-- 核心摘要 -->
+<div class="summary-box">
+  <div class="label">🛰️ 核心摘要 — 黑色星期五 · IEF再破95 · 韩国熔断余震</div>
+  <p style="margin:0;">
+5/15周五收盘，全球市场经历<strong>四重打击</strong>：①US10Y飙至4.59%（+12bp）突破黄灯线，US20Y站上5.14%（+13bp）加速上行；②美股全面下跌，QQQ −1.98%、VTI −1.40%；③韩国KOSPI熔断后EWY暴跌−7.25%，亚太传染确认；④黄金四连跌，IAU −3.06%跌破$85，XAU从$4,712跌至$4,544，5日累计−3.6%。IEF跌至93.49，再度跌破95开火权熔断线。全球宏观重力场全面恶化。
+  </p>
+</div>
+
+<!-- 全球指数收盘 -->
+<div class="card">
+  <div class="card-title">📊 全球指数收盘</div>
+  <table>
+    <thead>
+      <tr><th>指数</th><th>代码</th><th>收盘价</th><th>涨跌幅</th><th>趋势</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>标普500</td><td>VTI</td><td>$362.27</td><td class="down arrow-down">1.40%</td><td>▼</td></tr>
+      <tr><td>纳斯达克100</td><td>QQQ</td><td>$705.55</td><td class="down arrow-down">1.98%</td><td>▼</td></tr>
+      <tr><td>全市场(除美)</td><td>VEA</td><td>$68.88</td><td class="down arrow-down">2.38%</td><td>▼</td></tr>
+      <tr><td>沪深300</td><td>000300</td><td>4859.59</td><td class="down arrow-down">1.12%</td><td>▼</td></tr>
+      <tr><td>中证500</td><td>510500</td><td>¥8.612</td><td class="down arrow-down">1.82%</td><td>▼</td></tr>
+      <tr><td>上证指数</td><td>000001</td><td>4135.39</td><td class="down arrow-down">1.02%</td><td>▼</td></tr>
+      <tr><td>创业板</td><td>399006</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>科创50</td><td>000688</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>恒生科技</td><td>HSTECH</td><td>4935.30</td><td class="down arrow-down">2.78%</td><td>▼</td></tr>
+      <tr><td>港股红利低波</td><td>159545</td><td>¥1.420</td><td class="down arrow-down">0.56%</td><td>▼</td></tr>
+      <tr><td>港股央企红利</td><td>513910</td><td>¥1.613</td><td class="down arrow-down">0.86%</td><td>▼</td></tr>
+      <tr><td>日经225</td><td>BBJP</td><td>$73.89</td><td class="down arrow-down">1.47%</td><td>▼</td></tr>
+      <tr><td>英国富时</td><td>EWU</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>韩国综合</td><td>EWY</td><td>$176.70</td><td class="down arrow-down">7.25%</td><td>▼🔴</td></tr>
+      <tr><td>越南胡志明</td><td>VNM</td><td>$19.16</td><td class="down arrow-down">1.69%</td><td>▼</td></tr>
+      <tr><td>印度CNX</td><td>FLIN</td><td>$34.35</td><td class="down arrow-down">1.18%</td><td>▼</td></tr>
+      <tr><td>印度小盘</td><td>SMIN</td><td>$65.95</td><td class="down arrow-down">0.99%</td><td>▼</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- IEF哨兵 -->
+<div class="card">
+  <div class="card-title">🛰️ IEF哨兵</div>
+  <table>
+    <thead>
+      <tr><th>指标</th><th>读数</th><th>区间</th><th>解读</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>IEF</strong></td><td class="highlight">93.49</td><td><span class="badge badge-red">熔断</span></td><td>跌破95开火权线，全池美元资产开火权物理切断</td></tr>
+      <tr><td><strong>US10Y</strong></td><td class="highlight">4.59%</td><td><span class="badge badge-yellow">黄灯</span></td><td>突破4.50%黄灯线，距5.00%熔断41bp</td></tr>
+      <tr><td><strong>US20Y</strong></td><td class="highlight">5.14%</td><td><span class="badge badge-red">5%上方加速</span></td><td>自选以来最高值，长端利率失控信号</td></tr>
+      <tr><td><strong>DXY</strong></td><td>99.23</td><td><span class="badge badge-yellow">六连阳</span></td><td>美元虹吸效应，新兴市场全线承压</td></tr>
+      <tr><td><strong>VIX</strong></td><td>18.09</td><td><span class="badge badge-yellow">警戒</span></td><td>+4.81%，逼近20恐慌线</td></tr>
+      <tr><td><strong>CRB</strong></td><td>400.28</td><td>—</td><td>−1.02%，商品整体回落</td></tr>
+      <tr><td><strong>布伦特</strong></td><td>109.25</td><td><span class="badge badge-red">逼空延续</span></td><td>+3.34%，霍尔木兹交火持续</td></tr>
+      <tr><td><strong>SHIBOR 3M</strong></td><td>1.408%</td><td><span class="badge badge-green">平稳</span></td><td>持平，国内流动性未恶化</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 持仓诊断 -->
+<div class="card">
+  <div class="card-title">💹 持仓诊断</div>
+
+  <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px;"><strong>权益仓（人民币 — A账户）</strong></p>
+  <table>
+    <thead>
+      <tr><th>标的</th><th>代码</th><th>成本</th><th>现价</th><th>浮盈</th><th>止损位</th><th>状态</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>港股央企红利</td><td>513910</td><td>¥1.619</td><td>¥1.613</td><td class="down">−0.37%</td><td>¥1.580（硬）</td><td><span class="badge badge-yellow">关注</span></td></tr>
+      <tr><td>MUFG</td><td>MUFG</td><td>$18.51</td><td>$18.67</td><td class="up">+0.86%</td><td>$18.51</td><td><span class="badge badge-green">正常</span></td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:13px;color:var(--text-dim);margin:14px 0 10px;"><strong>黄金/避险</strong></p>
+  <table>
+    <thead>
+      <tr><th>标的</th><th>代码</th><th>现价</th><th>关键位</th><th>状态</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>黄金ETF</td><td>518880</td><td>¥9.554</td><td>MA120 ¥9.65</td><td><span class="badge badge-red">已清仓</span> 5/15止盈离场，+2.64%</td></tr>
+      <tr><td>黄金现货</td><td>IAU</td><td>$84.86</td><td>止损$85.49 / 挂单$88.00</td><td><span class="badge badge-red">预警</span> 跌破止损位</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:13px;color:var(--text-dim);margin:14px 0 10px;"><strong>现金/债券</strong></p>
+  <table>
+    <thead>
+      <tr><th>标的</th><th>代码</th><th>金额</th><th>状态</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>短期国债ETF</td><td>SGOV</td><td>$211,907（成本100.567）</td><td><span class="badge badge-green">满功率</span> 年化5.2%</td></tr>
+      <tr><td>A账户现金</td><td>—</td><td>≈¥648,854</td><td><span class="badge badge-green">待命</span></td></tr>
+      <tr><td>B账户现金</td><td>—</td><td>≈$6,389</td><td><span class="badge badge-green">待命</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 分类汇总 -->
+<div class="card">
+  <div class="card-title">📈 分类汇总</div>
+  <table>
+    <thead>
+      <tr><th>类别</th><th>今日表现</th><th>重点观察</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>美股(VTI/QQQ)</td><td>−1.40% / −1.98%</td><td>US10Y 4.59%压制估值，IEF破95切断开火权，AI板块回调</td></tr>
+      <tr><td>全市场(VEA)</td><td>−2.38%</td><td>DXY六连阳虹吸全球资金，非美全线承压</td></tr>
+      <tr><td>中港(红利/科技)</td><td>513910 −0.86% / 513770 −3.29%</td><td>513910三连跌转浮亏−0.37%，000922同步走弱需审计</td></tr>
+      <tr><td>亚太(日韩越印)</td><td>EWY −7.25% / BBJP −1.47%</td><td>韩国熔断余震，EWY单日暴跌创纪录，亚太传染确认</td></tr>
+      <tr><td>避险(黄金/SGOV)</td><td>IAU −3.06% / SGOV +0.02%</td><td>黄金四连跌，金盾S1触发，IAU止损$85.49已被跌破</td></tr>
+      <tr><td>原油</td><td>布伦特 +3.34%</td><td>霍尔木兹交火持续，逼空态势未解</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 地缘窗口 -->
+<div class="card">
+  <div class="card-title">🌍 地缘窗口</div>
+  <table>
+    <thead>
+      <tr><th>节点</th><th>状态</th><th>信号</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>霍尔木兹海峡</td><td>美伊实质交火持续</td><td><span class="badge badge-red">🔴 核爆级</span> 布伦特逼空延续</td></tr>
+      <tr><td>韩国KOSPI</td><td>5/15熔断 −6.5%</td><td><span class="badge badge-red">🔴 独立事件</span> 程式化抛售+期货连锁</td></tr>
+      <tr><td>中美5月会面</td><td>贸易松动预期 vs 实际成果背离</td><td><span class="badge badge-yellow">🟡 待观察</span></td></tr>
+      <tr><td>美联储利率</td><td>降息预期归零，加息叙事浮现</td><td><span class="badge badge-red">🔴 转向风险</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 今日执行指令 -->
+<div class="card">
+  <div class="card-title">⚡ 今日执行指令</div>
+  <ol class="exec-list">
+    <li>
+      <span class="exec-num red">1</span>
+      <span><strong>IEF再破95 → 全池美元资产开火权物理切断</strong>：QQQ/IVV/VEA/BBJP/EWY/VNM/FLIN/SMIN全部禁止新开仓，已持仓维持止损不变。IEF 93.49距94.00仅0.51点，距宏观闸熔断不遥远。</span>
+    </li>
+    <li>
+      <span class="exec-num red">2</span>
+      <span><strong>IAU跌破止损$85.49 → 物理止损执行</strong>：收盘$84.86，已跌破止损位。需确认是否已执行止损——若未执行，下周一开盘无条件止损。黄金四连跌+金盾S1触发+双逆风激活。</span>
+    </li>
+    <li>
+      <span class="exec-num yellow">3</span>
+      <span><strong>US10Y 4.59%突破黄灯线 → 宏观闸黄色警报</strong>：US10Y突破4.50%黄灯线，US20Y站上5.14%加速。需启动宏观恶化状态审计，评估全池持仓风险敞口。</span>
+    </li>
+    <li>
+      <span class="exec-num yellow">4</span>
+      <span><strong>513910三连跌转浮亏 → 反击止损审计</strong>：现价1.613，成本1.619，浮亏−0.37%。SRC六源卖出判定是否触发？连跌3天+000922转弱是否构成止损条件？</span>
+    </li>
+    <li>
+      <span class="exec-num green">5</span>
+      <span><strong>SGOV满功率维持</strong>：$211,907年化5.2%，每天$27租金入账。在US10Y 4.59%+IEF 93.49+布伦特$109的三重风暴中，现金80%+是最优战略配置。</span>
+    </li>
+  </ol>
+</div>
+
+<div class="footer">
+  报告由联邦投顾系统自动生成 | V5.8.2r7 当前真源 | 19大核心池完整版 | 2026-05-16 08:02 CST
+</div>
+
+</body>
+</html>

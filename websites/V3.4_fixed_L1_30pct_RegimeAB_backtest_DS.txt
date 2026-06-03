@@ -1,0 +1,401 @@
+# V3.4 修正版回测指令 — L1扩容至30% + Regime Switching A/B对照实验
+# 发给DS（DeepSeek）执行，按清单逐项确认后启动
+
+## ═══════════════════════════════════════
+## 一、全局设定
+## ═══════════════════════════════════════
+
+START_DATE = '2020-01-01'
+END_DATE   = '2025-12-31'
+FREQUENCY  = 'WEEKLY'           # 每周五收盘运行
+BENCHMARK  = 'SPX'              # 对标基准
+
+# 费率（硬编码）
+COMMISSION  = 0.0001            # 万分之一（永隆）
+SLIPPAGE    = 0.0001            # 万分之一滑点
+TAX_A       = 0.0005            # A股印花税（仅卖出）
+TAX_US      = 0.0               # 美股无印花税
+
+# 三层架构
+L1_WEIGHT   = 0.30              # L1月频底仓 30%
+L2_WEIGHT   = 0.16              # L2周频进攻 16%
+L3_WEIGHT   = 0.10              # L3反击策略 10%
+MAX_TOTAL   = 0.80              # 总仓位上限 80%
+MIN_CASH    = 0.20              # 现金下限 20%
+
+# 初始资金
+INITIAL_CAPITAL = 1_000_000     # 100万
+
+## ═══════════════════════════════════════
+## 二、L1 月频底仓（30%，永不动）
+## ═══════════════════════════════════════
+
+L1_POSITIONS = {
+    '510300': {
+        'weight': 0.20,          # 沪深300，20%
+        'anchor': 'MA120',       # 月频MA120锚定
+        'rebalance': 'YEARLY',   # 每年首个交易日再平衡
+        'stop': None,            # 永不止损
+    },
+    '518880': {
+        'weight': 0.10,          # 黄金ETF，10%
+        'anchor': 'MA120',
+        'rebalance': 'YEARLY',
+        'stop': None,
+    }
+}
+
+# L1执行逻辑
+def run_L1(date):
+    if date.month == 1 and date.is_first_trading_day_of_year():
+        # 年度再平衡：调回目标权重
+        for ticker, cfg in L1_POSITIONS.items():
+            target_value = CURRENT_EQUITY * cfg['weight']
+            rebalance_to(ticker, target_value)
+
+## ═══════════════════════════════════════
+## 三、L2 周频进攻（16%，4只纯趋势池）
+## ═══════════════════════════════════════
+
+L2_POOL = {
+    'QQQ':   {'max_weight': 0.05, 'anchor': 'MA20', 'type': 'US'},
+    'EWY':   {'max_weight': 0.03, 'anchor': 'MA20', 'type': 'US'},
+    'IVV':   {'max_weight': 0.03, 'anchor': 'MA20', 'type': 'US'},
+    '518880':{'max_weight': 0.05, 'anchor': 'MA20', 'type': 'CN'},
+}
+
+# L2止损（原子化，不可拆分）
+STOP_LOSS_SINGLE  = -0.04       # 单标周频止损 -4%
+STOP_LOSS_WEEKLY  = -0.06       # 组合周止损 -6%
+COOLDOWN_WEEKS    = 3            # 止损后冷却3周
+
+# ─── 实验组A：启用 Regime Switching ───
+
+def get_regime_A(date):
+    """每月最后一个交易日判定，当月有效"""
+    spx_ma120 = MA(SPX_CLOSE, 120)
+    spx_bias  = (SPX_CLOSE[-1] - spx_ma120) / spx_ma120
+    
+    csi300_ma120 = MA(CSI300_CLOSE, 120)
+    csi300_bias  = (CSI300_CLOSE[-1] - csi300_ma120) / csi300_ma120
+    
+    # 取两者中更差的环境
+    min_bias = min(spx_bias, csi300_bias)
+    
+    if min_bias > 0.05:
+        return 'BULL'
+    elif min_bias < -0.05:
+        return 'BEAR'
+    else:
+        return 'SIDEWAYS'
+
+def get_params_A(regime):
+    if regime == 'BULL':
+        return {
+            'adx_main': 18,      # QQQ/IVV/518880
+            'adx_ewy':  22,
+            'max_fire': 3,       # 同时开火上限
+            'max_overseas': 3,   # 海外名额上限
+            'bias_upper': 0.10,  # 乖离率上限
+        }
+    elif regime == 'SIDEWAYS':
+        return {
+            'adx_main': 20,
+            'adx_ewy':  22,
+            'max_fire': 3,
+            'max_overseas': 2,
+            'bias_upper': 0.10,
+        }
+    else:  # BEAR
+        return {
+            'adx_main': 22,
+            'adx_ewy':  25,
+            'max_fire': 2,
+            'max_overseas': 2,
+            'bias_upper': 0.10,
+        }
+
+# ─── 实验组B：关闭 Regime Switching（固定参数）───
+
+def get_params_B():
+    return {
+        'adx_main': 18,
+        'adx_ewy':  22,
+        'max_fire': 3,
+        'max_overseas': 3,
+        'bias_upper': 0.10,
+    }
+
+# ─── 共用入场条件 ───
+
+def check_entry(ticker, close, ma20, adx, bias, params):
+    # 1. 价格必须在MA20上方
+    if close <= ma20:
+        return False
+    
+    # 2. 乖离率在[-2%, 10%]区间
+    if bias < -0.02 or bias > params['bias_upper']:
+        return False
+    
+    # 3. ADX门槛（按标的类型）
+    if ticker == 'EWY':
+        if adx < params['adx_ewy']:
+            return False
+    else:
+        if adx < params['adx_main']:
+            return False
+    
+    return True
+
+# ─── 共用出场条件 ───
+
+def check_exit(pos, close, ma20, current_week_pnl):
+    # 1. 单标止损
+    if pos.unrealized_pnl_pct <= STOP_LOSS_SINGLE:
+        return True, 'STOP_LOSS'
+    
+    # 2. 跌破MA20
+    if close < ma20:
+        return True, 'BELOW_MA20'
+    
+    # 3. 组合周止损（所有L2持仓合计）
+    if current_week_pnl <= STOP_LOSS_WEEKLY:
+        return True, 'PORTFOLIO_STOP'
+    
+    return False, None
+
+# ─── L2主循环（两组共用交易逻辑，仅参数不同）───
+
+def run_L2(date, regime_params, label):
+    """
+    label: 'A' 或 'B'
+    regime_params: get_params_A(regime) 或 get_params_B()
+    """
+    CURRENT_EQUITY = CASH + sum(pos.shares * price(pos.ticker) for pos in L2_POS)
+    L2_BUDGET = CURRENT_EQUITY * L2_WEIGHT
+    
+    # Step 1: 检查出场
+    for pos in L2_POS[:]:
+        close = get_close(pos.ticker, date)
+        ma20  = MA(get_closes(pos.ticker, 20))
+        week_pnl = sum(p.unrealized_pnl_pct * p.weight for p in L2_POS)
+        
+        should_exit, reason = check_exit(pos, close, ma20, week_pnl)
+        if should_exit:
+            close_position(pos, reason)
+            pos.cooldown_until = date + COOLDOWN_WEEKS
+    
+    # Step 2: 空仓生息
+    if len(L2_POS) == 0:
+        CASH *= (1 + 0.025 / 52)  # 511260 国债ETF周化
+    
+    # Step 3: 扫描入场
+    if len(L2_POS) >= regime_params['max_fire']:
+        return  # 已达开火上限
+    
+    candidates = []
+    for ticker, cfg in L2_POOL.items():
+        if ticker in [p.ticker for p in L2_POS]:
+            continue  # 已持仓
+        if ticker in cooldown_map and date < cooldown_map[ticker]:
+            continue  # 冷却中
+        
+        closes = get_closes(ticker, 120)
+        close = closes[-1]
+        ma20  = MA(closes, 20)
+        adx   = calc_ADX(closes, 14)
+        bias  = (close - ma20) / ma20
+        
+        if check_entry(ticker, close, ma20, adx, bias, regime_params):
+            candidates.append({
+                'ticker': ticker,
+                'adx': adx,
+                'bias': bias,
+                'type': cfg['type'],
+            })
+    
+    # 排序：ADX降序
+    candidates.sort(key=lambda x: x['adx'], reverse=True)
+    
+    # 海外名额限制
+    overseas_selected = 0
+    selected = []
+    for c in candidates:
+        if c['type'] == 'US':
+            if overseas_selected >= regime_params['max_overseas']:
+                continue
+            overseas_selected += 1
+        selected.append(c)
+        if len(selected) >= regime_params['max_fire'] - len(L2_POS):
+            break
+    
+    # 开仓
+    for c in selected:
+        weight = L2_POOL[c['ticker']]['max_weight']
+        target_value = CURRENT_EQUITY * weight
+        shares = int(target_value / c['close'])
+        open_position(c['ticker'], shares, c['close'], date)
+
+## ═══════════════════════════════════════
+## 四、L3 反击策略（10%，事件触发）
+## ═══════════════════════════════════════
+
+L3_POOL = [
+    '510300','510500','159915','588000','513770','513180',
+    '513910','159545','159302','513100',
+    'QQQ','IVV','EWY','BBJP','MUFG','VNM','FLIN','IAU'
+]
+
+def run_L3(date):
+    # L3触发条件（留空，待后续版本定义）
+    # 当前版本L3不触发，仅预留架构
+    pass
+
+## ═══════════════════════════════════════
+## 五、核心补丁（必须嵌入）
+## ═══════════════════════════════════════
+
+# 补丁1：动态权益（修复现金锁死）
+CURRENT_EQUITY = CASH + sum(pos['shares'] * prices[pos['ticker']] for pos in ALL_POSITIONS)
+L2_LIMIT = CURRENT_EQUITY * L2_WEIGHT
+
+# 补丁2：空仓生息
+if len(L2_POS) == 0 and not L3_ACTIVE:
+    CASH *= (1 + 0.025 / 52)
+
+# 补丁3：518880跨层合计上限15%
+def check_518880_limit():
+    l1_518880 = get_L1_position('518880')
+    l2_518880 = get_L2_position('518880')
+    total_518880 = (l1_518880.value + l2_518880.value) / CURRENT_EQUITY
+    if total_518880 > 0.15:
+        # L2的518880优先平仓至合计≤15%
+        reduce_L2_518880_to(total_518880 - 0.15)
+
+## ═══════════════════════════════════════
+## 六、A/B对照实验执行流程
+## ═══════════════════════════════════════
+
+# 两组必须使用完全相同的随机种子、数据源、费率
+# 唯一差异：Regime Switching 启用/关闭
+
+# 初始化
+CASH_A = INITIAL_CAPITAL
+CASH_B = INITIAL_CAPITAL
+L2_POS_A = []
+L2_POS_B = []
+L1_POS   = []   # L1共用（两组一致）
+
+for date in WEEKLY_DATES:
+    # L1月频底仓（两组共用）
+    if date.day <= 7:  # 每月第一周
+        run_L1(date)
+    
+    # L2周频 — 实验组A
+    regime_A = get_regime_A(date) if date.is_last_trading_day_of_month() else last_regime_A
+    params_A = get_params_A(regime_A)
+    run_L2(date, params_A, 'A')
+    
+    # L2周频 — 实验组B
+    params_B = get_params_B()
+    run_L2(date, params_B, 'B')
+    
+    # 每日盯市
+    mark_to_market(date)
+
+## ═══════════════════════════════════════
+## 七、输出指标（两组分别输出）
+## ═══════════════════════════════════════
+
+OUTPUT_METRICS = [
+    # 综合
+    'annual_return_net',        # 年化净收益（扣除费率）
+    'annual_return_gross',      # 年化毛收益
+    'max_drawdown',             # 最大回撤
+    'sharpe_ratio',             # 夏普比率
+    'calmar_ratio',             # 卡玛比率
+    'win_rate_weekly',          # 周频胜率（有交易的周）
+    
+    # L2专属
+    'L2_total_trades',          # L2总交易笔数
+    'L2_win_rate',              # L2胜率
+    'L2_profit_factor',         # L2盈亏比
+    'L2_avg_hold_days',         # L2平均持仓天数
+    'L2_annual_friction',       # L2年化摩擦成本
+    
+    # 分层拆解
+    'L1_annual_contribution',   # L1年化贡献
+    'L2_annual_contribution',   # L2年化贡献
+    'L3_annual_contribution',   # L3年化贡献
+    'cash_annual_contribution', # 现金生息贡献
+    
+    # 新增：环境拆解（仅A组）
+    'A_bull_return',            # 牛市环境年化
+    'A_sideways_return',        # 震荡环境年化
+    'A_bear_return',            # 熊市环境年化
+]
+
+## ═══════════════════════════════════════
+## 八、A/B对照裁决格式
+## ═══════════════════════════════════════
+
+# DS输出裁决表格：
+#
+# | 指标 | 实验组A | 实验组B | 差异(A-B) | 裁决 |
+# |---|---|---|---|---|
+# | 年化净收益 | X.XX% | X.XX% | X.XX% | A优于B / B优于A |
+# | 最大回撤 | -X.XX% | -X.XX% | X.XX% | |
+# | L2胜率 | XX.X% | XX.X% | X.X% | |
+# | ... | | | | |
+#
+# 最终裁决：
+# if A_return - B_return >= 0.01:
+#     结论 = "Regime Switching有效，正式版采用实验组A"
+# elif A_return - B_return > 0:
+#     结论 = "Regime Switching增量<1%，过度设计，正式版采用实验组B（简化版）"
+# else:
+#     结论 = "Regime Switching有害，正式版采用实验组B"
+
+## ═══════════════════════════════════════
+## 九、过拟合检测
+## ═══════════════════════════════════════
+
+# 1. 样本外测试（训练期2020-2023 vs 测试期2024-2025）
+#    输出两组分别的训练/测试收益
+
+# 2. 参数扰动测试
+#    对关键参数±20%：ADX ±2, 乖离率上限 ±2%, 止损 ±1%
+#    输出扰动后收益范围
+
+# 3. 摩擦压力测试
+#    费率×2（万一→万二），输出收益变化
+
+## ═══════════════════════════════════════
+## 十、DS执行检查清单（逐项确认）
+## ═══════════════════════════════════════
+
+# [ ] 1. 数据加载完整（8只标的 + SPX/沪深300基准，2020-01-01至2025-12-31周线）
+# [ ] 2. L1底仓30%已硬编码（510300 20% + 518880 10%），月频MA120再平衡
+# [ ] 3. L2池仅4只：QQQ(5%) + EWY(3%) + IVV(3%) + 518880(5%)
+# [ ] 4. 实验组A：Regime Switching启用，动态ADX/开火上限/海外名额
+# [ ] 5. 实验组B：Regime Switching关闭，固定ADX=18/22，开火上限=3，海外=3
+# [ ] 6. A/B两组共用：动态权益、空仓生息、-4%止损、-6%周止损、3周冷却
+# [ ] 7. 518880跨层合计上限15%已实现
+# [ ] 8. 费率硬编码：佣金万1 + 滑点万1 + A股印花税万5（仅卖出）
+# [ ] 9. 两组同时运行，输出独立指标
+# [ ] 10. 输出A/B对照裁决表 + 自动裁决结论
+# [ ] 11. 过拟合检测：训练/测试期拆解 + 参数扰动 + 摩擦压力
+# [ ] 12. 所有指标以百分比输出（保留2位小数）
+# [ ] 13. 确认无现金锁死BUG（CURRENT_EQUITY动态计算）
+
+## ═══════════════════════════════════════
+## 附：V3.1→V3.4 演化树（供DS理解上下文）
+## ═══════════════════════════════════════
+#
+# V3.1: 8只全池，固定ADX=20，信号窒息（32笔/6年，年化-3.44%）
+#   ↓ 修复6个BUG
+# V3.3(C版): 8只全池，ADX降至18/22，乖离率放宽至12%（330笔，年化+1.34%）
+#   ↓ 发现L2拖后腿，A股4只负贡献
+# V3.4(修正版): 4只纯趋势池，L1扩容至30%，Regime Switching A/B对照
+#
+# 核心假设：砍掉A股4只+L1扩容+L2收紧=年化冲击8%

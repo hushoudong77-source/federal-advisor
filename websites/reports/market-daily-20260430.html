@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>联邦投顾 · 市场日报 2026-04-30</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card-bg: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-secondary: #8b949e;
+    --green: #3fb950;
+    --red: #f85149;
+    --yellow: #d2991d;
+    --blue: #58a6ff;
+    --purple: #bc8cff;
+    --accent: #f0883e;
+    --gold: #f0c040;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 20px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .header {
+    text-align: center;
+    padding: 24px 0;
+    border-bottom: 2px solid var(--red);
+    margin-bottom: 24px;
+  }
+  .header h1 { font-size: 1.8em; color: var(--red); }
+  .header .sub { color: var(--text-secondary); font-size: 0.95em; margin-top: 4px; }
+  
+  .section {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .section h2 {
+    font-size: 1.2em;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+  }
+  th, td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.85em;
+    text-transform: uppercase;
+  }
+  td { font-variant-numeric: tabular-nums; }
+  
+  .up { color: var(--green); }
+  .down { color: var(--red); }
+  .neutral { color: var(--yellow); }
+  
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: 600;
+  }
+  .badge-green { background: rgba(63,185,80,0.15); color: var(--green); }
+  .badge-red { background: rgba(248,81,73,0.15); color: var(--red); }
+  .badge-yellow { background: rgba(210,153,29,0.15); color: var(--yellow); }
+  .badge-blue { background: rgba(88,166,255,0.15); color: var(--blue); }
+  .badge-purple { background: rgba(188,140,255,0.15); color: var(--purple); }
+  
+  .alert-box {
+    padding: 16px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+  .alert-red { background: rgba(248,81,73,0.12); border: 1px solid var(--red); color: var(--red); }
+  .alert-yellow { background: rgba(210,153,29,0.12); border: 1px solid var(--yellow); color: var(--yellow); }
+  .alert-green { background: rgba(63,185,80,0.12); border: 1px solid var(--green); color: var(--green); }
+  
+  .highlight { color: var(--accent); font-weight: 700; }
+  .gold-text { color: var(--gold); }
+  
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+  
+  .metric-card {
+    background: rgba(22,27,34,0.8);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    text-align: center;
+  }
+  .metric-card .label { font-size: 0.8em; color: var(--text-secondary); margin-bottom: 4px; }
+  .metric-card .value { font-size: 1.4em; font-weight: 700; }
+  
+  .exec-item {
+    padding: 12px 16px;
+    border-left: 3px solid var(--accent);
+    margin-bottom: 8px;
+    background: rgba(22,27,34,0.5);
+    border-radius: 0 6px 6px 0;
+  }
+  .exec-item.urgent { border-left-color: var(--red); }
+  .exec-item.hold { border-left-color: var(--green); }
+  .exec-item.watch { border-left-color: var(--yellow); }
+  
+  .fomc-box {
+    background: rgba(248,81,73,0.08);
+    border: 1px solid var(--red);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  .fomc-box h3 { color: var(--red); margin-bottom: 8px; }
+  
+  .footer {
+    text-align: center;
+    padding: 16px;
+    color: var(--text-secondary);
+    font-size: 0.8em;
+    border-top: 1px solid var(--border);
+    margin-top: 24px;
+  }
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 12px 0;
+  }
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔴 联邦投顾 · 市场日报</h1>
+  <div class="sub">2026年4月30日 周四 | 基于4月29日（周三）收盘 | 鲍威尔告别演出 · 三重数据日</div>
+</div>
+
+<!-- ====== 宏观重力锚点 ====== -->
+<div class="section">
+  <h2>🛰️ 宏观重力锚点 | Sentinel-01 物理层</h2>
+  <div class="grid-3">
+    <div class="metric-card">
+      <div class="label">布伦特原油</div>
+      <div class="value up" style="font-size:1.3em;">$116~118 <span style="font-size:0.6em">+6%</span></div>
+    </div>
+    <div class="metric-card">
+      <div class="label">WTI 原油</div>
+      <div class="value up" style="font-size:1.3em;">$106.37 <span style="font-size:0.6em">+6%</span></div>
+    </div>
+    <div class="metric-card">
+      <div class="label">现货黄金 (XAU)</div>
+      <div class="value down">$4,580 <span style="font-size:0.6em">-0.3%</span></div>
+    </div>
+    <div class="metric-card">
+      <div class="label">美联储利率</div>
+      <div class="value">3.50-3.75%</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">DXY 美元</div>
+      <div class="value">≈99.5</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">US10Y 收益率</div>
+      <div class="value">≈4.35%</div>
+    </div>
+  </div>
+  
+  <div class="fomc-box" style="margin-top:16px;">
+    <h3>🏛️ 历史性FOMC：8:4投票 · 内部分歧创1992年来最高</h3>
+    <table>
+      <tr><th>投票方</th><th>立场</th><th>理由</th></tr>
+      <tr><td>鲍威尔等8人</td><td><span class="badge badge-green">维持不变</span></td><td>通胀高位+能源冲击+经济稳健</td></tr>
+      <tr><td>理事Miran</td><td><span class="badge badge-red">反对·支持降息25bp</span></td><td>连续第4次异议</td></tr>
+      <tr><td>哈马克+卡什卡利+洛根</td><td><span class="badge badge-red">反对·反对宽松倾向措辞</span></td><td>"不支持声明中加入宽松倾向"</td></tr>
+    </table>
+    <p style="margin-top:8px;font-size:0.9em;color:var(--text-secondary);">
+      声明措辞变化：通胀从"依然略高"→<strong style="color:var(--red)">"处于高位，部分原因在于近期全球能源价格上涨"</strong>。中东局势被提升为<strong>"为经济前景带来高度不确定性"</strong>。鲍威尔确认5月15日后将继续担任理事。沃什提名已基本畅通。
+    </p>
+  </div>
+</div>
+
+<!-- ====== 全球指数收盘 ====== -->
+<div class="section">
+  <h2>📊 全球指数收盘（4月29日）</h2>
+  <table>
+    <tr>
+      <th>市场</th><th>代码/指数</th><th>收盘价</th><th>涨跌幅</th><th>状态</th>
+    </tr>
+    <tr style="background:rgba(63,185,80,0.04)">
+      <td><strong>上证指数</strong></td><td>000001</td><td>4,107.51</td><td class="up">+0.71%</td>
+      <td><span class="badge badge-green">▲ 收复4100</span></td>
+    </tr>
+    <tr>
+      <td>沪深300</td><td>000300</td><td>4,810.35</td><td class="up">+1.10%</td>
+      <td><span class="badge badge-green">▲ 权重领涨</span></td>
+    </tr>
+    <tr>
+      <td>深证成指</td><td>399001</td><td>—</td><td class="up">≈+1.8%</td>
+      <td><span class="badge badge-green">▲ 强势</span></td>
+    </tr>
+    <tr>
+      <td>创业板指</td><td>399006</td><td>—</td><td class="up">+2.52%</td>
+      <td><span class="badge badge-green">▲ 新能源+医药</span></td>
+    </tr>
+    <tr>
+      <td>科创50</td><td>000688</td><td>—</td><td class="up">+0.66%</td>
+      <td><span class="badge badge-green">▲ 反弹</span></td>
+    </tr>
+    <tr>
+      <td>上证50</td><td>000016</td><td>2,963</td><td class="up">创3月新高</td>
+      <td><span class="badge badge-green">▲ 4周累涨+4.58%</span></td>
+    </tr>
+    <tr style="background:rgba(255,255,255,0.02)">
+      <td><strong>恒生科技</strong></td><td>HSTECH</td><td>—</td><td>—</td>
+      <td><span class="badge badge-yellow">→ 结算日震荡</span></td>
+    </tr>
+    <tr>
+      <td>道琼斯</td><td>DJI</td><td>48,861.81</td><td class="down">-0.57%</td>
+      <td><span class="badge badge-yellow">▼ 联储分歧拖累</span></td>
+    </tr>
+    <tr>
+      <td>纳斯达克</td><td>QQQ≈</td><td>24,673.24</td><td class="up">+0.04%</td>
+      <td><span class="badge badge-blue">→ 科技韧性</span></td>
+    </tr>
+    <tr>
+      <td>标普500</td><td>SPY≈</td><td>7,135.98</td><td class="down">-0.04%</td>
+      <td><span class="badge badge-blue">→ 基本持平</span></td>
+    </tr>
+    <tr>
+      <td>中概金龙</td><td>HXC</td><td>—</td><td>—</td>
+      <td><span class="badge badge-yellow">→ A股引领情绪</span></td>
+    </tr>
+  </table>
+  <p style="margin-top:8px;font-size:0.85em;color:var(--text-secondary);">
+    📈 A股：沪深京三市上涨个股约4,190只，成交额1.127万亿。北向资金净流入显著，创业板涨2.52%领涨，新能源/医药/稀土板块活跃。
+  </p>
+</div>
+
+<!-- ====== 持仓诊断 ====== -->
+<div class="section">
+  <h2>💼 持仓诊断</h2>
+  <table>
+    <tr>
+      <th>标的</th><th>代码</th><th>成本</th><th>最新价</th><th>浮盈/浮亏</th><th>止损位</th><th>状态</th>
+    </tr>
+    <tr style="background:rgba(63,185,80,0.05)">
+      <td>黄金ETF</td><td>518880</td><td>¥9.31</td><td>—</td><td class="up">+4.54%</td><td>MA120≈9.65</td>
+      <td><span class="badge badge-yellow">🟡 关注（金价承压）</span></td>
+    </tr>
+    <tr style="background:rgba(63,185,80,0.05)">
+      <td>黄金信托</td><td>IAU</td><td>$86.756</td><td>—</td><td class="up">+2.30%</td><td>$85.49</td>
+      <td><span class="badge badge-yellow">🟡 关注</span></td>
+    </tr>
+    <tr style="background:rgba(88,166,255,0.05)">
+      <td>港股红利</td><td>513910</td><td>¥1.618</td><td>—</td><td class="up">+0.87%</td><td>¥1.580</td>
+      <td><span class="badge badge-blue">🔵 防守</span></td>
+    </tr>
+    <tr style="background:rgba(88,166,255,0.05)">
+      <td>短期国债</td><td>SGOV</td><td>$100.537</td><td>≈$100.65</td><td class="up">+0.11%</td><td>—</td>
+      <td><span class="badge badge-green">🟢 满功率</span></td>
+    </tr>
+  </table>
+  
+  <hr class="divider">
+  
+  <div class="grid-2">
+    <div class="metric-card">
+      <div class="label">💰 总资产</div>
+      <div class="value">≈3,158,855 RMB</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">🏦 现金主权率</div>
+      <div class="value">≈63.77%</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 关键事件 ====== -->
+<div class="section">
+  <h2>📰 24小时重大情报</h2>
+  <table>
+    <tr><th>事件</th><th>影响</th></tr>
+    <tr>
+      <td><strong>🔴 特朗普：继续封锁伊朗直至核协议</strong> · 布伦特飙至$118</td>
+      <td><span class="badge badge-red">🔴 核弹级能源冲击</span></td>
+    </tr>
+    <tr>
+      <td><strong>🏛️ 美联储8:4投票</strong> · 内部分歧创1992年来最高</td>
+      <td><span class="badge badge-red">🔴 降息预期基本清零</span></td>
+    </tr>
+    <tr>
+      <td><strong>鲍威尔告别演出</strong> · 5/15后继续任理事，沃什接任畅通</td>
+      <td><span class="badge badge-yellow">🟡 鹰派交接</span></td>
+    </tr>
+    <tr>
+      <td><strong>标普上调油价预测</strong> · 2026年WTI/布伦特+$15/桶</td>
+      <td><span class="badge badge-red">🔴 滞胀风险升级</span></td>
+    </tr>
+    <tr>
+      <td><strong>中国4月PMI今日公布</strong> · 市场关注能否维持50以上</td>
+      <td><span class="badge badge-yellow">⚠ 待公布</span></td>
+    </tr>
+    <tr>
+      <td><strong>七巨头中4家盘后财报</strong> · Alphabet/Amazon/Meta/微软</td>
+      <td><span class="badge badge-yellow">⚠ AI支出合理性大考</span></td>
+    </tr>
+    <tr>
+      <td><strong>恩智浦+26%、希捷+15%</strong> · 财报超预期</td>
+      <td><span class="badge badge-green">🟢 半导体局部亮点</span></td>
+    </tr>
+    <tr>
+      <td><strong>今日：欧央行+英央行利率决议+美国PCE/GDP</strong></td>
+      <td><span class="badge badge-red">⚠ 超级星期四</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ====== 地缘窗口 ====== -->
+<div class="section">
+  <h2>🌍 地缘追踪</h2>
+  <table>
+    <tr><th>节点</th><th>状态</th><th>评估</th></tr>
+    <tr>
+      <td>霍尔木兹封锁</td><td><span class="badge badge-red">🔴 无限期延长</span></td>
+      <td>特朗普明确拒绝解除，封锁比轰炸更有效</td>
+    </tr>
+    <tr>
+      <td>美伊谈判</td><td><span class="badge badge-red">🔴 彻底破裂</span></td>
+      <td>伊朗拒开海峡除非美解除封锁，死锁格局</td>
+    </tr>
+    <tr>
+      <td>阿联酋退出OPEC</td><td><span class="badge badge-red">🔴 已确认</span></td>
+      <td>OPEC遭受重大打击，中期利好原油进口国</td>
+    </tr>
+    <tr>
+      <td>欧洲航油储备</td><td><span class="badge badge-yellow">⚠ 约5周</span></td>
+      <td>5月底航班取消风险加剧</td>
+    </tr>
+    <tr>
+      <td>伊朗三阶段方案</td><td><span class="badge badge-yellow">🟡 试探性</span></td>
+      <td>停战→海峡管理→核问题，被美方无视</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ====== 今日执行建议 ====== -->
+<div class="section">
+  <h2>⚡ 今日执行指令 · 超级星期四</h2>
+  
+  <div class="exec-item urgent">
+    <strong>【布伦特$118 · 全组合重力重评】</strong><br>
+    特朗普"封锁比轰炸更有效"宣言将能源危机升级为持久战。布伦特从$111→$118（+6%）是物理冲击，非叙事噪音。<br>
+    → <span class="highlight">启动全组合能源传导审计：</span>原油$118→PPI上行→企业成本挤压→新兴市场（513910）利率风险 + 黄金（518880/IAU）的"利率逻辑压倒避险逻辑"效应。
+  </div>
+  
+  <div class="exec-item urgent">
+    <strong>【FOMC 8:4 · 降息预期清零】</strong><br>
+    三位鹰派反对宽松倾向措辞，一位鸽派坚持降息。共识：通胀将持续高位，降息遥不可及。德银已撤销9月降息预测。<br>
+    → <span class="highlight">黄金的逻辑切换确认：</span>短期利率逻辑压倒地缘避险逻辑。518880若跌破MA120(≈9.65)触发减仓20%。IAU止损$85.49不变。
+  </div>
+  
+  <div class="exec-item hold">
+    <strong>【A股回暖 · 冷静观察】</strong><br>
+    上证重回4100，4190只个股上涨，创业板+2.52%。但这是"五一前窗口美化"还是真正的风险偏好修复？<br>
+    → <span class="highlight">今日PMI数据是关键分水岭。</span>若PMI>50.4（前值），确认经济韧性；若<50，今日涨幅可能一日游。513910受红利轮动利好，暂维持防守。
+  </div>
+  
+  <div class="exec-item watch">
+    <strong>【超级星期四 · 数据风暴待命】</strong><br>
+    今日：中国PMI 09:30 + 英央行利率 + 欧央行利率 + 美国GDP初值 + PCE物价指数 + 初请失业金。<br>
+    → <span class="highlight">所有开仓指令继续冻结。</span>SGOV满功率核威慑待命。关注美国PCE数据——若核心PCE超预期上行，将进一步封死降息窗口。
+  </div>
+
+  <div class="exec-item hold">
+    <strong>【SGOV满功率 · 年化5.2%的堡垒】</strong><br>
+    在布伦特$118 + FOMC鹰派分歧 + 降息预期清零的三重冲击下，现金63.77%不是保守，是最优战略配置。SGOV每日租金收益约$27，年化5.2%在利率高位环境是确定性收益。
+  </div>
+</div>
+
+<!-- ====== 分类汇总 ====== -->
+<div class="section">
+  <h2>📈 分类汇总</h2>
+  <table>
+    <tr><th>类别</th><th>今日表现</th><th>重点观察</th></tr>
+    <tr>
+      <td>美股 (SPY/QQQ)</td>
+      <td class="down">道指-0.57%/纳指+0.04%</td>
+      <td>FOMC分歧+四巨头财报 → AI支出合理性</td>
+    </tr>
+    <tr>
+      <td>A股 (上证/创业)</td>
+      <td class="up">+0.71%/+2.52%</td>
+      <td>PMI数据验证，4190只个股普涨</td>
+    </tr>
+    <tr>
+      <td>港股 (恒生科技)</td>
+      <td>结算日震荡</td>
+      <td>五一假期前资金避险收缩</td>
+    </tr>
+    <tr>
+      <td>避险 (黄金)</td>
+      <td class="down">$4,580（继续承压）</td>
+      <td>利率逻辑压倒避险逻辑，MA120关键</td>
+    </tr>
+    <tr>
+      <td>能源 (布伦特/WTI)</td>
+      <td class="up">+6%/+6% → $118/$106</td>
+      <td>🔴 特朗普无限期封锁宣言</td>
+    </tr>
+    <tr>
+      <td>债券 (US10Y)</td>
+      <td>≈4.35%</td>
+      <td>FOMC后市场消化鹰派信号</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ====== 今日数据日历 ====== -->
+<div class="section">
+  <h2>📅 今日数据日历（4月30日）</h2>
+  <div class="alert-box alert-red">
+    🔴 <strong>超级星期四：</strong>中欧美三大央行+关键经济数据同日密集落地
+  </div>
+  <table>
+    <tr><th>时间</th><th>事件</th><th>前值</th><th>关注点</th></tr>
+    <tr><td>09:30</td><td>中国4月官方制造业PMI</td><td>50.4</td><td>能否维持扩张区间 >50</td></tr>
+    <tr><td>19:00</td><td>英国央行利率决议</td><td>—</td><td>5月降息预期</td></tr>
+    <tr><td>20:15</td><td>欧洲央行利率决议</td><td>—</td><td>能源通胀下的政策取向</td></tr>
+    <tr><td>20:30</td><td>美国Q1 GDP年化季率初值</td><td>—</td><td>经济韧性验证</td></tr>
+    <tr><td>20:30</td><td>美国3月核心PCE物价指数</td><td>—</td><td><strong>重中之重：</strong>降息窗口晴雨表</td></tr>
+    <tr><td>20:30</td><td>美国当周初请失业金</td><td>—</td><td>劳动力市场温度</td></tr>
+    <tr><td>次日05:00</td><td>苹果财报电话会</td><td>—</td><td>消费电子风向标</td></tr>
+  </table>
+</div>
+
+<div class="footer">
+  <p>联邦投顾系统自动生成 | V15.0 · 19大核心池 | 2026-04-30 08:01 UTC+8</p>
+  <p style="margin-top:4px;font-size:0.85em">⚠ 本报告仅供参考，不构成投资建议。投资有风险，决策需谨慎。</p>
+  <p style="margin-top:4px;color:var(--red)">🛰️ Sentinel-01 · 🕵️ 首席审计官 · ⚖️ CEO · 🔍 系统自检官 — 四线程对撞，逻辑无漏</p>
+</div>
+
+</body>
+</html>

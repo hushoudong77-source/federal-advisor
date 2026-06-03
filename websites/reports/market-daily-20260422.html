@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>市场日报 - 2026年4月22日（奇点日）</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-top: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .header .date {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .section-title {
+            color: #2c3e50;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-left: 10px;
+            border-left: 4px solid #667eea;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #e1e1e1;
+        }
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        .trend-up {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .trend-down {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .trend-neutral {
+            color: #7f8c8d;
+        }
+        .signal-green {
+            background-color: #d5f4e6;
+            color: #27ae60;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .signal-yellow {
+            background-color: #fff3cd;
+            color: #856404;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .signal-red {
+            background-color: #f8d7da;
+            color: #721c24;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .signal-blue {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .risk-highlight {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        .execution-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .execution-box h3 {
+            margin-top: 0;
+            color: white;
+        }
+        .execution-item {
+            margin: 10px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .execution-item:before {
+            content: "⚡";
+            position: absolute;
+            left: 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e1e1;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        .geopolitical-timeline {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            position: relative;
+        }
+        .geopolitical-timeline:before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e1e1e1;
+            z-index: 1;
+        }
+        .timeline-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 30%;
+            position: relative;
+            z-index: 2;
+        }
+        .timeline-date {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .timeline-status {
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .status-red {
+            color: #e74c3c;
+        }
+        .status-yellow {
+            color: #f39c12;
+        }
+        .status-green {
+            color: #27ae60;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            table {
+                font-size: 0.9em;
+            }
+            th, td {
+                padding: 8px 10px;
+            }
+            .geopolitical-timeline {
+                flex-direction: column;
+            }
+            .timeline-item {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>市场日报 - 2026年4月22日</h1>
+            <div class="date">奇点日 · 霍尔木兹海峡停火大限</div>
+            <div style="margin-top: 10px; color: #e74c3c; font-weight: bold;">
+                ⚠️ 4.22 奇点临战状态 · 堡垒掩体阵型激活
+            </div>
+        </div>
+
+        <div class="risk-highlight">
+            🛡️ 当前风险等级：极高 | 现金主权率：63.77% | 逻辑合龙系数：0.92
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">📊 全球指数收盘（基于4月21日数据）</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>指数</th>
+                        <th>代码</th>
+                        <th>收盘价</th>
+                        <th>涨跌幅</th>
+                        <th>趋势</th>
+                        <th>信号灯</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>标普500</td>
+                        <td>SPX</td>
+                        <td>7064.01</td>
+                        <td class="trend-down">-0.63%</td>
+                        <td>▼</td>
+                        <td><span class="signal-yellow">警戒</span></td>
+                    </tr>
+                    <tr>
+                        <td>纳斯达克100</td>
+                        <td>NDX</td>
+                        <td>24259.96</td>
+                        <td class="trend-down">-0.59%</td>
+                        <td>▼</td>
+                        <td><span class="signal-yellow">警戒</span></td>
+                    </tr>
+                    <tr>
+                        <td>沪深300</td>
+                        <td>000300</td>
+                        <td>4728.67</td>
+                        <td class="trend-down">-0.17%</td>
+                        <td>▼</td>
+                        <td><span class="signal-blue">持有</span></td>
+                    </tr>
+                    <tr>
+                        <td>创业板</td>
+                        <td>399006</td>
+                        <td>3678.29</td>
+                        <td class="trend-up">+1.43%</td>
+                        <td>▲</td>
+                        <td><span class="signal-green">强势</span></td>
+                    </tr>
+                    <tr>
+                        <td>科创50</td>
+                        <td>000688</td>
+                        <td>1425.68</td>
+                        <td class="trend-up">+1.91%</td>
+                        <td>▲</td>
+                        <td><span class="signal-green">强势</span></td>
+                    </tr>
+                    <tr>
+                        <td>恒生科技</td>
+                        <td>HSTECH</td>
+                        <td>5042.68</td>
+                        <td class="trend-down">-0.97%</td>
+                        <td>▼</td>
+                        <td><span class="signal-yellow">观察</span></td>
+                    </tr>
+                    <tr>
+                        <td>红利指数</td>
+                        <td>HSHYLV</td>
+                        <td>35.48</td>
+                        <td class="trend-down">-0.06%</td>
+                        <td>→</td>
+                        <td><span class="signal-blue">持有</span></td>
+                    </tr>
+                    <tr>
+                        <td>日经225</td>
+                        <td>1321/BBJP</td>
+                        <td>58475.90</td>
+                        <td class="trend-down">-1.75%</td>
+                        <td>▼</td>
+                        <td><span class="signal-red">熔断</span></td>
+                    </tr>
+                    <tr>
+                        <td>英国富时</td>
+                        <td>EWU</td>
+                        <td>35.48</td>
+                        <td class="trend-down">-0.06%</td>
+                        <td>→</td>
+                        <td><span class="signal-yellow">观察</span></td>
+                    </tr>
+                    <tr>
+                        <td>韩国综合</td>
+                        <td>EWY</td>
+                        <td>78.56</td>
+                        <td class="trend-up">+0.08%</td>
+                        <td>▲</td>
+                        <td><span class="signal-yellow">观察</span></td>
+                    </tr>
+                    <tr>
+                        <td>越南胡志明</td>
+                        <td>VNM</td>
+                        <td>18.86</td>
+                        <td class="trend-down">-1.10%</td>
+                        <td>▼</td>
+                        <td><span class="signal-red">熔断</span></td>
+                    </tr>
+                    <tr>
+                        <td>印度CNX</td>
+                        <td>FLIN</td>
+                        <td>45.36</td>
+                        <td class="trend-down">-0.07%</td>
+                        <td>▼</td>
+                        <td><span class="signal-red">熔断</span></td>
+                    </tr>
+                    <tr>
+                        <td>印度小盘</td>
+                        <td>SMIN</td>
+                        <td>33.05</td>
+                        <td class="trend-down">-0.33%</td>
+                        <td>▼</td>
+                        <td><span class="signal-red">熔断</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">🛰️ IEF哨兵</h2>
+            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <div style="font-size: 2em; font-weight: bold; color: #e74c3c;">95.42</div>
+                <div style="font-size: 1.2em; margin: 10px 0; color: #f39c12;">警戒区间</div>
+                <div style="color: #7f8c8d;">解读：美债流动性虹吸线，沃什鹰派信号压制黄金避险逻辑</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">💹 持仓诊断</h2>
+            
+            <h3>权益仓（人民币）</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>标的</th>
+                        <th>代码</th>
+                        <th>成本</th>
+                        <th>估损</th>
+                        <th>止损位</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>MUFG</td>
+                        <td>MUFG</td>
+                        <td>$18.51</td>
+                        <td class="trend-down">-1.57%</td>
+                        <td>$18.50</td>
+                        <td><span class="signal-red">已清仓</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>黄金/避险</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>标的</th>
+                        <th>代码</th>
+                        <th>关键位</th>
+                        <th>状态</th>
+                        <th>持仓金额</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>黄金ETF</td>
+                        <td>518880</td>
+                        <td>9.81防线</td>
+                        <td><span class="signal-green">Stage 2主升</span></td>
+                        <td>468,468元</td>
+                    </tr>
+                    <tr>
+                        <td>黄金现货</td>
+                        <td>IAU</td>
+                        <td>87.87 MA21</td>
+                        <td><span class="signal-yellow">剩余50%仓位</span></td>
+                        <td>11,955 USD</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>现金/债券</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>标的</th>
+                        <th>代码</th>
+                        <th>金额</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>短期国债ETF</td>
+                        <td>SGOV</td>
+                        <td>~149万RMB等值</td>
+                        <td><span class="signal-green">核威慑待命</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">📈 分类汇总</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>类别</th>
+                        <th>今日表现</th>
+                        <th>重点观察</th>
+                        <th>信号灯</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>美股(SPY/QQQ)</td>
+                        <td class="trend-down">-0.6%</td>
+                        <td>纳指13连涨终结，技术回调</td>
+                        <td><span class="signal-yellow">警戒</span></td>
+                    </tr>
+                    <tr>
+                        <td>中港(红利/科技)</td>
+                        <td class="trend-down">-0.5%</td>
+                        <td>红利相对抗跌，科技回调</td>
+                        <td><span class="signal-blue">持有</span></td>
+                    </tr>
+                    <tr>
+                        <td>亚太(日本/韩国/越南/印度)</td>
+                        <td class="trend-down">-0.8%</td>
+                        <td>新兴市场普遍弱势，美元走强</td>
+                        <td><span class="signal-red">熔断</span></td>
+                    </tr>
+                    <tr>
+                        <td>避险(黄金/SGOV)</td>
+                        <td class="trend-down">-1.5%</td>
+                        <td>黄金分化，IAU承压但518880抗跌</td>
+                        <td><span class="signal-green">支撑</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">🌍 地缘窗口</h2>
+            <div class="geopolitical-timeline">
+                <div class="timeline-item">
+                    <div class="timeline-date">4.21通牒</div>
+                    <div class="timeline-status status-red">已破裂</div>
+                    <div style="font-size: 0.8em; margin-top: 5px;">霍尔木兹谈判实质性破裂</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">4.22奇点</div>
+                    <div class="timeline-status status-red">今日到期</div>
+                    <div style="font-size: 0.8em; margin-top: 5px;">停火大限，封锁概率上升</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">欧洲航油储备</div>
+                    <div class="timeline-status status-yellow">约6周</div>
+                    <div style="font-size: 0.8em; margin-top: 5px;">5月底停飞风险</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 8px;">
+                <strong>最新地缘情报：</strong>
+                <ul style="margin: 10px 0 0 20px;">
+                    <li>美伊停火协议"压哨"延期，但美军物理封锁100%维持</li>
+                    <li>霍尔木兹海峡通航依然中断，28艘船只被截停</li>
+                    <li>伊朗政府内部严重分裂，谈判实质性无望</li>
+                    <li>原油B00Y +3.75%，地缘通胀逻辑强化</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="execution-box">
+            <h3>⚡ 今日执行建议（V14.0 法典）</h3>
+            
+            <div class="execution-item"><strong>【堡垒掩体阵型 · 4.22奇点临战】</strong></div>
+            <div class="execution-item"><strong>1. 绝对静默期</strong> — 4.22前严禁任何开仓操作，维持现金/黄金/红利三角平衡</div>
+            <div class="execution-item"><strong>2. 黄金多头持有</strong> — IAU剩余50%仓位作为地缘探测"免费期权"，止损设于成本价$86.756</div>
+            <div class="execution-item"><strong>3. 现金核威慑</strong> — SGOV从"子弹"转为"核弹"，等待极端机会捕兽夹</div>
+            <div class="execution-item"><strong>4. VNM纪律</strong> — 恪守"宁可踏空，绝不送命"，击球区精确至$17.16-17.20 (MA233)</div>
+            <div class="execution-item"><strong>5. 518880防线</strong> — 观察9.81支撑，跌破则减仓20%，守住则满功率持有</div>
+            
+            <div style="margin-top: 20px; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 4px;">
+                <strong>核心原则：</strong> 物理重力大于技术形态，现金主权率63.77%提供绝对无损生存权
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>报告由联邦投顾系统自动生成 | V14.0 | 19大核心池完整版</p>
+            <p>生成时间：2026年4月22日 08:01 (北京时间)</p>
+            <p>数据来源：4月22日完整.csv (44个标的物理数据)</p>
+            <p>逻辑合龙系数：0.92 | 审计官：全球资产管理部 · 首席执行官</p>
+        </div>
+    </div>
+</body>
+</html>

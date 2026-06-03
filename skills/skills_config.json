@@ -1,0 +1,207 @@
+{
+    "skill-creator": {
+        "name": "skill-creator",
+        "description": "Create, install, or update skills in the workspace. Use when (1) installing a skill from a URL or remote source, (2) creating a new skill from scratch, (3) updating or restructuring existing skills. Always use this skill for any skill installation or creation task.",
+        "source": "builtin",
+        "enabled": true,
+        "category": "skill"
+    },
+    "knowledge-wiki": {
+        "name": "knowledge-wiki",
+        "description": "Manage the personal knowledge wiki. Use when the user shares articles, documents, or asks to organize knowledge; when a conversation produces insights worth preserving as structured knowledge; or when the user asks about the knowledge base.",
+        "source": "builtin",
+        "enabled": true,
+        "category": "skill"
+    },
+    "image-generation": {
+        "name": "image-generation",
+        "description": "Generate or edit images from text prompts. Use when the user asks to create, draw, design, or edit an image, illustration, photo, icon, poster, or any visual content.",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "stock-monitor": {
+        "name": "stock-monitor",
+        "description": "全功能智能股票监控预警系统。支持成本百分比、均线金叉死叉、RSI超买超卖、成交量异动、跳空缺口、动态止盈等7大预警规则。符合中国投资者习惯（红涨绿跌）。",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "github": {
+        "name": "github",
+        "description": "GitHub 核心操作 - 仓库管理、Fork、PR、Release、Issue 评论",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "plugin-antv": {
+        "name": "plugin-antv",
+        "description": "AntV可视化图表 - 可视化图表生成工具，支持生成条形图、折线方图、柱状图、饼图、流程图、思维导图、词云图等15种图表格式。当需要执行该插件提供的功能时可使用此技能。",
+        "source": "custom",
+        "enabled": true,
+        "category": "plugin"
+    },
+    "plugin-file-parsing": {
+        "name": "plugin-file-parsing",
+        "description": "文件解析 - 解析并读取文件内容。当需要执行该插件提供的功能时可使用此技能。",
+        "source": "custom",
+        "enabled": true,
+        "category": "plugin"
+    },
+    "plugin-vision": {
+        "name": "plugin-vision",
+        "description": "图像识别 - 图片识别工具，通过多模态模型理解图片内容，并回答用户问题。当需要执行该插件提供的功能时可使用此技能。",
+        "source": "custom",
+        "enabled": true,
+        "category": "plugin"
+    },
+    "plugin-google-search": {
+        "name": "plugin-google-search",
+        "description": "谷歌搜索 - 搜索引擎，当需要从互联网搜索最新事件或资讯时选择该工具，输入为用户需要搜索的关键词。当需要执行该插件提供的功能时可使用此技能。",
+        "source": "custom",
+        "enabled": true,
+        "category": "plugin"
+    },
+    "plugin-search": {
+        "name": "plugin-search",
+        "description": "默认搜索 - 通用搜索引擎，当需要从互联网搜索最新事件或资讯时选择该工具。当需要执行该插件提供的功能时可使用此技能。",
+        "source": "custom",
+        "enabled": false,
+        "category": "plugin"
+    },
+    "plugin-hot-trends-hub": {
+        "name": "plugin-hot-trends-hub",
+        "description": "热点资讯聚合 - 全网热点新闻资讯排行榜，包括知乎、头条、微博、36氪、豆瓣、掘金等平台的新闻热榜。当需要执行该插件提供的功能时可使用此技能。",
+        "source": "custom",
+        "enabled": true,
+        "category": "plugin"
+    },
+    "global-investment-advisor": {
+        "name": "global-investment-advisor",
+        "description": "全球量化投资联邦顾问系统。基于物理重力锚点、机构级风险管理和多线程决策机制，执行机构级头寸管理与攻守策略。使用场景：(1) /输入 指令录入资产数据并计算避风港配比；(2) /分析 指令启动联邦思维对撞分析标的；(3) /结构检查 审计组合平衡与相关性；(4) /止损 /止盈 判定离场物理必要性；(5) /扫描 /风控 /复盘 /盘前 执行对应SOP。",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "Gold Price Inquiry - 黄金价格查询": {
+        "name": "Gold Price Inquiry - 黄金价格查询",
+        "description": "查询上金所、上期所、港金、银行渠道、伦敦金银及品牌金店等多源黄金参考价；涨跌字段可辅助说明走势（非投资建议）。当用户说：今天黄金多少钱一克？银行金条什么价？周大福金价？伦敦金走势怎样？或类似金价问题时，使用本技能。",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "stock-analysis": {
+        "name": "stock-analysis",
+        "description": "Analyze stocks and cryptocurrencies using Yahoo Finance data. Supports portfolio management, watchlists with alerts, dividend analysis, 8-dimension stock scoring, viral trend detection (Hot Scanner), and rumor/early signal detection. Use for stock analysis, portfolio tracking, earnings reactions, crypto monitoring, trending stocks, or finding rumors before they hit mainstream.",
+        "source": "clawhub",
+        "enabled": true,
+        "category": "skill",
+        "display_name": "股票分析"
+    },
+    "pdf": {
+        "name": "pdf",
+        "description": "Use this skill whenever the user wants to do anything with PDF files. This includes reading or extracting text/tables from PDFs, combining or merging multiple PDFs into one, splitting PDFs apart, rotating pages, adding watermarks, creating new PDFs, filling PDF forms, encrypting/decrypting PDFs, extracting images, and OCR on scanned PDFs to make them searchable. If the user mentions a .pdf file or asks to produce one, use this skill.",
+        "source": "cowhub",
+        "enabled": true,
+        "category": "skill"
+    },
+    "xlsx": {
+        "name": "xlsx",
+        "description": "Use this skill any time a spreadsheet file is the primary input or output. This means any task where the user wants to: open, read, edit, or fix an existing .xlsx, .xlsm, .csv, or .tsv file (e.g., adding columns, computing formulas, formatting, charting, cleaning messy data); create a new spreadsheet from scratch or from other data sources; or convert between tabular file formats. Trigger especially when the user references a spreadsheet file by name or path — even casually (like \"the xlsx in my downloads\") — and wants something done to it or produced from it. Also trigger for cleaning or restructuring messy tabular data files (malformed rows, misplaced headers, junk data) into proper spreadsheets. The deliverable must be a spreadsheet file. Do NOT trigger when the primary deliverable is a Word document, HTML report, standalone Python script, database pipeline, or Google Sheets API integration, even if tabular data is involved.",
+        "source": "cowhub",
+        "enabled": true,
+        "category": "skill"
+    },
+    "youtube-watcher": {
+        "name": "youtube-watcher",
+        "description": "Fetch and read transcripts from YouTube videos. Use when you need to summarize a video, answer questions about its content, or extract information from it.",
+        "source": "clawhub",
+        "enabled": true,
+        "category": "skill",
+        "display_name": "YouTube视频分析"
+    },
+    "plugin-gw1kuD": {
+        "name": "plugin-gw1kuD",
+        "description": "新闻早报 - 获取每日新闻资讯早报。当需要执行该插件提供的功能时可使用此技能。",
+        "source": "custom",
+        "enabled": true,
+        "category": "plugin"
+    },
+    "database-1h7Axcvj": {
+        "name": "database-1h7Axcvj",
+        "description": "金融数据库 - 金融数据。当需要对该数据库执行增删改查操作时可使用此技能。",
+        "source": "custom",
+        "enabled": true,
+        "category": "database"
+    },
+    "mx-data": {
+        "name": "mx-data",
+        "description": "基于东方财富权威数据库的金融数据查询工具，支持行情、财务及关联关系数据。",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "mx-search": {
+        "name": "mx-search",
+        "description": "本skill基于东方财富妙想搜索能力，基于金融场景进行信源智能筛选，用于获取涉及时效性信息或特定事件信息的任务，包括新闻、公告、研报、政策、交易规则、具体事件、各种影响分析、以及需要检索外部数据的非常识信息等。避免AI在搜索金融场景信息时，参考到非权威、及过时的信息。",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "mx-xuangu": {
+        "name": "mx-xuangu",
+        "description": "本 Skill 支持基于股票选股条件，如行情指标、财务指标等，筛选满足条件的股票；可查询指定行业 / 板块内的股票、上市公司，以及板块指数的成分股；同时支持股票、上市公司、板块 / 指数推荐等相关任务，采用此skill可避免大模型在选股时使用了过时信息。",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "mx-zixuan": {
+        "name": "mx-zixuan",
+        "description": "妙想自选管理skill，基于东方财富通行证账户数据及行情底层数据构建，支持通过自然语言查询、添加、删除自选股。",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "mx-moni": {
+        "name": "mx-moni",
+        "description": "妙想提供的股票模拟组合管理系统，支持持仓查询、买卖操作、撤单、委托查询、历史成交查询和资金查询等功能。通过安全认证的API接口实现真实交易体验。",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "wallstreetcn-news": {
+        "name": "wallstreetcn-news",
+        "description": "获取华尔街见闻财经新闻。当用户询问华尔街见闻、wallstreetcn、财经新闻、市场动态、金融资讯、股市行情、热文、头条、搜索文章时使用。使用 web_fetch 直接调用 API 获取最新文章、头条文章、热文和搜索结果。",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "anysearch": {
+        "name": "anysearch",
+        "description": "Real-time search engine supporting web search, vertical domain search (23 domains), parallel batch search, and URL content extraction.",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "frontend-design": {
+        "name": "frontend-design",
+        "description": "Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, artifacts, posters, or applications (examples include websites, landing pages, dashboards, React components, HTML/CSS layouts, or when styling/beautifying any web UI). Generates creative, polished code and UI design that avoids generic AI aesthetics.",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "find-skills": {
+        "name": "find-skills",
+        "description": "Helps users discover and install agent skills when they ask questions like \"how do I do X\", \"find a skill for X\", \"is there a skill that can...\", or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist as an installable skill.",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "self-improvement": {
+        "name": "self-improvement",
+        "description": "Captures learnings, errors, and corrections to enable continuous improvement. Use when: (1) A command or operation fails unexpectedly, (2) User corrects Claude ('No, that's wrong...', 'Actually...'), (3) User requests a capability that doesn't exist, (4) An external API or tool fails, (5) Claude realizes its knowledge is outdated or incorrect, (6) A better approach is discovered for a recurring task. Also review learnings before major tasks.",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    }
+}

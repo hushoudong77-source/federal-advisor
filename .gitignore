@@ -1,0 +1,33 @@
+# === 系统临时文件 ===
+tmp/
+
+# === 向量数据库缓存（自动生成，不备份） ===
+memory/long-term/
+
+# === 技能中的环境配置/密钥 ===
+skills/*/.env
+skills/*/config.json
+
+# === 生成的网页产物（非核心） ===
+websites/cow-send/
+
+# === Python 缓存 ===
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+node_modules/
+
+# === 系统文件 ===
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# === IDE ===
+.vscode/
+.idea/
+
+# === Git ===
+.git/

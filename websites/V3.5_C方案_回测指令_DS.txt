@@ -1,0 +1,592 @@
+================================================================================
+折中版回测指令：V3.5 双频法典（C方案·A/B对照）
+交付对象：DeepSeek（DS）
+状态：V3.4两组均未达标 -> 黑帽审计发现仓位是主因 ->
+      用户要求折中：同时跑纯25%固定参数 vs 25%+周线ADX预筛
+================================================================================
+
+【零、修正决策记录】
+
+上一轮裁决：
+  · Regime Switching死刑（A/B差异0.01pp，冗余）
+  · L2仓位16%是收益瓶颈 -> 提至25%
+  · 用户提出"先分阶段再进策略"的V20.x理念
+  · 黑帽审计反对缠论路由（主观性黑洞），建议简化版周线ADX预筛
+  · 用户裁决：C方案 -> 同时跑两组对照
+
+实验组A（固定参数）：
+  · L2仓位25%，4只固定池竞争上岗，无阶段预筛
+  · 参数：ADX 18/22，乖离率[-2%,10%]，开火上限3只
+
+实验组B（周线预筛）：
+  · L2仓位25%，4只池先过周线ADX预筛，再进日频竞争
+  · 周线阶段判定：纯物理指标（ADX/MA/乖离率），0缠论
+  · 日频参数与A组完全一致
+
+================================================================================
+【一、三层架构硬定义（两组共用）】
+================================================================================
+
+层级 | 名称 | 调频 | 标的 | 仓位上限 | 资金池 | 均线 | 状态
+---|---|---|---|---|---|---|---
+L1 | 月频底仓 | 月频·永不动 | 510300(20%), 518880(10%) | 30% | 独立 | MA120 | 始终在线
+L2 | 周频进攻 | 周频·动态 | QQQ+EWY+IVV+518880 | 25% | 独立 | MA20 | 常态在线
+L3 | 反击策略 | 事件触发 | 18只全池 | 10% | 与L2共享上限 | MA20 | 触发时L2让路
+现金 | 国债ETF | — | 511260 | 35% | — | — | 空仓时2.5%年化
+
+总仓位硬上限：80%（L1+L2+L3），现金>=20%。
+
+跨层冲突规则：
+  · 518880同时存在于L1(10%底仓)和L2(5%进攻)，仓位分别计算、分别止损
+  · 合计上限：518880 <= 15%（L1 10% + L2 5%）
+  · L3触发时：L2暂停新开仓，L3占用10%额度，L2剩余可用<=15%
+  · L3与L2重叠标的：L2先平仓，L3再建仓（L3优先）
+
+================================================================================
+【二、标的池（4只纯趋势池·分层费率硬编码）】
+================================================================================
+
+海外层（永隆阶梯费率）：
+  QQQ   纳指100   核心海外  单标上限5%
+  EWY   韩国      卫星海外  单标上限3%
+  IVV   标普500   核心海外  单标上限3%
+
+国内层（万一+滑点，往返摩擦率 0.12%）：
+  518880  黄金      核心国内  单标上限5%  【L1已有10%底仓，L2可叠加5%】
+
+费率硬编码（精确计算，不可近似）：
+  海外买入 = max(股数*0.018, 8) + 股数*0.003
+  海外卖出 = max(股数*0.018, 8) + 股数*0.003 + 成交金额*0.000008 + max(股数*0.00013, 0.01)
+  国内买入 = 成交金额*0.0001 + 成交金额*0.0005
+  国内卖出 = 同买入
+
+================================================================================
+【三、实验组A：纯25%固定参数（无阶段预筛）】
+================================================================================
+
+3.1 入场条件
+
+```python
+def generate_signals_A(friday_date):
+    candidates = []
+    for ticker in [QQQ, EWY, IVV, 518880]:
+        adx = calc_adx(ticker, period=14, end=friday_date)  # 日频ADX
+        ma20 = calc_sma(ticker, period=20, end=friday_date)  # 日频MA20
+        close = get_close(ticker, friday_date)
+        bias = close / ma20 - 1
+
+        if close <= ma20: continue
+        if bias < -0.02 or bias > 0.10: continue
+
+        if ticker == EWY:
+            if adx < 22: continue
+        else:
+            if adx < 18: continue
+
+        if ticker in [QQQ, IVV]:
+            proxy = get_proxy_index(ticker)
+            breadth = calc_breadth(proxy, friday_date)
+            if breadth is None: breadth = 1.0
+            if breadth < 0.35 and adx < 25: continue
+
+        candidates.append({ticker: ticker, adx: adx, bias: bias})
+
+    candidates.sort(key=lambda x: x[adx], reverse=True)
+
+    overseas = []
+    domestic = []
+    for c in candidates:
+        if c[ticker] in [QQQ, EWY, IVV]:
+            if len(overseas) < 3:
+                overseas.append(c)
+        else:
+            domestic.append(c)
+        if len(overseas) + len(domestic) >= 3:
+            break
+
+    return overseas + domestic
+```
+
+================================================================================
+【四、实验组B：25% + 周线ADX预筛（简化版阶段路由）】
+================================================================================
+
+4.1 周线阶段判定（纯物理指标，0缠论）
+
+```python
+def calc_weekly_stage(ticker, friday_date):
+    """
+    基于周线数据判定标的当前阶段。
+    每周五收盘后，读取该标的最新的周线K线数据计算。
+    周线ADX(14)、周线MA20、周线MA60、周线收盘价。
+    """
+    weekly_close = get_weekly_close(ticker, friday_date)
+    weekly_ma20 = calc_weekly_sma(ticker, period=20, end=friday_date)
+    weekly_ma60 = calc_weekly_sma(ticker, period=60, end=friday_date)
+    weekly_adx = calc_weekly_adx(ticker, period=14, end=friday_date)
+    weekly_bias = weekly_close / weekly_ma20 - 1
+
+    # 进攻态：周线趋势确认，日频信号可信
+    if weekly_adx > 25 and weekly_close > weekly_ma20 and weekly_bias > 0.05:
+        return 进攻态
+
+    # 危险态：周线趋势衰竭或破位，禁止入场，已持仓强制平仓
+    if weekly_adx < 15 or weekly_close < weekly_ma60 or weekly_bias < -0.10:
+        return 危险态
+
+    # 防御态：周线震荡，不新增，已持仓可继续持有
+    # 条件：ADX在[15,25]之间，乖离率在[-5%,5%]之间
+    if 15 <= weekly_adx <= 25 and -0.05 <= weekly_bias <= 0.05:
+        return 防御态
+
+    # 其他模糊状态，默认防御态（不新增）
+    return 防御态
+```
+
+4.2 周线预筛路由规则
+
+```python
+WEEKLY_ROUTING = {
+    进攻态: {
+        action: 允许进入L2候选池,
+        new_position: True,
+        hold_position: True
+    },
+    防御态: {
+        action: 禁止新增，已持仓可继续持有,
+        new_position: False,
+        hold_position: True
+    },
+    危险态: {
+        action: 禁止新增，已持仓强制平仓,
+        new_position: False,
+        hold_position: False
+    }
+}
+```
+
+4.3 实验组B入场条件（周线预筛 + 日频竞争）
+
+```python
+def generate_signals_B(friday_date):
+    candidates = []
+
+    for ticker in [QQQ, EWY, IVV, 518880]:
+        # ========== 第一层：周线预筛 ==========
+        stage = calc_weekly_stage(ticker, friday_date)
+
+        if stage == 危险态:
+            # 危险态：直接跳过，不参与日频排序
+            # 若已持仓，在execute阶段强制平仓
+            continue
+
+        if stage == 防御态:
+            # 防御态：不新增，但已持仓可继续持有
+            # 不加入candidates，但不清仓（在execute中处理）
+            continue
+
+        # 进攻态：进入第二层日频过滤
+        # ========== 第二层：日频竞争（与A组完全一致） ==========
+        adx = calc_adx(ticker, period=14, end=friday_date)
+        ma20 = calc_sma(ticker, period=20, end=friday_date)
+        close = get_close(ticker, friday_date)
+        bias = close / ma20 - 1
+
+        if close <= ma20: continue
+        if bias < -0.02 or bias > 0.10: continue
+
+        if ticker == EWY:
+            if adx < 22: continue
+        else:
+            if adx < 18: continue
+
+        if ticker in [QQQ, IVV]:
+            proxy = get_proxy_index(ticker)
+            breadth = calc_breadth(proxy, friday_date)
+            if breadth is None: breadth = 1.0
+            if breadth < 0.35 and adx < 25: continue
+
+        candidates.append({ticker: ticker, adx: adx, bias: bias, stage: stage})
+
+    # ADX排序
+    candidates.sort(key=lambda x: x[adx], reverse=True)
+
+    # 名额分配（与A组一致）
+    overseas = []
+    domestic = []
+    for c in candidates:
+        if c[ticker] in [QQQ, EWY, IVV]:
+            if len(overseas) < 3:
+                overseas.append(c)
+        else:
+            domestic.append(c)
+        if len(overseas) + len(domestic) >= 3:
+            break
+
+    return overseas + domestic
+```
+
+4.4 实验组B平仓逻辑（增加周线危险态强制平仓）
+
+```python
+def execute_close_B(monday_date, selected, portfolio):
+    for pos in portfolio:
+        ticker = pos[ticker]
+
+        # 1. 周线危险态强制平仓（B组特有）
+        stage = calc_weekly_stage(ticker, friday_date)
+        if stage == 危险态:
+            sell_price = get_open(ticker, monday_date) * (1 - friction/2)
+            close_position(pos, sell_price, reason=WEEKLY_DANGER)
+            CASH += pos[shares] * sell_price
+            continue
+
+        # 2. 排名淘汰平仓（与A组一致）
+        if ticker not in [s[ticker] for s in selected]:
+            sell_price = get_open(ticker, monday_date) * (1 - friction/2)
+            close_position(pos, sell_price)
+            CASH += pos[shares] * sell_price
+            continue
+
+        # 3. 单标-4%硬止损（与A组一致）
+        current = get_open(ticker, monday_date)
+        if current / pos[entry_price] - 1 <= -0.04:
+            sell_price = current * (1 - friction/2)
+            close_position(pos, sell_price, reason=STOP)
+            CASH += pos[shares] * sell_price
+```
+
+================================================================================
+【五、仓位与交易执行（两组共用）】
+================================================================================
+
+5.1 动态权益计算
+
+```python
+CURRENT_EQUITY = CASH + sum(pos[shares] * prices[pos[ticker]] for pos in ALL_POSITIONS)
+L2_WEEKLY_LIMIT = CURRENT_EQUITY * 0.25  # L2上限25%
+```
+
+5.2 空仓现金生息
+
+```python
+CASH_YIELD_RATE = 0.025  # 511260十年国债ETF年化约2.5%
+
+if len(L2_POS) == 0 and not L3_ACTIVE:
+    CASH *= (1 + CASH_YIELD_RATE / 52)
+```
+
+5.3 开仓逻辑
+
+```python
+def execute_open(monday_date, selected, portfolio):
+    CURRENT_EQUITY = calc_equity()
+    L2_LIMIT = CURRENT_EQUITY * 0.25
+    max_fire = 3
+
+    for s in selected:
+        if s[ticker] not in [p[ticker] for p in portfolio]:
+            buy_price = get_open(s[ticker], monday_date)
+            buy_price *= (1 + friction_rate(s[ticker]) / 2)
+
+            slot_cap = L2_LIMIT / max_fire
+            max_single = 0.05 if s[ticker] == QQQ else 0.03
+            max_cap = CURRENT_EQUITY * max_single
+
+            position_size = min(slot_cap, max_cap)
+            shares = int(position_size / buy_price)
+
+            total_cost = shares * buy_price
+            if CASH >= total_cost and shares > 0:
+                open_position(s[ticker], buy_price, shares)
+                CASH -= total_cost
+```
+
+5.4 通用平仓逻辑（A组用基础版，B组增加周线危险态）
+
+```python
+# A组基础平仓
+def execute_close_A(monday_date, selected, portfolio):
+    for pos in portfolio:
+        if pos[ticker] not in [s[ticker] for s in selected]:
+            sell_price = get_open(pos[ticker], monday_date) * (1 - friction/2)
+            close_position(pos, sell_price)
+            CASH += pos[shares] * sell_price
+
+    for pos in portfolio:
+        current = get_open(pos[ticker], monday_date)
+        if current / pos[entry_price] - 1 <= -0.04:
+            sell_price = current * (1 - friction/2)
+            close_position(pos, sell_price, reason=STOP)
+            CASH += pos[shares] * sell_price
+
+    weekly_pnl = calc_weekly_pnl(portfolio)
+    if weekly_pnl <= -0.06:
+        return
+
+    if calc_total_drawdown() <= -0.15:
+        for pos in portfolio:
+            sell_price = get_open(pos[ticker], monday_date) * (1 - friction/2)
+            close_position(pos, sell_price, reason=CIRCUIT)
+            CASH += pos[shares] * sell_price
+        return
+```
+
+================================================================================
+【六、月频底仓L1（修正后：30%）】
+================================================================================
+
+```python
+L1_POSITIONS = {
+    510300: {shares: int(INITIAL_CAPITAL * 0.20 / get_open(510300, start_date)),
+             entry: get_open(510300, start_date)},
+    518880: {shares: int(INITIAL_CAPITAL * 0.10 / get_open(518880, start_date)),
+             entry: get_open(518880, start_date)}
+}
+# L1永不动、不止损、不参与周频排序
+# L1市值计入CURRENT_EQUITY
+# 518880合计上限：L1 10% + L2 5% = 15%
+```
+
+================================================================================
+【七、反击策略L3（不变）】
+================================================================================
+
+触发条件：
+  · 月频乖离率 < -15%（510300或518880的收盘价/MA120 - 1 < -0.15）
+  OR 市场恐慌指数异常（VIX>40 或 雪球热度<10）
+
+执行：
+  · L2当周暂停新开仓（仅执行已触发平仓）
+  · L3一次性投入CURRENT_EQUITY * 0.10
+  · 标的：18只全池（含已砍掉的510300/510500/513180/BBJP，仅L3可用）
+  · 退出：反弹至MA20即市价清仓
+  · L3清仓后，L2下周恢复常态
+
+================================================================================
+【八、回测输出指标（两组分别输出）】
+================================================================================
+
+每组必须输出：
+
+| # | 指标 | 计算方式 | 通过标准 |
+|---|---|---|---|
+| 1 | 年化毛收益 | (期末净值/期初)^(252/交易日)-1 | 记录值 |
+| 2 | 年化净收益 | 毛收益 - 累计摩擦 + 累计现金利息 | >8% |
+| 3 | 最大回撤 | 峰值到谷底最大跌幅 | <15% |
+| 4 | 周频胜率 | 盈利周数 / 有持仓周数 | >50% |
+| 5 | 盈亏比 | 平均盈利额 / 平均亏损额 | >1.2 |
+| 6 | 夏普比率 | (年化净收益-0.025) / 年化波动率 | 记录值 |
+| 7 | 年化摩擦成本 | 累计摩擦 / 期初本金 / 年数 | 记录值 |
+| 8 | 海外平均持仓周期 | 海外标的持仓天数均值 | >5天 |
+| 9 | 国内平均持仓周期 | 国内标的持仓天数均值 | >7天 |
+| 10 | 总交易次数 | 一买一卖计1次 | 记录值 |
+| 11 | 空仓现金年化贡献 | 累计现金利息 / 期初本金 / 年数 | 记录值 |
+| 12 | 信号覆盖率 | 产生信号的周数 / 总周数 | >50% |
+| 13 | L2独立贡献 | L2层年化收益（扣除L1底仓贡献后估算） | >0% |
+
+实验组B额外输出：
+| 14 | 周线阶段分布 | 进攻态XX周/防御态XX周/危险态XX周 | 记录值 |
+| 15 | 危险态强制平仓次数 | 因周线危险态被动平仓的次数 | 记录值 |
+| 16 | 预筛拦截率 | 被周线预筛拦截的标的次数 / 总扫描次数 | 记录值 |
+
+================================================================================
+【九、对照实验裁决格式】
+================================================================================
+
+```markdown
+# V3.5 C方案 A/B对照实验报告
+
+## 实验组A（纯25%固定参数）
+| 指标 | 全区间 | 训练期(20-23) | 测试期(24-25) |
+|---|---|---|---|
+| 年化净收益 | X.XX% | X.XX% | X.XX% |
+| 最大回撤 | -X.XX% | -X.XX% | -X.XX% |
+| 周胜率 | XX.X% | XX.X% | XX.X% |
+| 盈亏比 | X.XX | X.XX | X.XX |
+| 总交易 | XXX | XXX | XXX |
+| L2独立贡献 | X.XX% | X.XX% | X.XX% |
+
+## 实验组B（25% + 周线ADX预筛）
+| 指标 | 全区间 | 训练期(20-23) | 测试期(24-25) |
+|---|---|---|---|
+| 年化净收益 | X.XX% | X.XX% | X.XX% |
+| 最大回撤 | -X.XX% | -X.XX% | -X.XX% |
+| 周胜率 | XX.X% | XX.X% | XX.X% |
+| 盈亏比 | X.XX | X.XX | X.XX |
+| 总交易 | XXX | XXX | XXX |
+| L2独立贡献 | X.XX% | X.XX% | X.XX% |
+| 周线阶段分布 | 进攻XX/防御XX/危险XX | — | — |
+| 危险态平仓次数 | XXX | — | — |
+| 预筛拦截率 | XX.X% | — | — |
+
+## 对照裁决
+| 维度 | A组 | B组 | 差异 |
+|---|---|---|---|
+| 年化净收益 | X.XX% | X.XX% | X.XXpp |
+| 最大回撤 | -X.XX% | -X.XX% | X.XXpp |
+| 训练期收益 | X.XX% | X.XX% | X.XXpp |
+| 测试期收益 | X.XX% | X.XX% | X.XXpp |
+| 总交易次数 | XXX | XXX | XXX |
+
+裁决结论：
+  · 若 B > A 且 B-A >= 1%：周线预筛有效，正式版采用B
+  · 若 B > A 但 B-A < 1%：预筛有微弱增益，但复杂度不划算，建议采用A
+  · 若 B <= A：预筛无效或有害，正式版采用A
+  · 若 B组训练期显著优于A组（>2pp）但测试期无差异：预筛存在过拟合嫌疑
+
+建议：XXX
+```
+
+================================================================================
+【十、关键代码补丁（DS可直接嵌入）】
+================================================================================
+
+补丁1：L1底仓扩容至30%
+
+L1_POSITIONS = {
+    510300: {shares: int(INITIAL_CAPITAL * 0.20 / get_open(510300, start_date)),
+             entry: get_open(510300, start_date)},
+    518880: {shares: int(INITIAL_CAPITAL * 0.10 / get_open(518880, start_date)),
+             entry: get_open(518880, start_date)}
+}
+
+补丁2：实验组B周线阶段判定（纯物理指标）
+
+def calc_weekly_stage(ticker, date):
+    w_close = get_weekly_close(ticker, date)
+    w_ma20 = calc_weekly_sma(ticker, 20, date)
+    w_ma60 = calc_weekly_sma(ticker, 60, date)
+    w_adx = calc_weekly_adx(ticker, 14, date)
+    w_bias = w_close / w_ma20 - 1
+
+    if w_adx > 25 and w_close > w_ma20 and w_bias > 0.05:
+        return 进攻态
+    if w_adx < 15 or w_close < w_ma60 or w_bias < -0.10:
+        return 危险态
+    if 15 <= w_adx <= 25 and -0.05 <= w_bias <= 0.05:
+        return 防御态
+    return 防御态  # 默认
+
+补丁3：实验组B周线预筛路由
+
+WEEKLY_ROUTE = {
+    进攻态: {new: True, hold: True},
+    防御态: {new: False, hold: True},
+    危险态: {new: False, hold: False}
+}
+
+补丁4：实验组B信号生成（含预筛）
+
+def generate_signals_B(friday_date):
+    candidates = []
+    for ticker in [QQQ, EWY, IVV, 518880]:
+        stage = calc_weekly_stage(ticker, friday_date)
+        if stage == 危险态:
+            continue
+        if stage == 防御态:
+            continue  # 不新增，但不清仓
+
+        # 日频过滤（与A组完全一致）
+        adx = calc_adx(ticker, 14, friday_date)
+        ma20 = calc_sma(ticker, 20, friday_date)
+        close = get_close(ticker, friday_date)
+        bias = close / ma20 - 1
+
+        if close <= ma20: continue
+        if bias < -0.02 or bias > 0.10: continue
+        if ticker == EWY and adx < 22: continue
+        if ticker != EWY and adx < 18: continue
+
+        if ticker in [QQQ, IVV]:
+            breadth = calc_breadth(get_proxy_index(ticker), friday_date)
+            if (breadth or 1.0) < 0.35 and adx < 25: continue
+
+        candidates.append({ticker: ticker, adx: adx, bias: bias, stage: stage})
+
+    candidates.sort(key=lambda x: x[adx], reverse=True)
+
+    overseas = []
+    domestic = []
+    for c in candidates:
+        if c[ticker] in [QQQ, EWY, IVV]:
+            if len(overseas) < 3: overseas.append(c)
+        else:
+            domestic.append(c)
+        if len(overseas) + len(domestic) >= 3: break
+
+    return overseas + domestic
+
+补丁5：实验组B平仓（增加危险态强制平仓）
+
+def execute_close_B(monday_date, selected, portfolio):
+    for pos in portfolio:
+        ticker = pos[ticker]
+
+        # 危险态强制平仓
+        if calc_weekly_stage(ticker, friday_date) == 危险态:
+            sell_price = get_open(ticker, monday_date) * (1 - friction/2)
+            close_position(pos, sell_price, reason=WEEKLY_DANGER)
+            CASH += pos[shares] * sell_price
+            continue
+
+        # 排名淘汰
+        if ticker not in [s[ticker] for s in selected]:
+            sell_price = get_open(ticker, monday_date) * (1 - friction/2)
+            close_position(pos, sell_price)
+            CASH += pos[shares] * sell_price
+            continue
+
+        # -4%止损
+        current = get_open(ticker, monday_date)
+        if current / pos[entry_price] - 1 <= -0.04:
+            sell_price = current * (1 - friction/2)
+            close_position(pos, sell_price, reason=STOP)
+            CASH += pos[shares] * sell_price
+
+补丁6：动态权益
+
+def calc_equity(cash, positions, prices):
+    equity = cash
+    for pos in positions:
+        equity += pos[shares] * prices.get(pos[ticker], 0)
+    return equity
+
+补丁7：空仓现金生息
+
+CASH_YIELD_RATE = 0.025
+
+def apply_cash_yield(cash, l2_positions, l3_active):
+    if len(l2_positions) == 0 and not l3_active:
+        return cash * (1 + CASH_YIELD_RATE / 52)
+    return cash
+
+================================================================================
+【十一、执行检查清单】
+================================================================================
+
+DS执行前确认：
+  [ ] L1底仓：510300 20% + 518880 10%（首日建仓后永不动）
+  [ ] L2标的池仅4只：QQQ/EWY/IVV/518880
+  [ ] L2总仓位上限 = CURRENT_EQUITY * 0.25
+  [ ] 同时开火上限 = 3只
+  [ ] 单标止损 = -4%
+  [ ] 组合周止损 = -6%
+  [ ] 总回撤熔断 = -15%
+  [ ] 空仓时 CASH 每周计息 2.5%/52
+  [ ] 摩擦成本按实际股数*永隆阶梯精确计算
+  [ ] 实验组A：纯日频ADX过滤，无周线预筛
+  [ ] 实验组B：先周线阶段判定，再日频ADX竞争
+  [ ] 实验组B周线指标：ADX(14)/MA20/MA60/乖离率，0缠论
+  [ ] 实验组B周线数据源：周线收盘价/最高/最低，与日频独立
+  [ ] 输出A/B两组完整指标 + 对照裁决结论
+  [ ] 周线MA60兜底：训练期前60周若无数据，降级为MA20
+
+================================================================================
+决策阈值（回测后最终裁决）：
+  · 若B组年化净收益 >= 8% 且 B-A >= 1%：正式版采用B（周线预筛）
+  · 若A组年化净收益 >= 8% 且 B-A < 1%：正式版采用A（固定参数，简化）
+  · 若两组均 >= 5% 但 < 8%：接受为低波动版本上线
+  · 若两组均 < 5%：彻底放弃L2，专注L1+L3
+================================================================================
+以上指令不可删减、不可简化。输出完整回测报告。

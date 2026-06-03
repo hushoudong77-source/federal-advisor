@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>市场日报 2026.4.25 | 联邦投顾</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #0a0e17; color: #e0e6ed; line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+.header { text-align: center; padding: 40px 0 30px; border-bottom: 1px solid #1e2d4a; margin-bottom: 30px; }
+.header h1 { font-size: 28px; font-weight: 700; background: linear-gradient(135deg, #f0c040, #e8962e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; }
+.header .subtitle { color: #7a8ba8; font-size: 13px; margin-top: 8px; }
+.header .date { color: #f0c040; font-size: 14px; font-weight: 600; margin-top: 5px; }
+.header .meta { color: #5a6a7a; font-size: 11px; margin-top: 5px; }
+
+.section { margin-bottom: 28px; }
+.section-title { font-size: 16px; font-weight: 700; color: #f0c040; margin-bottom: 12px; padding-left: 12px; border-left: 3px solid #f0c040; }
+.section-title.risk { border-left-color: #e74c3c; color: #e74c5c; }
+.section-title.safe { border-left-color: #2ecc71; color: #2ecc71; }
+.section-title.info { border-left-color: #3498db; color: #5dade2; }
+
+table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 13px; }
+thead th { background: #141e30; color: #8a9bb8; padding: 10px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid #1e2d4a; }
+tbody td { padding: 9px 10px; border-bottom: 1px solid #14202e; }
+tbody tr:hover { background: #0f1a2a; }
+.text-green { color: #2ecc71; font-weight: 600; }
+.text-red { color: #e74c3c; font-weight: 600; }
+.text-yellow { color: #f1c40f; font-weight: 600; }
+.text-gray { color: #7a8ba8; }
+.text-gold { color: #f0c040; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; }
+.badge-green { background: rgba(46,204,113,0.15); color: #2ecc71; }
+.badge-red { background: rgba(231,76,60,0.15); color: #e74c3c; }
+.badge-yellow { background: rgba(241,196,15,0.15); color: #f1c40f; }
+.badge-blue { background: rgba(52,152,219,0.15); color: #5dade2; }
+
+.stop-sign { display: inline-block; background: #e74c3c; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+.go-sign { display: inline-block; background: #2ecc71; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+.hold-sign { display: inline-block; background: #f39c12; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+
+.ief-box { display: flex; align-items: center; gap: 20px; background: #0f1a2a; border: 1px solid #1e2d4a; border-radius: 8px; padding: 16px 20px; margin-bottom: 10px; }
+.ief-reading { font-size: 36px; font-weight: 800; color: #f1c40f; }
+.ief-label { font-size: 11px; color: #7a8ba8; }
+.ief-range { font-size: 13px; padding: 4px 12px; border-radius: 4px; font-weight: 600; }
+.ief-range.caution { background: rgba(241,196,15,0.2); color: #f1c40f; border: 1px solid rgba(241,196,15,0.3); }
+.ief-range.danger { background: rgba(231,76,60,0.2); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
+.ief-range.safe { background: rgba(46,204,113,0.2); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+.card { background: #0f1a2a; border: 1px solid #1e2d4a; border-radius: 8px; padding: 16px; }
+.card h3 { font-size: 13px; color: #8a9bb8; margin-bottom: 8px; }
+.card .value { font-size: 20px; font-weight: 700; }
+.card .detail { font-size: 12px; color: #7a8ba8; margin-top: 4px; }
+
+.exec-box { background: linear-gradient(135deg, #0f1a2a, #1a0a0a); border: 1px solid #3a2020; border-radius: 8px; padding: 18px 20px; margin-bottom: 8px; }
+.exec-box .num { display: inline-block; background: #e74c3c; color: #fff; width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 50%; font-size: 12px; font-weight: 700; margin-right: 10px; }
+.exec-box .text { color: #e0e6ed; font-size: 13px; }
+
+.quote { border-left: 3px solid #3a5060; padding: 10px 16px; margin: 10px 0; background: #0c1320; font-size: 12px; color: #7a8ba8; }
+
+.footer { text-align: center; padding: 30px 0; border-top: 1px solid #1e2d4a; margin-top: 30px; color: #5a6a7a; font-size: 11px; }
+
+@media (max-width: 768px) {
+  .card-grid { grid-template-columns: 1fr; }
+  .ief-box { flex-direction: column; text-align: center; }
+  table { font-size: 12px; }
+  .container { padding: 12px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>⚔ 市场日报</h1>
+  <div class="date">2026年4月25日 · 星期六</div>
+  <div class="subtitle">联邦投顾系统 · V14.0 · 19大核心池全景扫描</div>
+  <div class="meta">基于4月24日（周五）收盘数据 | 报告生成时间 08:01 CST</div>
+</div>
+
+<!-- ============== 全球指数 ============== -->
+<div class="section">
+<div class="section-title">📊 全球指数收盘</div>
+<table>
+<thead>
+<tr><th>指数</th><th>代码</th><th>收盘价</th><th>涨跌幅</th><th>趋势</th></tr>
+</thead>
+<tbody>
+<tr><td>标普500</td><td>SPY</td><td>$712.06</td><td class="text-green">+0.72%</td><td><span class="badge badge-green">▲ 反弹</span></td></tr>
+<tr><td>纳斯达克100</td><td>QQQ</td><td>$644.48</td><td class="text-green">+0.87%</td><td><span class="badge badge-green">▲ 技术反弹</span></td></tr>
+<tr><td>沪深300</td><td>000300</td><td>4769.37</td><td class="text-red">-0.35%</td><td><span class="badge badge-yellow">▼ 震荡</span></td></tr>
+<tr><td>中证500</td><td>000905</td><td>8247.88</td><td class="text-red">-0.57%</td><td><span class="badge badge-yellow">▼ 回调</span></td></tr>
+<tr><td>创业板指</td><td>399006</td><td>3667.79</td><td class="text-red">-1.41%</td><td><span class="badge badge-red">▼ 领跌</span></td></tr>
+<tr><td>科创50</td><td>000688</td><td>1453.69</td><td class="text-green">+1.47%</td><td><span class="badge badge-green">▲ 强势</span></td></tr>
+<tr><td>恒生科技</td><td>HSTECH</td><td>4902.20</td><td class="text-green">+0.75%</td><td><span class="badge badge-green">▲ 芯片领涨</span></td></tr>
+<tr><td>红利指数</td><td>000015</td><td>3274.32</td><td class="text-red">-0.31%</td><td><span class="badge badge-yellow">▼ 窄幅</span></td></tr>
+<tr><td>日经225</td><td>1321</td><td>59716.18</td><td class="text-green">+0.97%</td><td><span class="badge badge-green">▲ 反弹</span></td></tr>
+<tr><td>英国富时</td><td>EWU</td><td>$47.89</td><td class="text-gray">—</td><td><span class="badge badge-yellow">→ 平盘</span></td></tr>
+<tr><td>韩国综合</td><td>EWY</td><td>6475.63</td><td class="text-gray">0.00%</td><td><span class="badge badge-yellow">→ 平收</span></td></tr>
+<tr><td>越南胡志明</td><td>VNM</td><td>$18.86</td><td class="text-red">-1.10%</td><td><span class="badge badge-red">▼ 回调</span></td></tr>
+<tr><td>印度CNX</td><td>FLIN</td><td>$46.82</td><td class="text-gray">—</td><td><span class="badge badge-yellow">→ 窄幅</span></td></tr>
+<tr><td>印度小盘</td><td>SMIN</td><td>$67.09</td><td class="text-red">-1.86%</td><td><span class="badge badge-red">▼ 小盘承压</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============== IEF哨兵 ============== -->
+<div class="section">
+<div class="section-title">🛰️ IEF哨兵</div>
+<div class="ief-box">
+  <div>
+    <div class="ief-reading">96.85</div>
+    <div class="ief-label">IEF哨兵读数</div>
+  </div>
+  <div>
+    <span class="ief-range caution">⚠ 警戒区间</span>
+    <div style="margin-top:8px; font-size:13px; color:#c0d0e0;">IEF 96.85 — 置信度边际下降，地缘溢价未完全消退</div>
+  </div>
+  <div style="flex:1; text-align:right; font-size:12px; color:#7a8ba8;">
+    <div>US10Y: 4.32% <span class="text-red">+2bp</span></div>
+    <div>DXY: 98.83 <span class="text-green">+0.23%</span></div>
+    <div>USD/CNY: 6.8379</div>
+  </div>
+</div>
+<div class="quote">【解读】美债收益率上行+美元走强形成双重引力，黄金回落至4690附近。IEF边际下降至96.85，短期不确定因子增加，但尚未触发熔断阈值。科创50和恒生科技芯片股的独立走强值得关注。</div>
+</div>
+
+<!-- ============== 持仓诊断 ============== -->
+<div class="section">
+<div class="section-title info">💹 持仓诊断</div>
+
+<div class="card-grid">
+  <div class="card">
+    <h3>🔴 MUFG（已清仓）</h3>
+    <div class="value" style="font-size:16px; color:#7a8ba8;">清仓价 $18.22</div>
+    <div class="detail">亏损 -1.57% · 纪律性执行止损线 $18.50</div>
+  </div>
+  <div class="card">
+    <h3>🟡 IAU 黄金现货</h3>
+    <div class="value" style="font-size:16px; color:#f1c40f;">$90.55</div>
+    <div class="detail">成本 $86.756 · 浮盈 +4.38% · 止损 $86.756</div>
+  </div>
+  <div class="card">
+    <h3>🟢 518880 黄金ETF</h3>
+    <div class="value" style="font-size:16px; color:#2ecc71;">~¥9.91</div>
+    <div class="detail">持仓 468,468 RMB · Stage 2 主升浪 · 严禁减仓</div>
+  </div>
+  <div class="card">
+    <h3>🟡 513910 港股红利</h3>
+    <div class="value" style="font-size:16px; color:#f1c40f;">~¥1.631</div>
+    <div class="detail">持仓 200,613 RMB · 成本1.617 · 浮盈 +0.87%</div>
+  </div>
+  <div class="card">
+    <h3>🟢 SGOV 现金堡垒</h3>
+    <div class="value" style="font-size:16px; color:#2ecc71;">~$100.61</div>
+    <div class="detail">171,974 USD ≈ 149万RMB等值 · 核威慑待命</div>
+  </div>
+  <div class="card">
+    <h3>💰 总资产水位</h3>
+    <div class="value" style="font-size:16px; color:#f0c040;">3,158,855 RMB</div>
+    <div class="detail">现金主权率 63.77% · 绝对生存权</div>
+  </div>
+</div>
+</div>
+
+<!-- ============== 分类汇总 ============== -->
+<div class="section">
+<div class="section-title">📈 分类汇总</div>
+<table>
+<thead>
+<tr><th>类别</th><th>今日表现</th><th>重点观察</th></tr>
+</thead>
+<tbody>
+<tr>
+  <td>🇺🇸 美股（SPY/QQQ）</td>
+  <td><span class="text-green">+0.72% / +0.87%</span></td>
+  <td>英特尔业绩超预期（盘后+17%）提振半导体情绪，纳指午盘+1.47%</td>
+</tr>
+<tr>
+  <td>🇨🇳 中港（红利/科技）</td>
+  <td><span class="text-green">科创+1.47% 恒科+0.75%</span></td>
+  <td>芯片股独领风骚（华虹+15%，中芯+10%），红利微跌</td>
+</tr>
+<tr>
+  <td>🌏 亚太（日/韩/越/印）</td>
+  <td><span class="text-green">日经+0.97%</span> / <span class="text-red">越南-1.10% 印度小盘-1.86%</span></td>
+  <td>日韩反弹同步美股；新兴市场分化，越南悬空回调</td>
+</tr>
+<tr>
+  <td>🛡️ 避险（黄金/SGOV）</td>
+  <td><span class="text-red">黄金-0.41%</span> / <span class="text-green">SGOV平</span></td>
+  <td>黄金失守4700，DXY走强+US10Y上行压制；SGOV稳定</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============== 地缘窗口 ============== -->
+<div class="section">
+<div class="section-title risk">🌍 地缘窗口</div>
+<table>
+<thead>
+<tr><th>节点</th><th>状态</th><th>倒计时</th><th>影响路径</th></tr>
+</thead>
+<tbody>
+<tr>
+  <td>4.21 霍尔木兹通牒</td>
+  <td><span class="badge badge-red">已破裂</span></td>
+  <td>实质性破裂</td>
+  <td>美军封锁海峡，伊朗六项反击清单（含曼德海峡）</td>
+</tr>
+<tr>
+  <td>4.22 停火大限</td>
+  <td><span class="badge badge-red">已到期</span></td>
+  <td>封锁概率上升</td>
+  <td>德黑兰传出爆炸声，美伊持续升级</td>
+</tr>
+<tr>
+  <td>欧洲航油储备</td>
+  <td><span class="badge badge-yellow">约5.5周</span></td>
+  <td>5月底停飞风险</td>
+  <td>IATA警告强化黄金多头逻辑</td>
+</tr>
+<tr>
+  <td>布伦特原油</td>
+  <td><span class="badge badge-red">>107美元</span></td>
+  <td>+5.06%单日</td>
+  <td>通胀驱动型撕裂场景，油价突破100是根本变量</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============== 执行建议 ============== -->
+<div class="section">
+<div class="section-title risk">⚡ 今日执行建议</div>
+
+<div class="exec-box">
+  <div><span class="num">1</span><span class="text"><b>【绝对静默 · 严禁开仓】</b> — 4.22奇点已过但地缘未解，DXY 98.83走强+US10Y 4.32%双重引力下，任何新开仓都面临"被重力压垮"的风险。现金主权率63.77%就是战略优势，不挥棒不会输。</span></div>
+</div>
+
+<div class="exec-box">
+  <div><span class="num">2</span><span class="text"><b>【黄金持有 · 但盯紧止损】</b> — 黄金失守4700，IAU成本$86.756（现$90.55）仍有+4.38%安全垫。止损线固化为$86.756（成本位），跌破即无条件离场。518880的MA120防线（~¥9.65）为终极物理锚点，跌破则减仓20%。</span></div>
+</div>
+
+<div class="exec-box">
+  <div><span class="num">3</span><span class="text"><b>【513910防守线】</b> — 红利指数微跌-0.31%，513910成本1.617，止损位1.580。跌破立即执行减仓50%的既定计划。止盈区1.725-1.750维持不变。</span></div>
+</div>
+
+<div class="exec-box">
+  <div><span class="num">4</span><span class="text"><b>【捕兽夹待命 · 关注废墟机会】</b> — 布伦特>107美元+欧洲航油5.5周，若因恐慌情绪导致优质资产被错杀至极端估值，SGOV现金堡垒（149万RMB等值）已就位。但条件不满足前，绝不出手。</span></div>
+</div>
+
+</div>
+
+<!-- ============== 附录 ============== -->
+<div class="section">
+<div class="section-title info">📋 三维重力对账</div>
+<table>
+<thead>
+<tr><th>维度</th><th>数据</th><th>对黄金影响</th></tr>
+</thead>
+<tbody>
+<tr><td>国际黄金（XAUUSD）</td><td>~$4689</td><td>失守4700，短期承压</td></tr>
+<tr><td>国内现货（AU9999）</td><td>~¥10.33/g</td><td>人民币计价黄金相对抗跌</td></tr>
+<tr><td>USD/CNY</td><td>6.8379</td><td>汇率贬值提供隐形支撑</td></tr>
+<tr><td>CRB商品指数</td><td>布伦特>107</td><td>通胀驱动型利多黄金</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="footer">
+  联邦投顾系统 自动生成 | V14.0 | 19大核心池全景扫描<br>
+  守东（胡总），全球资产管理部 · 首席执行官<br>
+  报告时间：2026年4月25日 08:01 CST | 数据截至4月24日收盘
+</div>
+
+</div>
+</body>
+</html>

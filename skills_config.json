@@ -1,0 +1,250 @@
+{
+  "skills": {
+    "akshare-analysis": {
+      "name": "akshare-analysis",
+      "description": "",
+      "location": "skills/akshare-analysis/SKILL.md",
+      "base_dir": "skills/akshare-analysis"
+    },
+    "comparable-company-analysis": {
+      "name": "comparable-company-analysis",
+      "description": "",
+      "location": "skills/comparable-company-analysis/SKILL.md",
+      "base_dir": "skills/comparable-company-analysis"
+    },
+    "database-1h7Axcvj": {
+      "name": "database-1h7Axcvj",
+      "description": "",
+      "location": "skills/database-1h7Axcvj/SKILL.md",
+      "base_dir": "skills/database-1h7Axcvj"
+    },
+    "fund-diagnosis": {
+      "name": "fund-diagnosis",
+      "description": "",
+      "location": "skills/fund-diagnosis/SKILL.md",
+      "base_dir": "skills/fund-diagnosis"
+    },
+    "github": {
+      "name": "github",
+      "description": "",
+      "location": "skills/github/SKILL.md",
+      "base_dir": "skills/github"
+    },
+    "global-investment-advisor": {
+      "name": "global-investment-advisor",
+      "description": "",
+      "location": "skills/global-investment-advisor/SKILL.md",
+      "base_dir": "skills/global-investment-advisor"
+    },
+    "image-generation": {
+      "name": "image-generation",
+      "description": "",
+      "location": "skills/image-generation/SKILL.md",
+      "base_dir": "skills/image-generation"
+    },
+    "industry-research-report": {
+      "name": "industry-research-report",
+      "description": "",
+      "location": "skills/industry-research-report/SKILL.md",
+      "base_dir": "skills/industry-research-report"
+    },
+    "industry-stock-tracker": {
+      "name": "industry-stock-tracker",
+      "description": "",
+      "location": "skills/industry-stock-tracker/SKILL.md",
+      "base_dir": "skills/industry-stock-tracker"
+    },
+    "initiation-of-coverage-or-deep-dive": {
+      "name": "initiation-of-coverage-or-deep-dive",
+      "description": "",
+      "location": "skills/initiation-of-coverage-or-deep-dive/SKILL.md",
+      "base_dir": "skills/initiation-of-coverage-or-deep-dive"
+    },
+    "knowledge-wiki": {
+      "name": "knowledge-wiki",
+      "description": "",
+      "location": "skills/knowledge-wiki/SKILL.md",
+      "base_dir": "skills/knowledge-wiki"
+    },
+    "mx-data": {
+      "name": "mx-data",
+      "description": "",
+      "location": "skills/mx-data/SKILL.md",
+      "base_dir": "skills/mx-data"
+    },
+    "mx-finance-data": {
+      "name": "mx-finance-data",
+      "description": "",
+      "location": "skills/mx-finance-data/SKILL.md",
+      "base_dir": "skills/mx-finance-data"
+    },
+    "mx-finance-search": {
+      "name": "mx-finance-search",
+      "description": "",
+      "location": "skills/mx-finance-search/SKILL.md",
+      "base_dir": "skills/mx-finance-search"
+    },
+    "mx-financial-assistant": {
+      "name": "mx-financial-assistant",
+      "description": "",
+      "location": "skills/mx-financial-assistant/SKILL.md",
+      "base_dir": "skills/mx-financial-assistant"
+    },
+    "mx-macro-data": {
+      "name": "mx-macro-data",
+      "description": "",
+      "location": "skills/mx-macro-data/SKILL.md",
+      "base_dir": "skills/mx-macro-data"
+    },
+    "mx-moni": {
+      "name": "mx-moni",
+      "description": "",
+      "location": "skills/mx-moni/SKILL.md",
+      "base_dir": "skills/mx-moni"
+    },
+    "mx-search": {
+      "name": "mx-search",
+      "description": "",
+      "location": "skills/mx-search/SKILL.md",
+      "base_dir": "skills/mx-search"
+    },
+    "mx-stocks-screener": {
+      "name": "mx-stocks-screener",
+      "description": "",
+      "location": "skills/mx-stocks-screener/SKILL.md",
+      "base_dir": "skills/mx-stocks-screener"
+    },
+    "mx-xuangu": {
+      "name": "mx-xuangu",
+      "description": "",
+      "location": "skills/mx-xuangu/SKILL.md",
+      "base_dir": "skills/mx-xuangu"
+    },
+    "mx-zixuan": {
+      "name": "mx-zixuan",
+      "description": "",
+      "location": "skills/mx-zixuan/SKILL.md",
+      "base_dir": "skills/mx-zixuan"
+    },
+    "pdf": {
+      "name": "pdf",
+      "description": "",
+      "location": "skills/pdf/SKILL.md",
+      "base_dir": "skills/pdf"
+    },
+    "plugin-antv": {
+      "name": "plugin-antv",
+      "description": "",
+      "location": "skills/plugin-antv/SKILL.md",
+      "base_dir": "skills/plugin-antv"
+    },
+    "plugin-file-parsing": {
+      "name": "plugin-file-parsing",
+      "description": "",
+      "location": "skills/plugin-file-parsing/SKILL.md",
+      "base_dir": "skills/plugin-file-parsing"
+    },
+    "plugin-google-search": {
+      "name": "plugin-google-search",
+      "description": "",
+      "location": "skills/plugin-google-search/SKILL.md",
+      "base_dir": "skills/plugin-google-search"
+    },
+    "plugin-gw1kuD": {
+      "name": "plugin-gw1kuD",
+      "description": "",
+      "location": "skills/plugin-gw1kuD/SKILL.md",
+      "base_dir": "skills/plugin-gw1kuD"
+    },
+    "plugin-hot-trends-hub": {
+      "name": "plugin-hot-trends-hub",
+      "description": "",
+      "location": "skills/plugin-hot-trends-hub/SKILL.md",
+      "base_dir": "skills/plugin-hot-trends-hub"
+    },
+    "plugin-search": {
+      "name": "plugin-search",
+      "description": "",
+      "location": "skills/plugin-search/SKILL.md",
+      "base_dir": "skills/plugin-search"
+    },
+    "plugin-vision": {
+      "name": "plugin-vision",
+      "description": "",
+      "location": "skills/plugin-vision/SKILL.md",
+      "base_dir": "skills/plugin-vision"
+    },
+    "plugin-web-search": {
+      "name": "plugin-web-search",
+      "description": "",
+      "location": "skills/plugin-web-search/SKILL.md",
+      "base_dir": "skills/plugin-web-search"
+    },
+    "skill-creator": {
+      "name": "skill-creator",
+      "description": "",
+      "location": "skills/skill-creator/SKILL.md",
+      "base_dir": "skills/skill-creator"
+    },
+    "stock-analysis": {
+      "name": "stock-analysis",
+      "description": "",
+      "location": "skills/stock-analysis/SKILL.md",
+      "base_dir": "skills/stock-analysis"
+    },
+    "stock-diagnosis": {
+      "name": "stock-diagnosis",
+      "description": "",
+      "location": "skills/stock-diagnosis/SKILL.md",
+      "base_dir": "skills/stock-diagnosis"
+    },
+    "stock-earnings-review": {
+      "name": "stock-earnings-review",
+      "description": "",
+      "location": "skills/stock-earnings-review/SKILL.md",
+      "base_dir": "skills/stock-earnings-review"
+    },
+    "stock-market-hotspot-discovery": {
+      "name": "stock-market-hotspot-discovery",
+      "description": "",
+      "location": "skills/stock-market-hotspot-discovery/SKILL.md",
+      "base_dir": "skills/stock-market-hotspot-discovery"
+    },
+    "stock-monitor": {
+      "name": "stock-monitor",
+      "description": "",
+      "location": "skills/stock-monitor/SKILL.md",
+      "base_dir": "skills/stock-monitor"
+    },
+    "topic-research-report": {
+      "name": "topic-research-report",
+      "description": "",
+      "location": "skills/topic-research-report/SKILL.md",
+      "base_dir": "skills/topic-research-report"
+    },
+    "tushare-data": {
+      "name": "tushare-data",
+      "description": "",
+      "location": "skills/tushare-data/SKILL.md",
+      "base_dir": "skills/tushare-data"
+    },
+    "xlsx": {
+      "name": "xlsx",
+      "description": "",
+      "location": "skills/xlsx/SKILL.md",
+      "base_dir": "skills/xlsx"
+    },
+    "youtube-watcher": {
+      "name": "youtube-watcher",
+      "description": "",
+      "location": "skills/youtube-watcher/SKILL.md",
+      "base_dir": "skills/youtube-watcher"
+    },
+    "gold-price-inquiry": {
+      "name": "Gold-Price-Inquiry---------",
+      "description": "",
+      "location": "skills/Gold-Price-Inquiry---------/SKILL.md",
+      "base_dir": "skills/Gold-Price-Inquiry---------"
+    }
+  }
+}

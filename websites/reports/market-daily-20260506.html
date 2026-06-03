@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>联邦投顾 · 市场日报 2026-05-06</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --card: #12161e;
+    --border: #1e2430;
+    --text: #c9d1d9;
+    --text-dim: #6e7681;
+    --red: #f85149;
+    --green: #3fb950;
+    --yellow: #d2991d;
+    --blue: #58a6ff;
+    --accent: #8b949e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { 
+    background: var(--bg); color: var(--text); 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.6; padding: 20px; max-width: 960px; margin: 0 auto;
+  }
+  .header {
+    text-align: center; padding: 30px 0; border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .header h1 { font-size: 1.5em; color: #fff; }
+  .header .sub { color: var(--text-dim); font-size: 0.85em; margin-top: 4px; }
+  .header .meta { 
+    display: flex; justify-content: center; gap: 24px; margin-top: 12px;
+    font-size: 0.8em; color: var(--accent);
+  }
+
+  .section { margin-bottom: 24px; }
+  .section-title {
+    font-size: 1.05em; font-weight: 700; color: #fff; 
+    padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 12px;
+  }
+  .section-title .icon { margin-right: 6px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.88em; }
+  th { background: var(--border); color: var(--accent); font-weight: 600; text-align: left; padding: 6px 10px; }
+  td { padding: 6px 10px; border-bottom: 1px solid rgba(30,36,48,0.5); }
+  tr:hover { background: rgba(255,255,255,0.02); }
+
+  .up { color: var(--red); }   /* 红涨 */
+  .down { color: var(--green); } /* 绿跌 */
+  .flat { color: var(--accent); }
+
+  .badge { 
+    display: inline-block; padding: 1px 8px; border-radius: 10px; 
+    font-size: 0.78em; font-weight: 600;
+  }
+  .badge-red { background: rgba(248,81,73,0.15); color: var(--red); }
+  .badge-yellow { background: rgba(210,153,29,0.15); color: var(--yellow); }
+  .badge-green { background: rgba(63,185,80,0.15); color: var(--green); }
+  .badge-blue { background: rgba(88,166,255,0.12); color: var(--blue); }
+
+  .alert-box {
+    padding: 12px 16px; border-radius: 6px; margin: 12px 0;
+    border-left: 3px solid;
+  }
+  .alert-red { background: rgba(248,81,73,0.08); border-color: var(--red); }
+  .alert-yellow { background: rgba(210,153,29,0.08); border-color: var(--yellow); }
+  .alert-green { background: rgba(63,185,80,0.08); border-color: var(--green); }
+
+  .macro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .macro-card { 
+    background: var(--card); border: 1px solid var(--border); border-radius: 6px; 
+    padding: 10px 12px; text-align: center;
+  }
+  .macro-card .name { font-size: 0.75em; color: var(--accent); }
+  .macro-card .value { font-size: 1.2em; font-weight: 700; margin: 4px 0; }
+  .macro-card .delta { font-size: 0.78em; }
+
+  .exec-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    border-bottom: 1px solid rgba(30,36,48,0.3);
+  }
+  .exec-item:last-child { border-bottom: none; }
+  .exec-prio { 
+    width: 28px; height: 28px; border-radius: 50%; display: flex; 
+    align-items: center; justify-content: center; font-size: 0.7em; font-weight: 700;
+  }
+  .exec-prio.red { background: rgba(248,81,73,0.2); color: var(--red); }
+  .exec-prio.yellow { background: rgba(210,153,29,0.2); color: var(--yellow); }
+  .exec-prio.green { background: rgba(63,185,80,0.2); color: var(--green); }
+
+  .footer { 
+    text-align: center; padding: 24px 0; border-top: 1px solid var(--border);
+    color: var(--text-dim); font-size: 0.75em; margin-top: 32px;
+  }
+
+  .trend-up::after { content: " ▲"; color: var(--red); }
+  .trend-down::after { content: " ▼"; color: var(--green); }
+  .trend-flat::after { content: " →"; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🛡️ 联邦投顾 · 市场日报</h1>
+  <div class="sub">全球量化投资联邦顾问系统 · V20.54.0 · 19大核心池完整版</div>
+  <div class="meta">
+    <span>📅 2026-05-06 周三</span>
+    <span>⏰ A股/港股节后首日恢复交易</span>
+    <span>🛰️ IEF 94.565 突破开火权线</span>
+  </div>
+</div>
+
+<!-- ====== 宏观重力场 ====== -->
+<div class="section">
+  <div class="section-title">🌍 宏观重力场 · 九锚终值（5/5收盘）</div>
+  <div class="macro-grid">
+    <div class="macro-card">
+      <div class="name">🇺🇸 DXY</div>
+      <div class="value">98.42</div>
+      <div class="delta down">-0.07</div>
+    </div>
+    <div class="macro-card">
+      <div class="name">📡 US10Y</div>
+      <div class="value">4.4141%</div>
+      <div class="delta down">-0.0261</div>
+    </div>
+    <div class="macro-card" style="border-color: var(--green);">
+      <div class="name">🛡️ IEF</div>
+      <div class="value" style="color: var(--green);">94.565</div>
+      <div class="delta up">+0.175</div>
+    </div>
+    <div class="macro-card">
+      <div class="name">📡 US20Y</div>
+      <div class="value">4.9900%</div>
+      <div class="delta down">-0.0259</div>
+    </div>
+    <div class="macro-card">
+      <div class="name">🏦 TLT</div>
+      <div class="value">85.345</div>
+      <div class="delta up">+0.385</div>
+    </div>
+    <div class="macro-card" style="border-color: var(--red);">
+      <div class="name">🛢️ CRB</div>
+      <div class="value" style="color: var(--red);">401.06</div>
+      <div class="delta up">+7.66</div>
+    </div>
+    <div class="macro-card">
+      <div class="name">🛢️ 布伦特</div>
+      <div class="value">$110.53</div>
+      <div class="delta down">-3.18</div>
+    </div>
+    <div class="macro-card">
+      <div class="name">⚡ VIX</div>
+      <div class="value">17.42</div>
+      <div class="delta down">-0.87</div>
+    </div>
+    <div class="macro-card">
+      <div class="name">🥇 XAU</div>
+      <div class="value">$4,558.90</div>
+      <div class="delta up">+35.02</div>
+    </div>
+  </div>
+
+  <div class="alert-box alert-yellow" style="margin-top: 14px;">
+    <strong>🟡 核心矛盾：CRB暴涨+1.95% vs 布伦特暴跌-3.42%</strong><br>
+    商品通胀内部撕裂。CRB的涨势来自农产品/工业金属，布伦特的跌来自霍尔木兹溢价消化。通胀逻辑正在从"原油单一驱动"切换为"多商品共振"，更顽固但也更分散。
+  </div>
+  <div class="alert-box alert-green">
+    <strong>🟢 IEF 94.565 > 94.00 开火权线</strong><br>
+    债券端物理减压确认。US10Y 4.4141%仍处🟡4.50%预警线下方（安全），距红色5.00%熔断尚余0.586%。全池美元资产开火权从"物理切断"→"条件观察"。
+  </div>
+</div>
+
+<!-- ====== 全球指数收盘 ====== -->
+<div class="section">
+  <div class="section-title">📊 全球指数收盘（5/5，五一假期最后一日）</div>
+  <table>
+    <thead>
+      <tr><th>指数</th><th>代码</th><th>收盘价</th><th>涨跌幅</th><th>趋势</th><th>信号</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>标普500</td><td>SPX</td><td>7,258.87</td>
+        <td class="up">+0.81%</td><td class="trend-up">▲</td>
+        <td><span class="badge badge-red">悬空MA120+5.8%</span></td>
+      </tr>
+      <tr>
+        <td>纳斯达克100</td><td>QQQ</td><td>$672.88</td>
+        <td class="up">+0.84%</td><td class="trend-up">▲</td>
+        <td><span class="badge badge-red">悬空MA120+9.4%</span></td>
+      </tr>
+      <tr>
+        <td>沪深300</td><td>510300</td><td>📊待补</td><td>—</td><td>—</td><td><span class="badge badge-blue">五一休市</span></td>
+      </tr>
+      <tr>
+        <td>中证500</td><td>510500</td><td>📊待补</td><td>—</td><td>—</td><td><span class="badge badge-blue">五一休市</span></td>
+      </tr>
+      <tr>
+        <td>创业板</td><td>159915</td><td>📊待补</td><td>—</td><td>—</td><td><span class="badge badge-blue">五一休市</span></td>
+      </tr>
+      <tr>
+        <td>科创50</td><td>588000</td><td>📊待补</td><td>—</td><td>—</td><td><span class="badge badge-blue">五一休市</span></td>
+      </tr>
+      <tr>
+        <td>恒生科技</td><td>513180</td><td>📊待补</td><td>—</td><td>—</td><td><span class="badge badge-blue">五一休市</span></td>
+      </tr>
+      <tr>
+        <td>红利指数</td><td>513910</td><td>📊待补</td><td>—</td><td>—</td><td><span class="badge badge-blue">五一休市</span></td>
+      </tr>
+      <tr>
+        <td>日经225</td><td>BBJP</td><td>$71.65</td>
+        <td class="up">+0.3%</td><td class="trend-flat">→</td>
+        <td><span class="badge badge-yellow">距次优$71.50仅$0.15</span></td>
+      </tr>
+      <tr>
+        <td>英国富时</td><td>EWU</td><td>$46.14</td>
+        <td class="down">连续四日下跌</td><td class="trend-down">▼</td>
+        <td><span class="badge badge-yellow">RSI(6)=36.4 条件A初现</span></td>
+      </tr>
+      <tr>
+        <td>韩国综合</td><td>EWY</td><td>$163.59</td>
+        <td class="up">+6.35%</td><td class="trend-up">▲</td>
+        <td><span class="badge badge-red">悬空MA120+52% 过热</span></td>
+      </tr>
+      <tr>
+        <td>越南胡志明</td><td>VNM</td><td>$18.77</td>
+        <td class="flat">+0.2%</td><td class="trend-flat">→</td>
+        <td><span class="badge badge-red">悬空MA120+2.5%</span></td>
+      </tr>
+      <tr>
+        <td>印度CNX</td><td>FLIN</td><td>$34.89</td>
+        <td class="down">-0.7%</td><td class="trend-down">▼</td>
+        <td><span class="badge badge-yellow">深度超卖 跌破最优区间</span></td>
+      </tr>
+      <tr>
+        <td>印度小盘</td><td>SMIN</td><td>$65.87</td>
+        <td class="down">-0.8%</td><td class="trend-down">▼</td>
+        <td><span class="badge badge-green">已入最优区间</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="font-size:0.78em; color: var(--text-dim); margin-top: 4px;">
+    ⚠️ A股/港股标的（510300~513910）五一假期休市，最新数据为4/30收盘。今日5/6恢复交易，开盘后更新。
+  </div>
+</div>
+
+<!-- ====== IEF哨兵 ====== -->
+<div class="section">
+  <div class="section-title">🛰️ IEF哨兵 · 特写</div>
+  <table>
+    <thead><tr><th>日期</th><th>IEF</th><th>区间</th><th>事件</th></tr></thead>
+    <tbody>
+      <tr><td>5/2</td><td style="color:var(--red);">87.850</td><td><span class="badge badge-red">崩塌区</span></td><td>非农-62万核弹前夜</td></tr>
+      <tr><td>5/3</td><td style="color:var(--yellow);">92.300</td><td><span class="badge badge-yellow">警戒区</span></td><td>非农核弹→降息预期复活，单日+5.1%</td></tr>
+      <tr><td>5/4</td><td style="color:var(--yellow);">94.590</td><td><span class="badge badge-yellow">警戒区</span></td><td>距95.00仅0.410</td></tr>
+      <tr style="background: rgba(63,185,80,0.05);"><td><strong>5/5</strong></td><td style="color:var(--green);"><strong>94.565</strong></td><td><span class="badge badge-green">突破94.00</span></td><td><strong>开火权线突破 ✅</strong></td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top: 8px; font-size: 0.9em;">
+    <strong>解读</strong>：IEF在四天内从87.85崩塌区暴力反弹至94.565（+6.715，+7.6%）。94.00开火权线已突破。但距95.00完整开火权仍差0.435。US10Y 4.4141%仍处🟡预警区——<strong>开火权从"物理切断"升级为"条件观察"，尚未到"绿色开火"。</strong>
+  </div>
+</div>
+
+<!-- ====== 持仓诊断 ====== -->
+<div class="section">
+  <div class="section-title">💹 持仓诊断</div>
+
+  <h4 style="color: var(--accent); margin: 12px 0 6px;">权益仓（人民币）</h4>
+  <table>
+    <thead><tr><th>标的</th><th>代码</th><th>持仓</th><th>成本</th><th>现价</th><th>浮盈</th><th>止损位</th><th>状态</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>MUFG</td><td>MUFG</td><td>0股（挂单中）</td><td>—</td><td>$17.57</td><td>—</td><td>$16.06</td>
+        <td><span class="badge badge-yellow">挂单$17.20待触发</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4 style="color: var(--accent); margin: 16px 0 6px;">黄金/避险</h4>
+  <table>
+    <thead><tr><th>标的</th><th>代码</th><th>持仓</th><th>成本</th><th>关键位</th><th>状态</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>黄金ETF</td><td>518880</td><td>46,800股</td><td>¥9.31</td>
+        <td>MA120=¥9.853</td>
+        <td><span class="badge badge-yellow">关注：今日开盘验证MA120</span></td>
+      </tr>
+      <tr>
+        <td>黄金现货</td><td>IAU</td><td><strong>已全清</strong></td><td>$86.756</td>
+        <td>清仓$85.69</td>
+        <td><span class="badge badge-green">5/5已执行，亏损-$35.18</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4 style="color: var(--accent); margin: 16px 0 6px;">现金/债券</h4>
+  <table>
+    <thead><tr><th>标的</th><th>代码</th><th>金额</th><th>年化</th><th>状态</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>短期国债ETF</td><td>SGOV</td><td>$212,413</td><td>~5.2%</td>
+        <td><span class="badge badge-green">满功率</span></td>
+      </tr>
+      <tr>
+        <td>A账户现金</td><td>—</td><td>¥564,806</td><td>—</td>
+        <td><span class="badge badge-green">待命</span></td>
+      </tr>
+      <tr>
+        <td>B账户美元现金</td><td>—</td><td>~$3,491</td><td>—</td>
+        <td><span class="badge badge-green">待命</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="alert-box alert-yellow" style="margin-top: 14px;">
+    <strong>⚠️ 518880持仓集中度风险</strong><br>
+    46,800股 × ¥9.678 = ¥452,930，占A账户39.2%（超法典8%上限）。减仓38,060股至8,740股预案已就绪，等待今日开盘MA120物理验证后执行。
+  </div>
+</div>
+
+<!-- ====== 分类汇总 ====== -->
+<div class="section">
+  <div class="section-title">📈 分类汇总</div>
+  <table>
+    <thead><tr><th>类别</th><th>今日表现</th><th>重点观察</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>🇺🇸 美股(SPX/QQQ)</td>
+        <td class="up">+0.81% / +0.84%</td>
+        <td>降息预期复活驱动，但悬空MA120严重。IEF突破94.00后能否站上95.00是关键</td>
+      </tr>
+      <tr>
+        <td>🇨🇳 中港(红利/科技)</td>
+        <td>五一休市</td>
+        <td>今日恢复交易，假期积累的全球信号集中释放。SHIBOR 3M跳升至1.5810%是新增变量</td>
+      </tr>
+      <tr>
+        <td>🌏 亚太(日本/韩国/越南/印度)</td>
+        <td>分化剧烈</td>
+        <td>EWY过热悬空+52%、FLIN深度超卖、SMIN已入最优区间。新兴市场资金流向极度分化</td>
+      </tr>
+      <tr>
+        <td>🛡️ 避险(黄金/SGOV)</td>
+        <td>XAU +0.77%</td>
+        <td>黄金四连跌后反弹，RSI脱离超卖区。SGOV满功率，现金主权率约80%</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ====== 地缘窗口 ====== -->
+<div class="section">
+  <div class="section-title">🌍 地缘窗口</div>
+  <table>
+    <thead><tr><th>节点</th><th>状态</th><th>倒计时</th><th>影响</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>霍尔木兹封锁</td>
+        <td><span class="badge badge-red">持续中</span></td>
+        <td>第22天</td>
+        <td>布伦特$110.53，溢价消化中但危机未解除</td>
+      </tr>
+      <tr>
+        <td>4.22奇点</td>
+        <td><span class="badge badge-yellow">已过14天</span></td>
+        <td>—</td>
+        <td>马斯喀特会谈进行中，无突破性进展</td>
+      </tr>
+      <tr>
+        <td>欧洲航油储备</td>
+        <td><span class="badge badge-red">紧迫</span></td>
+        <td>约4.2周</td>
+        <td>IATA警告5月底可能燃油短缺</td>
+      </tr>
+      <tr>
+        <td>阿联酋油轮遇袭</td>
+        <td><span class="badge badge-red">升级</span></td>
+        <td>5/5发生</td>
+        <td>冲突从美伊双边升级为多边，GCC可能集体转向</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ====== 今日执行建议 ====== -->
+<div class="section">
+  <div class="section-title">⚡ 今日执行指令</div>
+
+  <div class="exec-item">
+    <div class="exec-prio red">🔴</div>
+    <div style="flex:1;">
+      <strong>518880 MA120终极验证</strong><br>
+      <span style="font-size:0.85em; color: var(--text-dim);">今日A股开盘公布净值。MA120=¥9.853（Tushare精确值）。若净值<9.853触发减仓20%（9,360股→剩37,440股）。若>9.853则减仓预案搁置，维持46,800股观察。</span>
+    </div>
+  </div>
+
+  <div class="exec-item">
+    <div class="exec-prio red">🔴</div>
+    <div style="flex:1;">
+      <strong>IEF 94.565突破94.00但距95.00差0.435</strong><br>
+      <span style="font-size:0.85em; color: var(--text-dim);">QQQ/IVV开火权从"物理切断"→"条件观察"。但尚未到"绿色开火"——不开新仓，不追高。等待IEF≥95.00或US10Y<4.30%任一条件触发。</span>
+    </div>
+  </div>
+
+  <div class="exec-item">
+    <div class="exec-prio yellow">🟡</div>
+    <div style="flex:1;">
+      <strong>SHIBOR 3M跳升+15.7bp至1.5810%</strong><br>
+      <span style="font-size:0.85em; color: var(--text-dim);">中国区流动性从"温和宽松"升级为"边际收紧"。距1.70%红线尚余11.9bp。关注今日央行3000亿买断式逆回购操作对SHIBOR的影响。</span>
+    </div>
+  </div>
+
+  <div class="exec-item">
+    <div class="exec-prio yellow">🟡</div>
+    <div style="flex:1;">
+      <strong>SMIN已入最优区间 $64.96~$67.03</strong><br>
+      <span style="font-size:0.85em; color: var(--text-dim);">现价$65.87在区间内。但US10Y 4.4141%处于🟡预警区，开火权受限。若今日美股延续反弹+US10Y回落，SMIN优先级最高。</span>
+    </div>
+  </div>
+
+  <div class="exec-item">
+    <div class="exec-prio yellow">🟡</div>
+    <div style="flex:1;">
+      <strong>FLIN深度超卖 $34.89 跌破最优区间</strong><br>
+      <span style="font-size:0.85em; color: var(--text-dim);">RSI(6)=26.73超卖。新兴市场差异化买入区间[MA120-3×ATR, MA120-1×ATR]=[$33.04, $36.07]。现价$34.89已在区间内，但US10Y锁死开火权。</span>
+    </div>
+  </div>
+
+  <div class="exec-item">
+    <div class="exec-prio green">🟢</div>
+    <div style="flex:1;">
+      <strong>SGOV满功率 + MUFG挂单$17.20维持</strong><br>
+      <span style="font-size:0.85em; color: var(--text-dim);">现金主权率约80%，年化5.2%。MUFG挂单距离现价$17.57约2.1%。</span>
+    </div>
+  </div>
+
+  <div class="exec-item">
+    <div class="exec-prio green">🟢</div>
+    <div style="flex:1;">
+      <strong>IAU清仓归档完成</strong><br>
+      <span style="font-size:0.85em; color: var(--text-dim);">66股全平于$85.69，成本$86.756，总亏损-$35.18。合规止损，已归档。</span>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 技术指标速览 ====== -->
+<div class="section">
+  <div class="section-title">🔬 全池技术指标速览（5/5收盘 · 美股自算 + A股4/30）</div>
+  <table>
+    <thead><tr><th>标的</th><th>现价</th><th>MA120</th><th>乖离率</th><th>RSI</th><th>买入区间</th><th>信号</th></tr></thead>
+    <tbody>
+      <tr><td>QQQ</td><td>$672.88</td><td>$614.92</td><td class="up">+9.4%</td><td>65.2</td><td>$597~$615</td><td>🔴 悬空</td></tr>
+      <tr><td>IVV</td><td>$721.39</td><td>$685.63</td><td class="up">+5.2%</td><td>62.8</td><td>$672~$686</td><td>🔴 悬空</td></tr>
+      <tr><td>EWY</td><td>$163.59</td><td>$108.68</td><td class="up">+50.5%</td><td>81.0</td><td>$109~$120</td><td>🔴 过热</td></tr>
+      <tr><td>BBJP</td><td>$71.65</td><td>$69.08</td><td class="up">+3.7%</td><td>55.4</td><td>$68~$70</td><td>🟡 接近</td></tr>
+      <tr><td>MUFG</td><td>$17.57</td><td>$16.83</td><td class="up">+4.4%</td><td>52.1</td><td>$16.5~$17.2</td><td>🟡 挂单</td></tr>
+      <tr><td>EWU</td><td>$46.14</td><td>$45.45</td><td class="up">+1.5%</td><td>36.4</td><td>$44~$45.5</td><td>🟡 接近</td></tr>
+      <tr><td>VNM</td><td>$18.77</td><td>$18.32</td><td class="up">+2.5%</td><td>52.0</td><td>$17.7~$18.3</td><td>🔴 悬空</td></tr>
+      <tr style="background: rgba(63,185,80,0.05);"><td><strong>FLIN</strong></td><td><strong>$34.89</strong></td><td>$37.92</td><td class="down"><strong>-8.0%</strong></td><td><strong>26.7</strong></td><td><strong>$33~$36</strong></td><td><strong>🟢 超卖</strong></td></tr>
+      <tr style="background: rgba(63,185,80,0.05);"><td><strong>SMIN</strong></td><td><strong>$65.87</strong></td><td>$67.03</td><td class="down"><strong>-1.7%</strong></td><td><strong>57.5</strong></td><td><strong>$65~$67</strong></td><td><strong>🟢 区间内</strong></td></tr>
+      <tr><td>518880</td><td>¥9.678</td><td>¥9.853</td><td class="down">-1.8%</td><td>30.9</td><td>¥9.52~¥9.62</td><td>🟡 待验证</td></tr>
+      <tr><td>510300</td><td>¥4.824</td><td>¥4.700</td><td class="up">+2.6%</td><td>74.7</td><td>¥4.45~¥4.75</td><td>🟡 偏高</td></tr>
+      <tr><td>510500</td><td>¥8.430</td><td>¥7.895</td><td class="up">+6.8%</td><td>68.1</td><td>¥7.60~¥8.20</td><td>🔴 悬空</td></tr>
+      <tr><td>588000</td><td>¥1.654</td><td>¥1.470</td><td class="up">+12.5%</td><td>82.2</td><td>¥1.35~¥1.55</td><td>🔴 过热</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="footer">
+  报告由联邦投顾系统自动生成 | V20.54.0 回测校准版 | 19大核心池完整版<br>
+  数据来源：Tushare + 东方财富 mx-data + 用户P0真值投喂 | 生成时间 2026-05-06 08:01 UTC+8
+</div>
+
+</body>
+</html>
