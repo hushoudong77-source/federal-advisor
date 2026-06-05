@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>投资决策专家 · 金盾法典双轨执行引擎</title>
+<style>
+/* ====== CSS变量（夜间模式切换基础） ====== */
+:root {
+  --bg-page: #e8edf8;
+  --bg-sidebar: #eef1ff;
+  --bg-header: linear-gradient(135deg,#0a1525,#162040);
+  --bg-chat: #e8edf8;
+  --bg-bar: #e8edf8;
+  --bg-msg-assistant: #ffffff;
+  --bg-msg-user: #0066d9;
+  --color-text: #151a2a;
+  --color-text-inverse: #fff;
+  --color-text-muted: #5a6a8a;
+  --color-border: #c8d0e4;
+  --color-sidebar-divider: #c8d0e4;
+  --color-accent: #0066d9;
+  --color-accent-rgb: 0, 102, 217;
+  --color-accent-dark: #004daa;
+  --color-cyan: #0099ff;
+  --color-green: #22c55e;
+  --color-red: #ef4444;
+  --color-yellow: #e68a00;
+  --shadow-msg: 0 1px 3px rgba(0,0,0,.06);
+  --shadow-panel: 0 1px 4px rgba(0,0,0,.05);
+  --radius-msg: 14px;
+  --radius-panel: 10px;
+  --radius-btn: 8px;
+  --sidebar-w: 280px;
+  --bg-panel-glass: rgba(232,237,248,0.82);
+}
+[data-theme="dark"] {
+  --bg-page: #090f22;
+  --bg-sidebar: #0d1528;
+  --bg-header: linear-gradient(135deg,#050912,#0a1225);
+  --bg-chat: #090f22;
+  --bg-bar: #090f22;
+  --bg-msg-assistant: #0e1a30;
+  --bg-msg-user: #0044aa;
+  --color-text: #e0e8ff;
+  --color-text-inverse: #fff;
+  --color-text-muted: #5a6e96;
+  --color-border: #142244;
+  --color-sidebar-divider: #142244;
+  --shadow-msg: 0 1px 3px rgba(0,0,0,.3);
+  --shadow-panel: 0 1px 4px rgba(0,0,0,.25);
+  --bg-panel-glass: rgba(9,15,34,0.78);
+  --color-accent: #0066d9;
+  --color-accent-rgb: 0, 102, 217;
+  --color-accent-dark: #004daa;
+  --color-cyan: #0099ff;
+}
+
+/* ====== Animated Grid Background ====== */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%; left: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse at 20% 40%, rgba(var(--color-accent-rgb), 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 60%, rgba(var(--color-accent-rgb), 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 20%, rgba(25, 80, 200, 0.04) 0%, transparent 50%);
+  animation: bgGlow 15s ease-in-out infinite alternate;
+}
+@keyframes bgGlow {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-1%, 0.5%) scale(1.03); }
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(var(--color-accent-rgb), 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--color-accent-rgb), 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: gridShift 20s linear infinite;
+}
+@keyframes gridShift {
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(40px, 40px); }
+}
+
+/* ====== Scanline Overlay ====== */
+.scanline-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(var(--color-accent-rgb), 0.025) 2px,
+    rgba(var(--color-accent-rgb), 0.025) 4px
+  );
+}
+
+/* ====== Cyber Dots ====== */
+.cyber-dot {
+  position: fixed;
+  width: var(--s, 3px);
+  height: var(--s, 3px);
+  left: var(--x, 50%);
+  top: var(--y, 50%);
+  background: var(--color-cyan);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  box-shadow: 0 0 6px var(--color-cyan), 0 0 12px rgba(0,230,255,0.3);
+  animation: dotFloat 4s ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+  opacity: 0.5;
+}
+@keyframes dotFloat {
+  0%, 100% { transform: translate(0, 0); }
+  25%  { transform: translate(15px, -10px); }
+  50%  { transform: translate(-5px, 15px); }
+  75%  { transform: translate(-15px, -5px); }
+}
+
+/* ====== 跑马灯 ====== */
+.ticker-wrap {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  margin: 0 10px;
+}
+.ticker-wrap::before,
+.ticker-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  z-index: 2;
+  pointer-events: none;
+}
+.ticker-wrap::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg-chat) 0%, transparent 100%);
+}
+.ticker-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg-chat) 0%, transparent 100%);
+}
+.ticker-track {
+  display: flex;
+  white-space: nowrap;
+  animation: tickerScroll 300s linear infinite;
+}
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 28px;
+  font-size: 18px;
+  color: #ef4444;
+}
+.ticker-item .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.ticker-item .time {
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+  margin-right: 4px;
+}
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+
+/* ====== RESET & BASE ====== */
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg-page);height:100vh;display:flex;flex-direction:column;color:var(--color-text);transition:background .2s,color .2s;position:relative;z-index:1}
+
+/* ====== HEADER ====== */
+header{background:var(--bg-header);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;position:relative;z-index:10;border-bottom:1px solid rgba(var(--color-accent-rgb),0.12);box-shadow:0 2px 20px rgba(var(--color-accent-rgb),0.06)}
+header .logo{font-size:24px;flex-shrink:0}
+header h1{font-size:20px;font-weight:700;text-shadow:0 0 12px rgba(var(--color-accent-rgb),0.3)}
+header .subtitle{font-size:13px;opacity:.7;letter-spacing:0.5px}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+#status{font-size:13px;cursor:pointer}
+#status.ok{color:var(--color-green);text-shadow:0 0 8px rgba(34,197,94,0.4)}
+#status.warn{color:var(--color-yellow)}
+
+/* ====== MAIN LAYOUT ====== */
+.main-wrap{display:flex;flex:1;overflow:hidden;position:relative;z-index:1;background:var(--bg-page)}
+
+/* ====== SIDEBAR ====== */
+.sidebar{
+  width:var(--sidebar-w);min-width:var(--sidebar-w);
+  background:var(--bg-sidebar);border-right:1px solid var(--color-border);
+  display:flex;flex-direction:column;overflow-y:auto;
+  transition:width .25s,min-width .25s,background .2s;
+  z-index:5;
+}
+.sidebar.collapsed{width:0;min-width:0;border-right:none;overflow:hidden}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:#ccc;border-radius:2px}
+
+/* 视图切换 */
+.view{display:flex;flex-direction:column;height:100%}
+.view-btn.active,.mode-btn.active{background:var(--color-accent);color:#fff;border-color:var(--color-accent)}
+.sec-divider{margin-top:6px}
+/* 侧栏折叠开关 */
+.sidebar-toggle{
+  position:absolute;top:10px;left:calc(var(--sidebar-w) - 28px);
+  width:24px;height:24px;background:rgba(255,255,255,0.15);
+  border:none;border-radius:50%;color:#fff;cursor:pointer;
+  font-size:12px;display:flex;align-items:center;justify-content:center;
+  z-index:15;transition:left .25s;
+}
+.sidebar.collapsed + .sidebar-toggle{left:6px}
+
+/* 侧栏内部滚动区域 */
+.sidebar-inner{padding:8px;display:flex;flex-direction:column;gap:6px;flex:1}
+
+/* 面板卡片 - 3D立体 + 斜切角标 + 毛玻璃 */
+.panel{
+  background:var(--bg-panel-glass);border-radius:var(--radius-panel);
+  padding:8px 10px;box-shadow:var(--shadow-panel);
+  font-size:14px;border:1px solid var(--color-border);
+  transition:background .2s,border-color .2s,box-shadow .2s,transform .2s;
+  position:relative;overflow:hidden;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.panel:hover{
+  border-color:rgba(var(--color-accent-rgb),0.3);
+  box-shadow:0 4px 16px rgba(var(--color-accent-rgb),0.12), 0 0 0 1px rgba(var(--color-accent-rgb),0.08);
+  transform:translateY(-2px);
+}
+/* 四角斜切角标 */
+.panel::before{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+  pointer-events:none;z-index:1;
+  background:
+    /* Top-left */
+    linear-gradient(to top, var(--color-cyan), var(--color-cyan)) 0 0 / 2px 12px no-repeat,
+    linear-gradient(to right, var(--color-cyan), var(--color-cyan)) 0 0 / 12px 2px no-repeat,
+    /* Top-right */
+    linear-gradient(to top, var(--color-cyan), var(--color-cyan)) 100% 0 / 2px 12px no-repeat,
+    linear-gradient(to left, var(--color-cyan), var(--color-cyan)) 100% 0 / 12px 2px no-repeat,
+    /* Bottom-left */
+    linear-gradient(to bottom, var(--color-cyan), var(--color-cyan)) 0 100% / 2px 12px no-repeat,
+    linear-gradient(to right, var(--color-cyan), var(--color-cyan)) 0 100% / 12px 2px no-repeat,
+    /* Bottom-right */
+    linear-gradient(to bottom, var(--color-cyan), var(--color-cyan)) 100% 100% / 2px 12px no-repeat,
+    linear-gradient(to left, var(--color-cyan), var(--color-cyan)) 100% 100% / 12px 2px no-repeat;
+}
+/* 顶部辉光线 */
+.panel::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(var(--color-accent-rgb),0.25),transparent);
+  pointer-events:none;z-index:2;
+}
+.panel-title{
+  font-size:14px;font-weight:700;text-transform:uppercase;
+  color:var(--color-text-muted);margin-bottom:6px;
+  display:flex;align-items:center;gap:4px;position:relative;z-index:2;
+}
+
+/* 分组标题 */
+.group-title{
+  font-size:15px;font-weight:700;color:var(--color-text-muted);
+  padding:3px 6px;margin-top:6px;position:relative;z-index:2;
+}
+
+/* 按钮组 */
+.btn-group{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+
+/* 3D立体按钮 */
+.cmd-btn{
+  font-size:17px;
+  padding:5px 10px;font-size:17px;font-weight:600;
+  border:1px solid var(--color-border);border-radius:8px;
+  background:linear-gradient(135deg, var(--bg-msg-assistant) 0%, var(--bg-page) 100%);
+  color:var(--color-text);
+  cursor:pointer;transition:all .2s cubic-bezier(0.4,0,0.2,1);
+  white-space:nowrap;text-align:center;
+  font-family:var(--font-mono);
+  position:relative;overflow:hidden;
+  /* 3D 多层阴影 - 模拟按钮厚度 */
+  box-shadow:
+    0 4px 6px rgba(0,0,0,0.1),
+    0 1px 3px rgba(0,0,0,0.06),
+    inset 0 -3px 0 rgba(0,0,0,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+  transform:translateY(0);
+  text-shadow:0 1px 0 rgba(255,255,255,0.3);
+  will-change:transform,box-shadow;
+}
+.cmd-btn::before{
+  content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(var(--color-accent-rgb),0.08),transparent);
+  transition:left .5s cubic-bezier(0.4,0,0.2,1);
+}
+.cmd-btn:hover::before{left:100%}
+.cmd-btn:hover{
+  background:linear-gradient(135deg,var(--color-accent) 0%,var(--color-accent-dark) 100%);
+  color:#fff;border-color:var(--color-accent);
+  transform:translateY(-2px);
+  text-shadow:0 0 8px rgba(var(--color-accent-rgb),0.5);
+  box-shadow:
+    0 6px 16px rgba(var(--color-accent-rgb),0.3),
+    0 0 0 1px rgba(var(--color-accent-rgb),0.2),
+    inset 0 -3px 0 rgba(0,0,0,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.cmd-btn:active{
+  transform:translateY(3px);
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.1),
+    inset 0 2px 4px rgba(0,0,0,0.1),
+    inset 0 -1px 0 rgba(0,0,0,0.05);
+}
+.cmd-btn:disabled{
+  transform:translateY(3px);
+  box-shadow:0 1px 2px rgba(0,0,0,0.08), inset 0 1px 3px rgba(0,0,0,0.06);
+  opacity:0.5;cursor:not-allowed;pointer-events:none;
+}
+/* mode-btn spans full width */
+.mode-btn{grid-column:1/-1}
+
+/* 仪表盘数据 */
+.dash-row{display:flex;justify-content:space-between;padding:3px 0;font-size:15px;position:relative;z-index:2}
+.dash-row .label{color:var(--color-text-muted)}
+.dash-row .val{font-weight:600;font-size:16px}
+#dashTotal{font-size:24px;font-weight:700;letter-spacing:-0.5px}
+#dashFixed{font-size:16px;font-weight:700}
+#dashEquityTotal{font-size:18px;font-weight:700}
+#dashPool{font-size:18px;font-weight:700}
+.dash-row .val.green{color:var(--color-green)}
+.dash-row .val.yellow{color:var(--color-yellow)}
+.dash-row .val.red{color:var(--color-red)}
+.dash-bar{height:8px;background:var(--color-border);border-radius:3px;margin:4px 0;overflow:hidden;display:flex;position:relative;z-index:2}
+.dash-bar .seg{height:100%;transition:width .3s}
+.dash-bar .seg.fixed{background:#6366f1}
+.dash-bar .seg.equity{background:#f59e0b}
+.dash-bar .seg.cash{background:#22c55e}
+.macro-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700;position:relative;z-index:2}
+.macro-badge.green{background:#dcfce7;color:#166534}
+.macro-badge.yellow{background:#fef3c7;color:#92400e}
+.macro-badge.red{background:#fee2e2;color:#991b1b}
+
+/* 池子列表 */
+.pool-item{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:15px;border-bottom:1px solid var(--color-border)}
+.pool-item:last-child{border-bottom:none}
+.pool-item .code{font-weight:700;width:58px;flex-shrink:0}
+.pool-item .dir{width:18px;flex-shrink:0}
+.pool-item .pct{font-weight:600;width:50px;text-align:right}
+.pool-item .pct.up{color:var(--color-red)}
+.pool-item .pct.down{color:var(--color-green)}
+.pool-item .info{font-size:13px;color:var(--color-text-muted);margin-left:auto}
+.pool-empty{color:var(--color-text-muted);font-size:14px;padding:4px 0;font-style:italic}
+
+/* 热点新闻 */
+.news-item{padding:4px 0;font-size:14px;cursor:pointer;border-bottom:1px solid var(--color-border);display:flex;gap:6px}
+.news-item:last-child{border-bottom:none}
+.news-item:hover{color:var(--color-accent)}
+.news-item .tag{font-size:11px;background:var(--color-border);padding:0 4px;border-radius:3px;flex-shrink:0;margin-top:1px}
+.news-item .text{line-height:1.4}
+
+/* 分隔线 */
+.divider{height:1px;background:var(--color-sidebar-divider);margin:4px 0;position:relative;z-index:2}
+
+/* ====== CHAT AREA ====== */
+.chat-area{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;z-index:1}
+#chat{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--bg-chat);transition:background .2s}
+.msg{max-width:85%;padding:12px 16px;border-radius:var(--radius-msg);line-height:1.7;font-size:17px;word-wrap:break-word;white-space:pre-wrap;position:relative}
+.msg.user{background:var(--bg-msg-user);color:var(--color-text-inverse);align-self:flex-end;border-bottom-right-radius:3px}
+.msg.assistant{background:var(--bg-msg-assistant);color:var(--color-text);align-self:flex-start;border-bottom-left-radius:3px;box-shadow:var(--shadow-msg)}
+.msg .reasoning{background:var(--bg-chat);color:var(--color-text-muted);padding:8px 12px;border-radius:6px;font-size:14px;margin-bottom:6px;border-left:3px solid var(--color-accent)}
+.msg .reasoning strong{color:var(--color-accent);font-size:13px;display:block;margin-bottom:2px;text-shadow:0 0 6px rgba(var(--color-accent-rgb),0.3)}
+.loading{align-self:flex-start;color:var(--color-text-muted);font-size:14px;padding:10px 14px;display:flex;align-items:center;gap:8px}
+/* 六边形旋转加载动画 */
+.loading .spinner{
+  display:inline-block;width:16px;height:16px;
+  position:relative;flex-shrink:0;
+}
+.loading .spinner::before{
+  content:'';display:block;width:100%;height:100%;
+  border:2px solid var(--color-border);
+  border-left-color:var(--color-accent);
+  clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  box-sizing:border-box;
+  animation:hexSpin .7s linear infinite;
+}
+@keyframes hexSpin{
+  to{transform:rotate(360deg)}
+}
+
+/* 表格 */
+table{border-collapse:collapse;width:100%;margin:6px 0;font-size:14px}
+td,th{border:1px solid var(--color-border);padding:5px 8px;text-align:left}
+th{background:var(--bg-chat);font-weight:600;text-align:center}
+code{background:var(--bg-chat);padding:1px 4px;border-radius:3px;font-size:14px}
+pre{background:var(--bg-chat);border-radius:10px;padding:12px;overflow-x:auto;font-size:14px;margin:6px 0}
+pre code{background:0;padding:0}
+
+/* ====== INPUT BAR ====== */
+#bar{padding:10px 16px 16px;background:var(--bg-bar);flex-shrink:0;display:flex;gap:6px;align-items:flex-end;transition:background .2s}
+#bar textarea{flex:1;padding:12px 16px;border:1px solid var(--color-border);border-radius:20px;font-size:15px;font-family:inherit;outline:0;resize:none;max-height:100px;line-height:1.4;background:var(--bg-msg-assistant);color:var(--color-text);transition:background .2s,color .2s}
+#bar textarea:focus{border-color:var(--color-accent);box-shadow:0 0 0 2px rgba(var(--color-accent-rgb),.2), 0 0 12px rgba(var(--color-accent-rgb),0.08)}
+#bar .btn{width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s;font-size:16px}
+#send-btn{background:var(--color-accent);box-shadow:0 2px 8px rgba(var(--color-accent-rgb),0.3)}#send-btn:hover{background:var(--color-accent-dark)}
+#stop-btn{background:var(--color-red);display:none}#stop-btn:hover{background:#c00}
+#upload-btn{background:var(--color-border);color:var(--color-text-muted)}
+#file-input{display:none}
+.file-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:var(--bg-chat);border-radius:10px;font-size:12px;color:var(--color-accent);margin:2px 0;border:1px solid var(--color-border);text-shadow:0 0 4px rgba(var(--color-accent-rgb),0.15)}
+.file-tag .x{cursor:pointer;color:var(--color-text-muted);font-weight:700;font-size:13px}
+.file-tag .x:hover{color:var(--color-red)}
+.file-tag.ok{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+
+/* Stock picker */
+#stock-picker{display:none;position:fixed;z-index:110;background:var(--bg-msg-assistant);border:1px solid var(--color-accent);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);padding:12px;min-width:220px;max-height:420px;overflow-y:auto}
+#stock-picker.on{display:block}
+#stock-picker .sp-group{font-size:11px;font-weight:700;color:var(--color-text-muted);padding:4px 0 2px 4px;margin-top:4px;border-top:1px solid var(--color-border)}
+#stock-picker .sp-group:first-child{margin-top:0;border-top:none}
+#stock-picker .sp-item{display:flex;align-items:center;gap:6px;padding:5px 8px;cursor:pointer;border-radius:6px;font-size:13px}
+#stock-picker .sp-item:hover{background:var(--color-accent);color:#fff}
+#stock-picker .sp-code{font-weight:700;width:66px;flex-shrink:0}
+#stock-picker .sp-name{font-size:12px;color:var(--color-text-muted)}
+#stock-picker .sp-item:hover .sp-name{color:rgba(255,255,255,.7)}
+{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+
+/* ====== OVERLAYS ====== */
+#drop-overlay{display:none;position:fixed;inset:0;z-index:99;background:rgba(var(--color-accent-rgb),.06);border:3px dashed var(--color-accent);pointer-events:none;align-items:center;justify-content:center}
+#drop-overlay.on{display:flex}
+#drop-overlay div{background:var(--bg-msg-assistant);padding:16px 32px;border-radius:12px;font-size:16px;color:var(--color-accent);box-shadow:0 4px 16px rgba(0,0,0,.12);font-weight:600}
+
+/* Settings overlay */
+
+/* ====== RESPONSIVE ====== */
+@media(max-width:768px){
+  .sidebar{width:0;min-width:0;border-right:none;overflow:hidden;position:fixed;left:0;top:0;bottom:0;z-index:50;transition:width .25s,min-width .25s}
+  .sidebar.mobile-open{width:280px;min-width:280px;border-right:1px solid var(--color-border);box-shadow:4px 0 16px rgba(0,0,0,.15)}
+  .sidebar-backdrop{display:none;position:fixed;inset:0;z-index:49;background:rgba(0,0,0,.3)}
+  .sidebar-backdrop.on{display:block}
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+
+<!-- ====== Scanline Overlay ====== -->
+<div class="scanline-overlay"></div>
+
+<!-- ====== Cyber Dots ====== -->
+<div class="cyber-dot" style="--x:5%;--y:18%;--s:3px;--d:0s"></div>
+<div class="cyber-dot" style="--x:88%;--y:12%;--s:2px;--d:0.4s"></div>
+<div class="cyber-dot" style="--x:45%;--y:75%;--s:4px;--d:0.9s"></div>
+<div class="cyber-dot" style="--x:72%;--y:55%;--s:2px;--d:1.3s"></div>
+<div class="cyber-dot" style="--x:15%;--y:60%;--s:3px;--d:1.7s"></div>
+<div class="cyber-dot" style="--x:95%;--y:85%;--s:2px;--d:2.1s"></div>
+<div class="cyber-dot" style="--x:60%;--y:30%;--s:3px;--d:2.5s"></div>
+<div class="cyber-dot" style="--x:30%;--y:90%;--s:2px;--d:2.9s"></div>
+<div class="cyber-dot" style="--x:80%;--y:42%;--s:3px;--d:3.3s"></div>
+<div class="cyber-dot" style="--x:50%;--y:6%;--s:2px;--d:3.7s"></div>
+
+<!-- ====== HEADER ====== -->
+<header>
+  <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="侧栏开关">◀</button>
+  <span class="logo">🦐</span>
+  <div><h1>投资决策专家 V2.8</h1><div class="subtitle">金盾法典 · 双轨执行引擎</div></div>
+  <div class="ticker-wrap" style="flex:1;height:56px;margin:0 10px">
+    <div class="ticker-track" id="tickerTrack"></div>
+  </div>
+  <div class="header-right">
+    <button id="themeToggle" onclick="toggleTheme()" style="background:0;border:none;color:#fff;cursor:pointer;font-size:16px" title="夜间模式">🌙</button>
+    <span id="netStatus" style="font-size:14px;cursor:default" title="网络状态">⬤</span>
+    <span id="status">⚠️ 未配置</span>
+      </div>
+</header>
+
+<div class="main-wrap">
+
+<!-- ====== SIDEBAR ====== -->
+<div class="sidebar" id="sidebar">
+<div class="sidebar-inner">
+
+  <!-- 📊 全局仪表盘 -->
+  <div class="panel" id="dashPanel">
+    <div class="panel-title">📊 全局仪表盘</div>
+    <div class="dash-row"><span class="label">总资产(¥)</span><span class="val" id="dashTotal">¥---</span></div>
+    <div class="dash-row"><span class="label">固定持仓</span><span class="val" id="dashFixed" style="cursor:pointer" title="点击编辑">¥---</span></div>
+    <div class="dash-row"><span class="label">🏦 保险</span><span class="val" id="dashInsurance" style="cursor:pointer" title="点击编辑">¥---</span></div>
+    <div class="dash-row"><span class="label">权益/现金</span><span class="val green" id="dashCashRate">---</span></div>
+    <div class="dash-bar">
+      <span class="seg fixed" id="segFixed" style="width:20%"></span>
+      <span class="seg insurance" id="segInsurance" style="width:0%;background:#06b6d4"></span>
+      <span class="seg equity" id="segEquity" style="width:0%"></span>
+      <span class="seg cash" id="segCash" style="width:70%"></span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:2px 8px;font-size:10px;color:var(--color-text-muted);margin:2px 0">
+      <span style="color:#6366f1">■ 固定持仓</span><span style="color:#06b6d4">■ 保险</span><span style="color:#f59e0b">■ 权益持仓</span><span style="color:#22c55e">■ 现金</span>
+    </div>
+    <div class="dash-row"><span class="label">宏观状态</span><span class="macro-badge green" id="dashMacro">🟢 正常运行</span></div>
+    <div style="border-top:1px solid var(--color-border);margin:4px 0;padding-top:4px">
+      <div class="dash-row"><span class="label">🅰️ A持仓</span><span class="val" id="dashAPos">¥---</span></div>
+      <div class="dash-row"><span class="label">🅰️ A现金</span><span class="val" id="dashACash">¥---</span></div>
+      <div class="dash-row" style="margin-top:2px"><span class="label">🅱️ B持仓(USD)</span><span class="val" id="dashBPos">$---</span></div>
+      <div class="dash-row"><span class="label">🅱️ B现金</span><span class="val" id="dashBCash">$---</span></div>
+      <div class="dash-row"><span class="label">📈 权益持仓合计(¥)</span><span class="val" style="font-weight:700;color:var(--color-accent)" id="dashEquityTotal">¥---</span></div>
+      <div class="dash-row" style="border-top:1px solid var(--color-border);margin-top:2px;padding-top:2px"><span class="label">📐 可用资金池(¥)</span><span class="val" id="dashPool">¥---</span></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 模式切换 + 视图切换 -->
+  <div class="group-title">📋 模式</div>
+  <div class="btn-group">
+    <button class="cmd-btn mode-btn" onclick="setMode('chat')" id="mbtn-chat">💬 聊天</button>
+    <button class="cmd-btn mode-btn active" onclick="setMode('decision')" id="mbtn-decision">🤖 决策对话</button>
+  </div>
+  <div class="group-title" style="margin-top:6px">📺 视图</div>
+  <div class="btn-group">
+    <button class="cmd-btn view-btn" onclick="switchView('chat');sendCmd('/见闻')" id="vbtn-news">🔥 热点</button>
+    <button class="cmd-btn view-btn" onclick="switchView('chat');sendCmd('/反击')" id="vbtn-counter">🛡️ 反击</button>
+    <button class="cmd-btn view-btn" onclick="switchView('chat');sendCmd('/进攻')" id="vbtn-attack">⚔️ 进攻</button>
+    <button class="cmd-btn view-btn" onclick="switchView('chat');sendCmd('/周报')" id="vbtn-weekly">📋 周报</button>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 📝 数据录入 -->
+  <div class="group-title">📝 数据录入</div>
+  <div class="btn-group">
+    <button class="cmd-btn" onclick="sendCmd('/输入')">📝 输入</button>
+    <button class="cmd-btn" onclick="showUSStocks()">🌐 美股实时</button>
+    <button class="cmd-btn" onclick="showCNStocks()">🇨🇳 A股实时</button>
+    <button class="cmd-btn" onclick="showMacro()">📊 宏观实时</button>
+  </div>
+
+  <!-- 🔍 扫描分析 -->
+  <div class="group-title">🔍 扫描分析</div>
+  <div class="btn-group">
+    <button class="cmd-btn" onclick="sendCmd('/全量扫描')">📡 全量扫描</button>
+    <button class="cmd-btn" onclick="sendCmd('/扫描A股')">🇨🇳 扫描A股</button>
+    <button class="cmd-btn" onclick="sendCmd('/扫描美股')">🇺🇸 扫描美股</button>
+    <button class="cmd-btn" onclick="pickStock('/分析')">📊 分析</button>
+    <button class="cmd-btn" onclick="sendCmd('/路由')">🗺️ 路由</button>
+  </div>
+
+  <!-- ⚡ 交易 -->
+  <div class="group-title">⚡ 交易</div>
+  <div class="btn-group">
+    <button class="cmd-btn" onclick="sendCmd('/开火')">🔥 开火</button>
+    <button class="cmd-btn" onclick="sendCmd('/进攻')">⚔️ 进攻</button>
+    <button class="cmd-btn" onclick="sendCmd('/反击')">🛡️ 反击</button>
+    <button class="cmd-btn" onclick="pickStock('/止损')">🛑 止损</button>
+    <button class="cmd-btn" onclick="pickStock('/止盈')">💰 止盈</button>
+    <button class="cmd-btn" onclick="pickStock('/大师对撞')">🥊 大师对撞</button>
+  </div>
+
+  <!-- 📊 执行检查 -->
+  <div class="group-title">📊 执行检查</div>
+  <div class="btn-group">
+    <button class="cmd-btn" onclick="sendCmd('/盘前')">🌅 盘前</button>
+    <button class="cmd-btn" onclick="pickStock('/复盘')">📋 复盘</button>
+  </div>
+
+  <!-- 🤖 联邦投顾 -->
+  <div class="group-title">🤖 联邦投顾</div>
+  <div class="btn-group">
+    <button class="cmd-btn" onclick="window.open('/federal-advisor.html','_blank')" style="grid-column:1/-1">🤖 联邦投顾 · 完整法典</button>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 🛡️ 审计 -->
+  <div class="group-title">🛡️ 审计</div>
+  <div class="btn-group">
+    <button class="cmd-btn" onclick="sendCmd('/风控')">🛡️ 风控</button>
+    <button class="cmd-btn" onclick="sendCmd('/结构检查')">🏗️ 结构</button>
+    <button class="cmd-btn" onclick="sendCmd('/命中率')">🎯 命中率</button>
+    <button class="cmd-btn" onclick="sendCmd('/自审')">🔍 自审</button>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ⚙️ 配置 -->
+  <div class="group-title" style="cursor:pointer;user-select:none" onclick="toggleConfig()" id="cfgToggle">⚙️ 配置 <span id="cfgArrow">▶</span></div>
+  <div id="cfgSection" style="display:none">
+    <label style="display:block;font-size:11px;color:var(--color-text-muted);margin:4px 0 2px">Token</label>
+    <input id="cfg-key" type="password" placeholder="sk-..." style="width:100%;padding:6px 8px;border:1px solid var(--color-border);border-radius:6px;font-size:12px;font-family:inherit;background:var(--bg-chat);color:var(--color-text);outline:0">
+    <label style="display:block;font-size:11px;color:var(--color-text-muted);margin:6px 0 2px">App Code</label>
+    <input id="cfg-code" placeholder="选填，应用code（可不填）" style="width:100%;padding:6px 8px;border:1px solid var(--color-border);border-radius:6px;font-size:12px;font-family:inherit;background:var(--bg-chat);color:var(--color-text);outline:0">
+    <label style="display:block;font-size:11px;color:var(--color-text-muted);margin:6px 0 2px">API 地址</label>
+    <input id="cfg-base" value="" style="width:100%;padding:6px 8px;border:1px solid var(--color-border);border-radius:6px;font-size:12px;font-family:inherit;background:var(--bg-chat);color:var(--color-text);outline:0">
+    <button onclick="saveSidebarConfig()" style="width:100%;margin-top:6px;padding:6px;background:var(--color-accent);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">保存</button>
+    <div style="margin-top:4px;font-size:10px;color:var(--color-text-muted)">代理模式：Token填LinkAI API Key，App Code选填，API地址留空走本地代理</div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="group-title">🌐 美股实时 (12标)</div>
+  <div id="usStockPanel" style="font-size:13px;padding:4px 0">
+    <div class="pool-empty">⏳ 加载中...</div>
+  </div>
+  <div class="divider"></div>
+  <div class="group-title">🇨🇳 A股实时 (10标)</div>
+  <div id="cnStockPanel" style="font-size:13px;padding:4px 0">
+    <div class="pool-empty">⏳ 加载中...</div>
+  </div>
+  <div class="group-title">📊 宏观指标 (6标)</div>
+  <div id="macroPanel" style="font-size:13px;padding:4px 0">
+    <div class="pool-empty">⏳ 加载中...</div>
+  </div>
+
+</div><!-- /sidebar-inner -->
+</div><!-- /sidebar -->
+
+<!-- ====== CHAT AREA (multi-view) ====== -->
+<div class="chat-area">
+
+  <!-- 视图: 对话 -->
+  <div class="view" id="view-chat">
+    <div id="chat"></div>
+    <div id="bar">
+      <label id="upload-btn" class="btn" for="file-input" title="上传文件">📎</label>
+      <input type="file" id="file-input" accept=".txt,.csv,.json,.md,.png,.jpg,.jpeg,.gif,.webp,.pdf,.docx,.xlsx" multiple>
+      <div style="flex:1;display:flex;flex-direction:column">
+        <div id="file-tags" style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:3px"></div>
+        <textarea id="input" rows="1" placeholder="说点什么... (换行Shift+回车)"></textarea>
+      </div>
+      <button id="stop-btn" class="btn" title="中止" onclick="abort()">⏹️</button>
+      <button id="send-btn" class="btn" onclick="send()">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:#fff"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- 视图: 热点新闻 -->
+  <div class="view" id="view-news" style="display:none">
+    <div style="padding:16px;overflow-y:auto;height:100%;display:flex;flex-direction:column">
+      <h2 style="font-size:18px;margin-bottom:12px">🔥 热点新闻</h2>
+      <div id="newsContent" style="flex:1">
+        <div style="text-align:center;color:var(--color-text-muted);padding:40px 0">
+          <div style="font-size:32px;margin-bottom:12px">📰</div>
+          <p>点击下方按钮获取今日热点</p>
+          <button class="cmd-btn" style="margin-top:12px;padding:8px 20px" onclick="sendCmd('/见闻')">🔄 获取今日热点</button>
+          <p style="margin-top:8px;font-size:11px">热点数据将通过 AI 对话自动填充</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 视图: 反击执行 -->
+  <div class="view" id="view-counter" style="display:none">
+    <div style="padding:16px;overflow-y:auto;height:100%;display:flex;flex-direction:column">
+      <h2 style="font-size:18px;margin-bottom:12px">🛡️ 反击执行池</h2>
+      <div id="counterContent" style="flex:1">
+        <div style="text-align:center;color:var(--color-text-muted);padding:40px 0">
+          <div style="font-size:32px;margin-bottom:12px">⏳</div>
+          <p>执行 <code style="background:var(--color-border);padding:2px 6px;border-radius:4px">/扫描</code> 或 <code style="background:var(--color-border);padding:2px 6px;border-radius:4px">/路由</code> 后自动填充</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 视图: 进攻执行 -->
+  <div class="view" id="view-attack" style="display:none">
+    <div style="padding:16px;overflow-y:auto;height:100%;display:flex;flex-direction:column">
+      <h2 style="font-size:18px;margin-bottom:12px">⚔️ 进攻执行池</h2>
+      <div id="attackContent" style="flex:1">
+        <div style="text-align:center;color:var(--color-text-muted);padding:40px 0">
+          <div style="font-size:32px;margin-bottom:12px">⏳</div>
+          <p>执行 <code style="background:var(--color-border);padding:2px 6px;border-radius:4px">/扫描</code> 或 <code style="background:var(--color-border);padding:2px 6px;border-radius:4px">/路由</code> 后自动填充</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /chat-area -->
+
+</div><!-- /main-wrap -->
+
+<!-- Stock picker overlay -->
+<div id="stock-picker">
+  <div class="sp-group">🌐 美股</div>
+  <div class="sp-item" onclick="pickStockItem('QQQ')"><span class="sp-code">QQQ</span><span class="sp-name">纳斯达克100</span></div>
+  <div class="sp-item" onclick="pickStockItem('IVV')"><span class="sp-code">IVV</span><span class="sp-name">标普500</span></div>
+  <div class="sp-item" onclick="pickStockItem('VTI')"><span class="sp-code">VTI</span><span class="sp-name">全市场指数</span></div>
+  <div class="sp-item" onclick="pickStockItem('VEA')"><span class="sp-code">VEA</span><span class="sp-name">发达市场(除美)</span></div>
+  <div class="sp-item" onclick="pickStockItem('IAU')"><span class="sp-code">IAU</span><span class="sp-name">黄金ETF</span></div>
+  <div class="sp-item" onclick="pickStockItem('BBJP')"><span class="sp-code">BBJP</span><span class="sp-name">日本Beta</span></div>
+  <div class="sp-item" onclick="pickStockItem('MUFG')"><span class="sp-code">MUFG</span><span class="sp-name">三菱日联</span></div>
+  <div class="sp-item" onclick="pickStockItem('EWY')"><span class="sp-code">EWY</span><span class="sp-name">韩国MSCI</span></div>
+  <div class="sp-item" onclick="pickStockItem('VNM')"><span class="sp-code">VNM</span><span class="sp-name">越南</span></div>
+  <div class="sp-item" onclick="pickStockItem('FLIN')"><span class="sp-code">FLIN</span><span class="sp-name">印度Franklin</span></div>
+  <div class="sp-item" onclick="pickStockItem('SMIN')"><span class="sp-code">SMIN</span><span class="sp-name">印度小盘</span></div>
+  <div class="sp-item" onclick="pickStockItem('CANE')"><span class="sp-code">CANE</span><span class="sp-name">糖期货ETF</span></div>
+  <div class="sp-group">🇨🇳 A股</div>
+  <div class="sp-item" onclick="pickStockItem('510500')"><span class="sp-code">510500</span><span class="sp-name">中证500</span></div>
+  <div class="sp-item" onclick="pickStockItem('588000')"><span class="sp-code">588000</span><span class="sp-name">科创50</span></div>
+  <div class="sp-item" onclick="pickStockItem('513180')"><span class="sp-code">513180</span><span class="sp-name">恒生科技</span></div>
+  <div class="sp-item" onclick="pickStockItem('513910')"><span class="sp-code">513910</span><span class="sp-name">红利低波</span></div>
+  <div class="sp-item" onclick="pickStockItem('159545')"><span class="sp-code">159545</span><span class="sp-name">中证红利</span></div>
+  <div class="sp-item" onclick="pickStockItem('159302')"><span class="sp-code">159302</span><span class="sp-name">红利指数</span></div>
+  <div class="sp-group">🥇 黄金</div>
+  <div class="sp-item" onclick="pickStockItem('518880')"><span class="sp-code">518880</span><span class="sp-name">黄金ETF</span></div>
+</div>
+
+<!-- Drop overlay -->
+<div id="drop-overlay"><div>📎 松手上传文件</div></div>
+
+<script>
+// ====== STATE ======
+var S = {
+  key: localStorage.getItem('la_key') || '',
+  code: localStorage.getItem('la_code') || '',
+  base: (function(){var b=localStorage.getItem('la_base');return b&&!b.includes('link-ai')?b:''})(),
+  useGateway: localStorage.getItem('la_use_gateway') !== 'false',
+  sid: localStorage.getItem('la_sid') || (function(){ var s='page-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6); localStorage.setItem('la_sid',s); return s; })(),
+  chatMode: 'decision',
+  loading: false,
+  ac: null,
+  timer: null,
+  files: [],
+  usStocks: null,
+  usUpdated: '',
+  cnStocks: null,
+  cnUpdated: '',
+  usdRate: localStorage.getItem('la_usd_rate') ? parseFloat(localStorage.getItem('la_usd_rate')) : 7.2,
+};
+
+// ====== DOM refs ======
+var $ = function(id) { return document.getElementById(id); };
+var chat = $('chat');
+var inp = $('input');
+var sendBtn = $('send-btn');
+var stopBtn = $('stop-btn');
+var status = $('status');
+var fileInput = $('file-input');
+var fileTags = $('file-tags');
+var dropOverlay = $('drop-overlay');
+
+
+// ====== DASHBOARD UPDATE ======
+// updateDashboard removed
+function toggleSidebar() {
+  var sb = $('sidebar');
+  var tgl = $('sidebarToggle');
+  if (window.innerWidth <= 768) {
+    sb.classList.toggle('mobile-open');
+  } else {
+    sb.classList.toggle('collapsed');
+    tgl.textContent = sb.classList.contains('collapsed') ? '▶' : '◀';
+  }
+}
+
+// ====== NETWORK DETECTION ======
+(function initNet() {
+  var ns = $('netStatus');
+  if (!ns) return;
+  function updateNet(online) {
+    if (online === undefined) online = navigator.onLine;
+    ns.textContent = online ? '🟢' : '🔴';
+    ns.style.color = online ? '#4ade80' : '#ef4444';
+    ns.title = online ? '网络正常' : '离线';
+  }
+  updateNet();
+  window.addEventListener('online', function() { updateNet(true); });
+  window.addEventListener('offline', function() { updateNet(false); });
+})();
+
+// ====== 初始化模式 ======
+setMode("decision");
+
+// ====== THEME TOGGLE ======
+function toggleTheme() {
+  var cur = document.documentElement.getAttribute('data-theme');
+  if (cur === 'dark') {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('la_theme', 'light');
+    $('themeToggle').textContent = '🌙';
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('la_theme', 'dark');
+    $('themeToggle').textContent = '☀️';
+  }
+}
+// 初始化主题
+(function(){
+  var t = localStorage.getItem('la_theme');
+  if (t === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    if ($('themeToggle')) $('themeToggle').textContent = '☀️';
+  }
+})();
+
+// ====== MODE SWITCH ======
+function setMode(mode) {
+  S.chatMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(function(b) { b.classList.remove('active'); });
+  var btn = $('mbtn-' + mode);
+  if (btn) btn.classList.add('active');
+  var st = $('status');
+  if (st) { st.textContent = mode === 'decision' ? '🤖 决策模式' : '💬 聊天模式'; st.className = 'ok'; }
+}
+
+// ====== LinkAI 状态检测 ======
+function checkLinkAIStatus() {
+  if (!S.key) {
+    status.textContent = '⚠️ 未配置';
+    status.className = '';
+    return;
+  }
+  status.textContent = '🔄 检测中...';
+  status.className = '';
+  var t = setTimeout(function() {
+    status.textContent = '⏱️ 超时';
+    status.className = 'warn';
+  }, 8000);
+  fetch((S.base || '') + '/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + S.key,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ question: '.', app_code: S.code, session_id: '_status' })
+  }).then(function(r) {
+    clearTimeout(t);
+    if (r.ok) { status.textContent = '✅ LinkAI'; status.className = 'ok'; }
+    else { status.textContent = '⚠️ LinkAI ' + r.status; status.className = 'warn'; }
+  }).catch(function() {
+    clearTimeout(t);
+    status.textContent = '⚠️ 离线'; status.className = 'warn';
+  });
+}
+
+// ====== VIEW SWITCH ======
+function switchView(view) {
+  ['chat','news','counter','attack'].forEach(function(v) {
+    var el = $('view-' + v);
+    if (el) { el.style.display = v === view ? '' : 'none'; }
+  });
+}
+
+// ====== SEND COMMAND (for sidebar buttons) ======
+function sendCmd(cmd) {
+  inp.value = cmd;
+  send();
+}
+
+// ====== 数据录入对话 ======
+var INPUT_FIELDS = [
+  {key: 'dash_a_pos',   label: '🅰️ A股持仓', unit: '¥'},
+  {key: 'dash_a_cash',  label: '🅰️ A股现金', unit: '¥'},
+  {key: 'dash_b_pos',   label: '🅱️ B股持仓(USD)', unit: '$'},
+  {key: 'dash_b_cash',  label: '🅱️ B股现金(USD)', unit: '$'},
+  {key: 'dash_fixed',   label: '📐 固定持仓', unit: '¥'},
+  {key: 'dash_insurance', label: '🛡️ 保险', unit: '¥'},
+];
+
+function startDataInput() {
+  S.inputState = { active: true, idx: 0, values: {} };
+  // 预填已有值
+  INPUT_FIELDS.forEach(function(f) {
+    var v = localStorage.getItem(f.key);
+    if (v) S.inputState.values[f.key] = parseFloat(v);
+  });
+  sys('📝 开始录入全局仪表盘数据，输数字即可，输 完成 结束');
+  askField();
+}
+
+function askField() {
+  if (!S.inputState || !S.inputState.active) return;
+  var fields = INPUT_FIELDS;
+  var idx = S.inputState.idx;
+  if (idx >= fields.length) {
+    finishDataInput();
+    return;
+  }
+  var f = fields[idx];
+  var cur = S.inputState.values[f.key];
+  var hint = cur ? ' (当前: ' + f.unit + cur.toLocaleString() + ')' : '';
+  msg('user', '请输入 ' + f.label + ' (' + f.unit + ')' + hint);
+  var d = document.createElement('div');
+  d.className = 'msg assistant';
+  d.innerHTML = '请告诉我 <strong>' + f.label + '</strong> 的金额是多少' + hint + '？<br><span style="font-size:12px;color:var(--color-text-muted)">直接输数字（如 100000），跳過按回车，退出输 取消</span>';
+  chat.appendChild(d);
+  scroll();
+}
+
+function handleDataInputValue(val) {
+  if (!S.inputState || !S.inputState.active) return;
+  var fields = INPUT_FIELDS;
+  var idx = S.inputState.idx;
+  if (idx >= fields.length) return;
+  var f = fields[idx];
+  if (val > 0) {
+    S.inputState.values[f.key] = val;
+    localStorage.setItem(f.key, val);
+    msg('assistant', '✅ ' + f.label + ' 已保存：' + f.unit + val.toLocaleString());
+  } else {
+    // 跳过（保持原值）
+    if (S.inputState.values[f.key]) {
+      msg('assistant', '⏭️ ' + f.label + ' 保持不变：' + f.unit + S.inputState.values[f.key].toLocaleString());
+    } else {
+      msg('assistant', '⏭️ ' + f.label + ' 跳过（未设置）');
+    }
+  }
+  S.inputState.idx++;
+  askField();
+}
+
+function finishDataInput() {
+  S.inputState.active = false;
+  S.inputState = null;
+  recalcDash();
+  var total = 0;
+  var msgs = ['📊 数据录入完成，仪表盘已更新'];
+  sys('📊 数据录入完成 ✅');
+}
+
+// ====== STOCK PICKER ======
+var pickerCmd = '';
+
+function pickStock(cmd) {
+  pickerCmd = cmd;
+  var pk = $('stock-picker');
+  pk.classList.add('on');
+  // 定位在点击按钮附近
+  var rect = event.target.getBoundingClientRect();
+  var left = rect.left;
+  var top = rect.bottom + 8;
+  // 下方空间不够时：锚定到视口底部，靠 overflow-y:auto 滚动
+  if (top + 420 > window.innerHeight) {
+    top = Math.max(4, window.innerHeight - 420);
+  }
+  if (left + 240 > window.innerWidth) left = window.innerWidth - 240;
+  pk.style.left = left + 'px';
+  pk.style.top = top + 'px';
+}
+function pickStockItem(code) {
+  $('stock-picker').classList.remove('on');
+  inp.value = pickerCmd + ' ' + code;
+  inp.focus();
+  send();
+}
+// 点击其他地方关闭
+document.addEventListener('click', function(e) {
+  var pk = $('stock-picker');
+  if (pk && pk.classList.contains('on') && !pk.contains(e.target) && !e.target.classList.contains('cmd-btn')) {
+    pk.classList.remove('on');
+  }
+});
+
+// ====== UTILS ======
+function esc(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+function render(s) {
+  if (!s) return '';
+  var cbs = [];
+  s = s.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, l, c) {
+    var i = cbs.length;
+    cbs.push('<pre><code>' + esc(c.trim()) + '</code></pre>');
+    return '\x00CODE' + i + '\x00';
+  });
+  var lines = s.split('\n'), html = '', tbl = [], inT = false, sepSeen = false;
+  function outT() {
+    if (tbl.length) { html += buildTable(tbl); tbl = []; }
+    inT = false; sepSeen = false;
+  }
+  for (var i = 0; i < lines.length; i++) {
+    var ln = lines[i];
+    if (ln.indexOf('\x00CODE') === 0) { outT(); html += cbs[parseInt(ln.match(/\d+/)[0])]; continue; }
+    var t = ln.trim();
+    if (/^\|[\s\-:|]+\|$/.test(t)) { if (!inT && tbl.length) { tbl = []; } inT = true; sepSeen = true; continue; }
+    if (t.match(/^\|.+\|$/)) {
+      if (!inT) { inT = true; tbl = []; sepSeen = false; }
+      var cells = [];
+      t.split('|').forEach(function(p, j) { if (j > 0 && j < t.split('|').length - 1) cells.push(p.trim()); });
+      if (cells.length) tbl.push(cells);
+      continue;
+    }
+    outT();
+    if (ln === '') html += '<br>';
+    else {
+      var e = esc(ln);
+      e = e.replace(/`([^`]+)`/g, '<code>$1</code>');
+      e = e.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      e = e.replace(/(https?:\/\/[^\s<>"'()]+)/g, '<a href="$1" target="_blank" style="color:var(--color-accent)">$1</a>');
+      html += e + '<br>';
+    }
+  }
+  outT();
+  return html;
+}
+function buildTable(rows) {
+  if (!rows.length) return '';
+  var h = '<table>';
+  rows.forEach(function(r, ri) {
+    var tag = ri === 0 ? 'th' : 'td';
+    h += '<tr>';
+    r.forEach(function(c) {
+      var color = '';
+      var tc = esc(c);
+      if (tc.indexOf('+') === 0 || (tc.indexOf('%') > 0 && tc.indexOf('+') === 0)) color = 'color:var(--color-red)';
+      else if (tc.indexOf('-') === 0 || (tc.indexOf('%') > 0 && tc.indexOf('-') === 0)) color = 'color:var(--color-green)';
+      tc = tc.replace(/`([^`]+)`/g, '<code>$1</code>');
+      tc = tc.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      h += '<' + tag + ' style="' + (ri === 0 ? 'font-weight:600;text-align:center;background:var(--bg-chat);' : '') + (color || '') + '">' + tc + '</' + tag + '>';
+    });
+    h += '</tr>';
+  });
+  return h + '</table>';
+}
+function scroll() { chat.scrollTop = chat.scrollHeight; }
+
+function msg(role, content, reasoning) {
+  var d = document.createElement('div');
+  d.className = 'msg ' + role;
+  var body = '';
+  if (reasoning) body += '<div class="reasoning"><strong>🧠 思考过程</strong>' + esc(reasoning) + '</div>';
+  body += render(content);
+  d.innerHTML = body;
+  if (role === 'assistant') {
+    var btn = document.createElement('button');
+    btn.textContent = '📋';
+    btn.title = '一键复制';
+    btn.style.cssText = 'position:absolute;top:6px;right:6px;background:var(--color-border);border:none;border-radius:6px;padding:2px 6px;cursor:pointer;font-size:12px;color:var(--color-text-muted);opacity:0;transition:opacity .2s';
+    d.addEventListener('mouseenter', function() { btn.style.opacity = '1'; });
+    d.addEventListener('mouseleave', function() { btn.style.opacity = '0'; });
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var clone = d.cloneNode(true);
+      var cb = clone.querySelector('button');
+      if (cb) cb.remove();
+      navigator.clipboard.writeText(clone.innerText).then(function() {
+        btn.textContent = '✅';
+        setTimeout(function() { btn.textContent = '📋'; }, 1000);
+      }).catch(function() { btn.textContent = '❌'; });
+    });
+    d.appendChild(btn);
+  }
+  chat.appendChild(d);
+  scroll();
+  return d;
+}
+
+function sys(text) {
+  var d = document.createElement('div');
+  d.style.cssText = 'text-align:center;color:var(--color-text-muted);font-size:12px;padding:4px 0';
+  d.textContent = text;
+  chat.appendChild(d);
+  scroll();
+}
+
+// ====== CONFIG (sidebar) ======
+function toggleConfig() {
+  var sec = $('cfgSection');
+  var arrow = $('cfgArrow');
+  if (!sec.style.display || sec.style.display === 'none') {
+    sec.style.display = 'block';
+    arrow.textContent = '▼';
+    $('cfg-key').value = S.key;
+    $('cfg-code').value = S.code;
+    $('cfg-base').value = S.base;
+  } else {
+    sec.style.display = 'none';
+    arrow.textContent = '▶';
+  }
+}
+function toggleSidebarConfig() {
+  var sb = $('sidebar');
+  if (window.innerWidth <= 768) sb.classList.add('mobile-open');
+  else sb.classList.remove('collapsed');
+  var sec = $('cfgSection');
+  var arrow = $('cfgArrow');
+  sec.style.display = 'block';
+  arrow.textContent = '▼';
+  $('cfg-key').value = S.key;
+  $('cfg-code').value = S.code;
+  $('cfg-base').value = S.base;
+  setTimeout(function(){
+    var el = $('cfgToggle');
+    if (el) el.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }, 100);
+}
+function saveSidebarConfig() {
+  S.key = $('cfg-key').value.trim();
+  S.code = $('cfg-code').value.trim();
+  S.base = $('cfg-base').value.trim();
+  localStorage.setItem('la_key', S.key);
+  localStorage.setItem('la_code', S.code);
+  if (S.base) { localStorage.setItem('la_base', S.base); } else { localStorage.removeItem('la_base'); }
+  status.textContent = S.key ? (S.chatMode === 'decision' ? '🤖 决策模式' : '💬 聊天模式') : '⚠️ 未配置';
+  if (S.key) status.className = 'ok';
+  $('cfgSection').style.display = 'none';
+  setTimeout(checkLinkAIStatus, 500);
+  $('cfgArrow').textContent = '▶';
+}
+
+// ====== ABORT ======
+function abort() {
+  if (S.ac) { S.ac.abort(); S.ac = null; }
+  if (S.to) { clearTimeout(S.to); S.to = null; }
+}
+
+// ====== SEND (LinkAI API - 保留原有功能) ======
+// ====== 跑马灯（华尔街见闻快讯·五类均衡） ======
+var tickerItems = [];
+
+// 频道映射：哪些频道是我们关注的
+var WATCHED_CHANNELS = {
+  'forex-channel': '外汇',
+  'hk-stock-channel': '港股',
+  'goldc-channel': '黄金',
+  'us-stock-channel': '美股',
+  'a-stock-channel': 'A股',
+  'global-channel': '全球'
+};
+var CHANNEL_KEYS = Object.keys(WATCHED_CHANNELS);
+
+function fetchTickerNews() {
+  fetch('/api/news')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.items && data.items.length) {
+        tickerItems = data.items.map(function(item) {
+          var t = item.time ? new Date(item.time * 1000) : null;
+          var ts = t ? String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0') : '';
+          var text = (item.title || '') + ' ' + (item.content || '');
+          return { text: text.trim(), time: ts, score: item.score || 0 };
+        }).filter(function(item) { return item.text.length > 10; });
+      }
+    })
+    .catch(function() { /* 静默失败 */ })
+    .then(function() { renderTicker(); });
+}
+
+function renderTicker() {
+  var track = document.getElementById('tickerTrack');
+  if (!track) return;
+  if (!tickerItems.length) {
+    track.innerHTML = '<span class="ticker-item"><span class="dot"></span>📡 华尔街见闻数据获取中...</span>';
+    return;
+  }
+  var html = tickerItems.map(function(item) {
+    return '<span class="ticker-item"><span class="dot"></span><span class="time">' + item.time + '</span>' + esc(item.text) + '</span>';
+  });
+  track.innerHTML = html.join('') + html.join('');
+}
+
+// 启动跑马灯并每10分钟刷新
+setTimeout(function() { fetchTickerNews(); }, 1000);
+setInterval(function() { fetchTickerNews(); }, 600000);
+
+// ====== 美股实时行情（Yahoo Finance代理） ======
+function fetchUSStocks(callback) {
+  fetch('/api/yahoo')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      S.usStocks = data.stocks;
+      S.usUpdated = data.updated;
+      var macroCodes = ['^TYX','^TNX','BZ=F','DX-Y.NYB','DBC','^VIX'];
+      var panel = document.getElementById('usStockPanel');
+      if (panel) {
+        var count = 0;
+        var html = '<div style="font-size:10px;color:var(--color-text-muted);margin-bottom:4px">📡 ' + data.updated + '</div>';
+        data.stocks.forEach(function(s) {
+          if (macroCodes.indexOf(s.code) !== -1) return; // 宏观指标跳过
+          count++;
+          var price = (s.price != null) ? Number(s.price).toFixed(2) : '--';
+          var pct = s.change_pct;
+          var cls = 'flat', arrow = '';
+          if (pct != null) {
+            if (pct > 0) { cls = 'up'; arrow = '▲'; }
+            else if (pct < 0) { cls = 'down'; arrow = '▼'; }
+            else { arrow = '─'; }
+          }
+          html += '<div class="pool-item">' +
+            '<span class="code">' + esc(s.code) + '</span>' +
+            '<span class="dir" style="color:' + (pct > 0 ? 'var(--color-red)' : pct < 0 ? 'var(--color-green)' : 'var(--color-text-muted)') + '">' + arrow + '</span>' +
+            '<span class="pct ' + cls + '">' + (pct != null ? (pct > 0 ? '+' : '') + Number(pct).toFixed(2) + '%' : '--') + '</span>' +
+            '<span style="margin-left:4px;font-weight:600;font-size:11px;color:var(--color-text)">$' + price + '</span>' +
+            '</div>';
+        });
+        panel.innerHTML = html;
+      }
+      // 同步渲染宏观指标
+      renderMacroPanel(data);
+      if (callback) callback(data);
+    })
+    .catch(function() {
+      var panel = document.getElementById('usStockPanel');
+      if (panel) panel.innerHTML = '<div class="pool-empty">⚠️ 行情代理未启动 (需要 python3 yahoo_proxy.py)</div>';
+    });
+}
+
+function renderMacroPanel(data) {
+  var panel = document.getElementById('macroPanel');
+  if (!panel) return;
+  var macroCodes = ['^TYX','^TNX','BZ=F','DX-Y.NYB','DBC','^VIX'];
+  var macroData = data.stocks.filter(function(s) { return macroCodes.indexOf(s.code) !== -1; });
+  if (!macroData.length) return;
+  var html = '<div style="font-size:10px;color:var(--color-text-muted);margin-bottom:2px">📡 ' + data.updated + '</div>';
+  macroData.forEach(function(s) {
+    var price = (s.price != null) ? (s.code.indexOf('^T')===0 ? Number(s.price).toFixed(4) : Number(s.price).toFixed(2)) : '--';
+    var pct = s.change_pct;
+    var cls = 'flat', arrow = '';
+    if (pct != null) {
+      if (pct > 0) { cls = 'up'; arrow = '▲'; }
+      else if (pct < 0) { cls = 'down'; arrow = '▼'; }
+      else { arrow = '─'; }
+    }
+    var display = s.code;
+    if (s.code === '^TYX') display = 'US20Y';
+    else if (s.code === '^TNX') display = 'US10Y';
+    else if (s.code === 'BZ=F') display = 'BRENT';
+    else if (s.code === 'DX-Y.NYB') display = 'DXY';
+    else if (s.code === 'DBC') display = 'CRB';
+    else if (s.code === '^VIX') display = 'VIX';
+    html += '<div class="pool-item">' +
+      '<span class="code">' + esc(display) + '</span>' +
+      '<span class="dir" style="color:' + (pct > 0 ? 'var(--color-red)' : pct < 0 ? 'var(--color-green)' : 'var(--color-text-muted)') + '">' + arrow + '</span>' +
+      '<span class="pct ' + cls + '">' + (pct != null ? (pct > 0 ? '+' : '') + Number(pct).toFixed(2) + '%' : '--') + '</span>' +
+      '<span style="margin-left:4px;font-weight:600;font-size:11px;color:var(--color-text)">' + price + '</span>' +
+      '</div>';
+  });
+  panel.innerHTML = html;
+}
+// ====== A股实时行情 (腾讯) ======
+function fetchCNStocks() {
+  var panel = document.getElementById('cnStockPanel');
+  if (!panel) return;
+  panel.innerHTML = '<div class="pool-empty">⏳ 加载中...</div>';
+  var codes = 'sh510500,sh588000,sh513180,sh513910,sz159302,sh518880';
+  // 优先直接调用腾讯API (支持CORS)
+  fetchCNFromTencent(panel, codes);
+}
+
+function fetchCNFromTencent(panel, codes) {
+  fetch('https://qt.gtimg.cn/q=' + codes)
+    .then(function(r) { return r.arrayBuffer(); })
+    .then(function(buf) {
+      var text = new TextDecoder('gbk').decode(buf);
+      var matches = text.match(/v_\w+="([^"]+)"/g);
+      if (!matches || matches.length === 0) { throw new Error('No data'); }
+      var html = ''; var dataList = [];
+      matches.forEach(function(m) {
+        var inner = m.match(/"(.+)"/)[1];
+        var parts = inner.split('~');
+        if (parts.length < 35) return;
+        var name = parts[1], code = parts[2];
+        var price = parseFloat(parts[3]) || 0;
+        var chgPct = parseFloat(parts[32]) || 0;
+        var dir = chgPct > 0 ? '▲' : chgPct < 0 ? '▼' : '─';
+        var pctStr = (chgPct > 0 ? '+' : '') + chgPct.toFixed(2) + '%';
+        var priceStr = price.toFixed(price < 10 ? 3 : 2);
+        dataList.push({code:code, name:name, price:price, chgPct:chgPct});
+        html += '<div class="pool-item"><span class="code" title="'+esc(name)+'">'+esc(code.slice(-6))+'</span>'
+          + '<span class="dir" style="color:'+(chgPct>0?'var(--color-red)':chgPct<0?'var(--color-green)':'var(--color-text-muted)')+'">'+dir+'</span>'
+          + '<span class="pct '+(chgPct>0?'up':'down')+'">'+pctStr+'</span>'
+          + '<span style="margin-left:4px;font-weight:600;font-size:11px;color:var(--color-text)">'+priceStr+'</span></div>';
+      });
+      if (html) {
+        var ts = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+        panel.innerHTML = '<div style="font-size:10px;color:var(--color-text-muted);margin-bottom:4px">📡 '+ts+'</div>'+html;
+        S.cnStocks = dataList; S.cnUpdated = ts;
+      } else {
+        panel.innerHTML = '<div class="pool-empty">⚠️ A股数据不可用</div>';
+      }
+    })
+    .catch(function(err) {
+      // Fallback: local proxy
+      panel.innerHTML = '<div class="pool-empty">⏳ 试本地代理...</div>';
+      fetch('/api/yahoo/cn')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data && data.stocks) { renderCNStocks(panel, data.stocks); }
+        }).catch(function() {
+          panel.innerHTML = '<div class="pool-empty">⚠️ A股不可用，请启动stock_proxy.py</div>';
+        });
+    });
+}
+
+function renderCNStocks(panel, stocks) {
+  var html = '';
+  stocks.forEach(function(s) {
+    var code = s.code.replace('.SS','').replace('.SZ','');
+    var name = s.name;
+    var price = s.price || (s.open || 0);
+    var chgPct = s.change_pct || 0;
+    var priceStr = price.toFixed(price < 10 ? 3 : 2);
+    var chgStr = (chgPct > 0 ? '+' : '') + chgPct.toFixed(2) + '%';
+    var dir = chgPct > 0 ? '▲' : chgPct < 0 ? '▼' : '─';
+    var cls = chgPct > 0 ? 'up' : chgPct < 0 ? 'down' : 'flat';
+    html += '<div class="pool-item">' +
+      '<span class="code" title="' + esc(name) + '">' + esc(code) + '</span>' +
+      '<span class="dir" style="color:' + (chgPct > 0 ? 'var(--color-red)' : chgPct < 0 ? 'var(--color-green)' : 'var(--color-text-muted)') + '">' + dir + '</span>' +
+      '<span class="pct ' + cls + '">' + chgStr + '</span>' +
+      '</div>';
+  });
+  if (!html) html = '<div class="pool-empty">暂无数据</div>';
+  panel.innerHTML = html;
+}
+function showCNStocks() {
+  if (S.loading) { sys('⏳ 上一条请求还在处理中'); return; }
+  var now = new Date();
+  var ts = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 ' +
+    String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' +
+    String(now.getSeconds()).padStart(2,'0') + ' (UTC+8)';
+  
+  var codes = 'sh510500,sh588000,sh513180,sh513910,sz159302,sh518880';
+  var url = 'https://qt.gtimg.cn/q=' + codes;
+  
+  var panel = document.getElementById('cnStockPanel');
+  if (panel) panel.innerHTML = '<div class="pool-empty">⏳ 加载中...</div>';
+  
+  fetch(url)
+    .then(function(r) { return r.arrayBuffer(); })
+    .then(function(buf) {
+      var text = new TextDecoder('gbk').decode(buf);
+      var lines = text.trim().split('\n');
+      var output = '🇨🇳 A股实时行情 · ' + ts + '\n';
+      output += '📍────────────────────────\n';
+      
+      var matches = text.match(/v_\w+="([^"]+)"/g);
+      if (!matches) { sys('⚠️ A股行情解析失败'); return; }
+      matches.forEach(function(m) {
+        var inner = m.match(/"(.+)"/)[1];
+        var parts = inner.split('~');
+        if (parts.length < 35) return;
+        var name = parts[1];
+        var code = parts[2];
+        var price = parseFloat(parts[3]) || 0;
+        var chgPct = parseFloat(parts[32]) || 0;
+        
+        var priceStr = price.toFixed(price < 10 ? 3 : 2);
+        var pctStr = (chgPct > 0 ? '+' : '') + chgPct.toFixed(2) + '%';
+        output += code.slice(-6) + '  ' + priceStr + '  ' + pctStr + '  (' + name + ')\n';
+      });
+      
+      output += '📍────────────────────────\n';
+      output += '📡 数据源: 腾讯股票';
+      
+      inp.value = output;
+      send();
+      
+      // 同步更新侧栏展示
+      fetchCNStocks();
+    })
+    .catch(function(err) {
+      sys('⚠️ A股行情获取失败：' + err.message);
+    });
+}
+
+
+// 自动加载A股行情
+setTimeout(function() { fetchCNStocks(); }, 3000);
+setInterval(function() { fetchCNStocks(); }, 60000);
+
+
+fetchUSStocks();
+setInterval(fetchUSStocks, 60000);
+
+
+// 按钮：提取美股数据到对话框
+function showUSStocks() {
+  if (S.loading) { sys('⏳ 上一条请求还在处理中'); return; }
+  var now = new Date();
+  var ts = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 ' +
+    String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' +
+    String(now.getSeconds()).padStart(2,'0') + ' (UTC+8)';
+  fetchUSStocks(function(data) {
+    var text = '🌐 美股实时行情 · ' + ts + '\n';
+    text += '━━━━━━━━━━━━━━━━━━━━\n';
+    data.stocks.forEach(function(s) {
+      var price = (s.price != null) ? Number(s.price).toFixed(2) : '--';
+      var pct = s.change_pct != null ? (s.change_pct > 0 ? '+' : '') + Number(s.change_pct).toFixed(2) + '%' : '--';
+      text += s.code + '  $' + price + '  ' + pct + '\n';
+    });
+    text += '━━━━━━━━━━━━━━━━━━━━\n';
+    text += '📡 数据源: Yahoo Finance · ' + data.updated;
+    inp.value = text;
+    send();
+  });
+}
+
+// 按钮：提取宏观指标到对话框
+function showMacro() {
+  if (S.loading) { sys('⏳ 上一条请求还在处理中'); return; }
+  var now = new Date();
+  var ts = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 ' +
+    String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' +
+    String(now.getSeconds()).padStart(2,'0') + ' (UTC+8)';
+  fetchUSStocks(function(data) {
+    var macroCodes = ['^TYX','^TNX','BZ=F','DX-Y.NYB','DBC','^VIX'];
+    var labels = {'^TYX':'US20Y','^TNX':'US10Y','BZ=F':'BRENT','DX-Y.NYB':'DXY','DBC':'CRB','^VIX':'VIX'};
+    var text = '📊 宏观指标实时数据 · ' + ts + '\n';
+    text += '━━━━━━━━━━━━━━━━━━━━\n';
+    data.stocks.forEach(function(s) {
+      if (macroCodes.indexOf(s.code) === -1) return;
+      var price = (s.price != null) ? Number(s.price).toFixed(2) : '--';
+      var pct = s.change_pct != null ? (s.change_pct > 0 ? '+' : '') + Number(s.change_pct).toFixed(2) + '%' : '--';
+      var label = labels[s.code] || s.code;
+      text += label + '  ' + price + '  ' + pct + '\n';
+    });
+    text += '━━━━━━━━━━━━━━━━━━━━\n';
+    text += '📡 数据源: Yahoo Finance · ' + data.updated;
+    inp.value = text;
+    send();
+  });
+}
+
+// ====== 跑马灯同源热点 ======
+// 与跑马灯使用同一数据源（/api/news），显示20条
+function fetchJianWen() {
+  S.loading = true;
+  sendBtn.style.display = 'none';
+  stopBtn.style.display = '';
+  var ld = document.createElement('div');
+  ld.className = 'loading';
+  ld.innerHTML = '<span class="spinner"></span><span>📡 加载热点新闻...</span>';
+  chat.appendChild(ld);
+  scroll();
+  var asstEl = document.createElement('div');
+  asstEl.className = 'msg assistant';
+  chat.appendChild(asstEl);
+  S.ac = new AbortController();
+  var tag = S.ac.signal;
+  var timer = setTimeout(function(){
+    ld.innerHTML = '<span class="spinner"></span><span style="color:var(--color-yellow)">加载较慢，请稍候...</span>';
+  }, 8000);
+  // 如果tickerItems已经有数据，直接用它，否则重新获取
+  var useData = tickerItems.length > 10 ? tickerItems : null;
+  if (useData) {
+    clearTimeout(timer);
+    if (ld.parentNode) ld.parentNode.removeChild(ld);
+    renderJianWenItems(asstEl, useData, tag);
+    return;
+  }
+  fetch('/api/news', {signal: tag})
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      clearTimeout(timer);
+      if (ld.parentNode) ld.parentNode.removeChild(ld);
+      var items = (data.items || []).map(function(item) {
+        var t = item.time ? new Date(item.time * 1000) : null;
+        var ts = t ? String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0') : '';
+        var text = (item.title || '') + ' ' + (item.content || '');
+        return { text: text.trim(), time: ts, score: item.score || 0 };
+      }).filter(function(item) { return item.text.length > 10; });
+      if (!items.length) { asstEl.textContent = '暂无热点新闻'; done(); return; }
+      renderJianWenItems(asstEl, items, tag);
+    }).catch(function(err) {
+      clearTimeout(timer);
+      if (ld.parentNode) ld.parentNode.removeChild(ld);
+      if (err.name === 'AbortError') { asstEl.textContent = '⏹️ 已中止'; }
+      else { asstEl.textContent = '❌ 加载失败: ' + (err.message || err); }
+      done();
+    });
+  function done() {
+    S.loading = false;
+    sendBtn.style.display = '';
+    stopBtn.style.display = 'none';
+    S.ac = null;
+    inp.focus();
+  }
+}
+
+function renderJianWenItems(asstEl, items, tag) {
+  // 截取前20条
+  var list = items.slice(0, 20);
+  var html = '<div style="font-weight:700;font-size:18px;margin-bottom:8px">📰 华尔街见闻 · 实时快讯</div>';
+  html += '<div style="font-size:13px;color:var(--color-text-muted);margin-bottom:10px">' + new Date().toLocaleDateString('zh-CN') + ' ｜ 共 ' + list.length + ' 条（与跑马灯同源）</div>';
+  list.forEach(function(item, i) {
+    html += '<div style="padding:8px 0;border-bottom:1px solid var(--color-border)">';
+    html += '<span style="font-size:14px;color:var(--color-text-muted);margin-right:6px">[' + item.time + ']</span>';
+    html += '<span style="font-weight:600;font-size:17px;line-height:1.6">' + esc(item.text) + '</span>';
+    html += '</div>';
+  });
+  asstEl.innerHTML = html;
+  // done
+  S.loading = false;
+  sendBtn.style.display = '';
+  stopBtn.style.display = 'none';
+  S.ac = null;
+  inp.focus();
+}
+
+function send() {
+  var text = inp.value.trim();
+  if (!text) return;
+  if (S.loading) { sys('⏳ 上一条请求还在处理中，请稍候或点击⏹️中止'); return; }
+  // /见闻 快捷指令——直连华尔街见闻
+  if (text === '/见闻') {
+    msg('user', text);
+    inp.value = '';
+    inp.style.height = 'auto';
+    fetchJianWen();
+    return;
+  }
+  // 数据录入对话
+  if (text === '/输入') {
+    msg('user', text);
+    inp.value = '';
+    inp.style.height = 'auto';
+    startDataInput();
+    return;
+  }
+  // 数据录入过程中的数字输入
+  if (S.inputState && S.inputState.active && /^[+-]?\d+(\.\d+)?$/.test(text.trim())) {
+    handleDataInputValue(parseFloat(text.trim()));
+    return;
+  }
+  // 数据录入过程中的退出
+  if (S.inputState && S.inputState.active && (text.trim() === '完成' || text.trim() === '退出' || text.trim() === '取消')) {
+    S.inputState.active = false;
+    S.inputState = null;
+    sys('📝 数据录入已取消');
+    return;
+  }
+  if (S.useGateway) {
+    if (!S.key) { sys('⚠️ 请先在配置面板填写网关 Token'); return; }
+  } else {
+    if (!S.key || !S.code) { sys('⚠️ 请先配置API Key和App Code'); return; }
+  }
+
+  // 用户消息 (含附件)
+  var displayText = text;
+  if (S.files && S.files.length) {
+    displayText += '\n' + S.files.map(function(f){ return '📎 ' + f.name; }).join('\n');
+  }
+  var userMsgEl = msg('user', displayText);
+  inp.value = '';
+  inp.style.height = 'auto';
+  S.loading = true;
+  sendBtn.style.display = 'none';
+  stopBtn.style.display = '';
+
+  // 命令状态描述
+  function cmdStatus(t) {
+    var s = t.trim();
+    if (s.startsWith('/复盘')) { var c=s.slice(3).trim(); return '📋 复盘 '+(c||'全池')+' - 拉取'+(c?'行情数据':'全市场')+'...'; }
+    if (s.startsWith('/止损')) { var c=s.slice(3).trim(); return '🛑 止损'+(c?' '+c:'')+' - 风控评估中...'; }
+    if (s.startsWith('/止盈')) { var c=s.slice(3).trim(); return '💰 止盈'+(c?' '+c:'')+' - 盈利分析中...'; }
+    if (s.startsWith('/大师对撞')) { var c=s.slice(5).trim(); return '🥊 大师对撞'+(c?' '+c:'')+' - 双模型PK中...'; }
+    if (s.startsWith('/盘前')) return '🌅 盘前检查中...';
+    if (s.startsWith('/风控')) return '🛡️ 风控审计中...';
+    if (s.startsWith('/结构检查')) return '🏗️ 持仓结构分析中...';
+    if (s.startsWith('/命中率')) return '🎯 命中率统计中...';
+    if (s.startsWith('/自审')) return '🔍 自审中...';
+    return '🤖 处理中...';
+  }
+
+  // Loading
+  var ld = document.createElement('div');
+  ld.className = 'loading';
+  // 冷启动分段提示
+  var phases = [
+    {t:0, msg:'🧠 正在唤醒虾米...'},
+    {t:1.5, msg:'📖 加载上下文...'},
+    {t:4, msg:'🤔 生成回复中...'},
+  ];
+  ld.innerHTML = '<span class="spinner"></span><span>' + phases[0].msg + '</span>';
+  chat.appendChild(ld);
+  scroll();
+
+  // 准备assistant消息容器
+  var asstEl = document.createElement('div');
+  asstEl.className = 'msg assistant';
+  chat.appendChild(asstEl);
+
+  var replyText = '', reasoningText = '', reasoningEl = null, streamStarted = false;
+
+  function hideLoading() { if (ld.parentNode) ld.parentNode.removeChild(ld); }
+
+  // 构建消息体：仅发当前问题，历史上下文由 LinkAI session 维护
+  var fileText = '';
+  if (S.files && S.files.length) {
+    fileText = '\n\n[附件内容]\n' + S.files.map(function(f) { return '=== ' + f.name + ' ===\n' + f.content.substring(0, 5000); }).join('\n\n');
+    S.files = [];
+    fileTags.innerHTML = '';
+  }
+
+  var bodyObj = { stream: S.chatMode === 'decision', question: text + fileText, app_code: S.chatMode === 'decision' ? (S.code || '') : '', session_id: S.sid };
+  var body = JSON.stringify(bodyObj);
+
+  S.ac = new AbortController();
+  sendBtn.style.display = 'none';
+  stopBtn.style.display = '';
+  var elapsed = 0;
+  var maxRetries = 2, retryCount = 0;
+  var TIMEOUT_MS = 120000;
+  S.to = setTimeout(function() {
+    if (S.ac && !S.ac.signal.aborted) {
+      S.ac.abort();
+      clearInterval(tickTimer);
+      hideLoading();
+      sys('⏰ 请求超时(120s)，已自动中止，请重试');
+      S.loading = false; sendBtn.style.display = ''; stopBtn.style.display = 'none'; S.ac = null; inp.focus();
+    }
+  }, TIMEOUT_MS);
+  var timeoutTimer = S.to;
+  var tickTimer = setInterval(function() {
+    elapsed++;
+    if (streamStarted) { clearInterval(tickTimer); return; }
+    // 阶段提示：按等待时间显示不同状态
+    var phaseMsg = phases[0].msg;
+    for (var pi = phases.length - 1; pi >= 0; pi--) {
+      if (elapsed >= phases[pi].t) { phaseMsg = phases[pi].msg; break; }
+    }
+    var suffix = elapsed < 8 ? '' : elapsed < 20 ? ' (' + elapsed + 's，可⏹️中止)' : ' (' + elapsed + 's)，建议⏹️中止重试';
+    var msg = phaseMsg + suffix;
+    var style = '';
+    if (elapsed >= 20) style = ' style="color:var(--color-red)"';
+    else if (elapsed >= 8) style = ' style="color:var(--color-yellow)"';
+    ld.innerHTML = '<span class="spinner"></span><span' + style + '>' + msg + '</span>';
+  }, 1000);
+  
+  function doFetch() {
+    if (S.ac.signal.aborted) { done(); return; }
+    fetch((S.base || '') + '/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + S.key,
+        'Content-Type': 'application/json',
+        'x-openclaw-model': 'deepseek/deepseek-v4-flash',
+        'x-openclaw-session-key': 'page-' + (S.sid || Date.now().toString(36)),
+      },
+      body: body,
+      signal: S.ac.signal
+    }).then(function(apiResp) {
+      clearInterval(tickTimer); clearTimeout(timeoutTimer);
+      if (retryCount > 0) { ld.innerHTML = '<span class="spinner"></span><span style="color:var(--color-green)">重连成功，继续接收...</span>'; }
+      if (!apiResp.ok) { hideLoading(); asstEl.textContent = 'HTTP ' + apiResp.status + ' ' + apiResp.statusText; done(); return; }
+      // 聊天 => 非流式
+      if (!bodyObj.stream) {
+        hideLoading();
+        apiResp.json().then(function(json) {
+          replyText = (json.choices?.[0]?.message?.content) || '';
+          var reas = json.choices?.[0]?.message?.reasoning_content || '';
+          if (reas) asstEl.innerHTML = '<div class="reasoning"><strong>🧠 思考过程</strong>' + esc(reas) + '</div>' + render(replyText);
+          else asstEl.innerHTML = render(replyText);
+          if (!replyText) asstEl.textContent = '(无回复)';
+          done();
+        }).catch(function(e) { hideLoading(); asstEl.textContent = e.message; done(); });
+        return;
+      }
+      // 决策 => 流式
+      var reader = apiResp.body.getReader();
+      var decoder = new TextDecoder();
+      var buffer = '';
+      var pumpRetries = 0;
+      function pump() {
+        if (S.ac.signal.aborted) { done(); return; }
+        reader.read().then(function(result) {
+          if (result.done) { flush(true); done(); return; }
+          pumpRetries = 0;
+          buffer += decoder.decode(result.value, {stream: true});
+          flush(false);
+          pump();
+        }).catch(function(err) {
+          if (err.name === 'AbortError') { done(); return; }
+          pumpRetries++;
+          if (pumpRetries <= 2) {
+            retryCount++;
+            if (!streamStarted) hideLoading();
+            ld.innerHTML = '<span class="spinner"></span><span style="color:var(--color-yellow)">连接波动，自动重连(' + pumpRetries + '/2)...</span>';
+            if (!streamStarted && ld.parentNode !== chat) chat.insertBefore(ld, asstEl.nextSibling || null);
+            scroll();
+            setTimeout(function() { doFetch(); }, pumpRetries * 1500);
+            return;
+          }
+          hideLoading();
+          asstEl.innerHTML += '\n\n⚠️ 流连接中断，已获取以上内容';
+          done();
+        });
+      }
+      function flush(final) {
+        var lines = buffer.split('\n');
+        buffer = final ? '' : lines.pop();
+        lines.forEach(function(line) {
+          var s = line.trim();
+          if (!s || s.indexOf('data: ') !== 0) return;
+          var raw = s.slice(6);
+          if (raw === '[DONE]') return;
+          try {
+            var chunk = JSON.parse(raw);
+            var delta = chunk.choices?.[0]?.delta || {};
+            if (delta.reasoning_content) {
+              reasoningText += delta.reasoning_content;
+              if (!reasoningEl) { reasoningEl = document.createElement('div'); reasoningEl.className = 'reasoning'; reasoningEl.innerHTML = '<strong>🧠 思考过程</strong>'; asstEl.appendChild(reasoningEl); }
+              reasoningEl.innerHTML = '<strong>🧠 思考过程</strong>' + esc(reasoningText);
+              scroll();
+            }
+            if (delta.content) {
+              if (!streamStarted) { hideLoading(); streamStarted = true; }
+              replyText += delta.content;
+              if (reasoningEl) asstEl.innerHTML = reasoningEl.outerHTML + render(replyText);
+              else asstEl.innerHTML = render(replyText);
+              scroll();
+            }
+          } catch(_) {}
+        });
+      }
+      pump();
+      function done() {
+        if (ld && ld.parentNode) ld.parentNode.removeChild(ld);
+        asstEl.style.position = 'relative';
+        var cBtn = document.createElement('button');
+        cBtn.textContent = '📋'; cBtn.title = '一键复制';
+        cBtn.style.cssText = 'position:absolute;top:6px;right:6px;background:var(--color-border);border:none;border-radius:6px;padding:2px 6px;cursor:pointer;font-size:12px;color:var(--color-text-muted);opacity:0;transition:opacity .2s';
+        asstEl.addEventListener('mouseenter', function() { cBtn.style.opacity = '1'; });
+        asstEl.addEventListener('mouseleave', function() { cBtn.style.opacity = '0'; });
+        cBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var clone = asstEl.cloneNode(true);
+          var cb = clone.querySelector('button');
+          if (cb) cb.remove();
+          navigator.clipboard.writeText(clone.innerText).then(function() {
+            cBtn.textContent = '✅'; setTimeout(function() { cBtn.textContent = '📋'; }, 1000);
+          }).catch(function() {});
+        });
+        asstEl.appendChild(cBtn);
+        try { var saved = JSON.parse(localStorage.getItem('la_msgs') || '[]'); saved.push({role:'user', content:text}); saved.push({role:'assistant', content:replyText, reasoning:reasoningText}); if (saved.length > 200) saved = saved.slice(-200); localStorage.setItem('la_msgs', JSON.stringify(saved)); } catch(e) {}
+S.loading = false; sendBtn.style.display = ''; stopBtn.style.display = 'none'; S.ac = null; if (S.to) { clearTimeout(S.to); S.to = null; } inp.focus();
+      }
+    }).catch(function(err) {
+      clearInterval(tickTimer); clearTimeout(timeoutTimer); hideLoading();
+      if (err.name === 'AbortError') { sys('\u23f9\ufe0f 已中止'); S.loading = false; sendBtn.style.display = ''; stopBtn.style.display = 'none'; S.ac = null; inp.focus(); return; }
+      retryCount++;
+      if (retryCount <= maxRetries && !streamStarted) {
+        ld.innerHTML = '<span class="spinner"></span><span>网络不稳定(' + retryCount + '/' + maxRetries + ')，' + Math.round(1000/1000) + 's后重试...</span>';
+        if (ld.parentNode !== chat) chat.insertBefore(ld, asstEl.nextSibling || null);
+        scroll();
+        setTimeout(function() { doFetch(); }, retryCount * 1000);
+        return;
+      }
+      sys('\u274c ' + (retryCount > maxRetries ? '重试' + maxRetries + '次后仍失败：' : '') + (err.message || err));
+      S.loading = false; sendBtn.style.display = ''; stopBtn.style.display = 'none'; S.ac = null; inp.focus();
+    });
+  }
+  doFetch();
+}
+
+// ====== KEY HANDLER ======
+inp.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+    e.preventDefault();
+    send();
+  }
+  setTimeout(function() {
+    e.target.style.height = 'auto';
+    e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
+  }, 0);
+});
+
+// ====== FILE UPLOAD (框架占位) ======
+fileInput.addEventListener('change', function(e) {
+  var files = e.target.files;
+  for (var i = 0; i < Math.min(files.length, 3); i++) {
+    var file = files[i];
+    var reader = new FileReader();
+    var progTag = document.createElement('span');
+    progTag.className = 'file-tag';
+    progTag.textContent = '📎 ' + esc(file.name) + ' 0%';
+    fileTags.appendChild(progTag);
+    reader.onprogress = function(e) {
+      if (e.lengthComputable) {
+        var pct = Math.round(e.loaded / e.total * 100);
+        progTag.textContent = '📎 ' + esc(file.name) + ' ' + pct + '%';
+      }
+    };
+        reader.onload = (function(f, name, pt) {
+      return function(ev) {
+        var buf = new Uint8Array(ev.target.result);
+        var lowerName = name.toLowerCase();
+        var isPdf = lowerName.endsWith('.pdf');
+        var isDocx = lowerName.endsWith('.docx');
+        var isXlsx = lowerName.endsWith('.xlsx');
+        if (isPdf) {
+          // PDF: extract text via PDF.js
+          pt.textContent = '📎 ' + esc(name) + ' 📄 PDF...';
+          pdfjsLib.getDocument({data: buf.slice(0)}).promise.then(function(pdfDoc) {
+            var n = pdfDoc.numPages > 20 ? 20 : pdfDoc.numPages;
+            var proms = [];
+            for (var pi = 1; pi <= n; pi++) {
+              (function(pageNum) {
+                proms.push(pdfDoc.getPage(pageNum).then(function(page) {
+                  return page.getTextContent().then(function(tc) {
+                    return tc.items.map(function(item) { return item.str; }).join(' ');
+                  });
+                }));
+              })(pi);
+            }
+            Promise.all(proms).then(function(texts) {
+              var text = texts.join('\n---\n');
+              var meta = '[PDF] ' + name + ' (total ' + pdfDoc.numPages + 'p, extracted ' + n + 'p)\n\n';
+              S.files.push({name: name, content: meta + text});
+              finishUpload(name, pt, buf.length, pdfDoc.numPages + 'p', '📄');
+            });
+          }).catch(function(err) {
+            pt.textContent = '📎 ' + esc(name) + ' ❌ PDF';
+            pt.style.cssText = 'color:var(--color-red)';
+          });
+        } else if (isDocx) {
+          // DOCX: extract text via JSZip
+          pt.textContent = '📎 ' + esc(name) + ' 📄 DOCX...';
+          parseDocx(buf.buffer).then(function(text) {
+            var content = '[DOCX] ' + name + '\n\n' + text;
+            S.files.push({name: name, content: content});
+            finishUpload(name, pt, text.length, '', '📄');
+          }).catch(function(err) {
+            pt.textContent = '📎 ' + esc(name) + ' ❌ DOCX';
+            pt.style.cssText = 'color:var(--color-red)';
+          });
+        } else if (isXlsx) {
+          // XLSX: extract text via JSZip
+          pt.textContent = '📎 ' + esc(name) + ' 📄 XLSX...';
+          parseXlsx(buf.buffer).then(function(text) {
+            var content = '[XLSX] ' + name + '\n\n' + text;
+            S.files.push({name: name, content: content});
+            finishUpload(name, pt, text.length, '', '📄');
+          }).catch(function(err) {
+            pt.textContent = '📎 ' + esc(name) + ' ❌ XLSX';
+            pt.style.cssText = 'color:var(--color-red)';
+          });
+        } else {
+          // Original text processing with encoding detection
+          var content = new TextDecoder('utf-8', {fatal: false}).decode(buf);
+          if (content.indexOf('\ufffd') >= 0 || content.match(/[\x00-\x08\x0b\x0c\x0e-\x1f]/)) {
+            try { var gbk = new TextDecoder('gbk').decode(buf); if (gbk.indexOf('\ufffd') < 0 && gbk.length > content.replace(/\ufffd/g,'').length) content = gbk; } catch(_) {}
+          }
+          S.files.push({name: name, content: content});
+          var attachEl = document.createElement('div');
+          attachEl.className = 'msg user';
+          attachEl.style.cssText = 'background:var(--color-border);color:var(--color-text);font-size:13px;display:flex;align-items:center;gap:8px;position:relative';
+          attachEl.innerHTML = '<span style="font-size:20px">📎</span><span>' + esc(name) + '</span><span style="font-size:11px;color:var(--color-text-muted)">' + Math.round(buf.length/1024) + 'KB</span>';
+          var xBtn = document.createElement('span');
+          xBtn.textContent = '✕';
+          xBtn.style.cssText = 'position:absolute;top:2px;right:6px;cursor:pointer;color:var(--color-text-muted);font-size:11px;opacity:0;transition:opacity .2s';
+          xBtn.onclick = function() {
+            attachEl.remove();
+            S.files = S.files.filter(function(f){ return f.name !== name; });
+            var tags = fileTags.querySelectorAll('.file-tag');
+            for (var t = 0; t < tags.length; t++) {
+              if (tags[t].textContent.indexOf(name) >= 0) { tags[t].remove(); break; }
+            }
+          };
+          attachEl.appendChild(xBtn);
+          attachEl.addEventListener('mouseenter', function(){ xBtn.style.opacity = '1'; });
+          attachEl.addEventListener('mouseleave', function(){ xBtn.style.opacity = '0'; });
+          attachEl._fileName = name;
+          chat.appendChild(attachEl);
+          scroll();
+        }
+        pt.textContent = '📎 ' + esc(name) + ' ✅';
+        pt.classList.add('ok');
+        pt.style.cssText = 'color:var(--color-green)';
+        var xspan = document.createElement('span');
+        xspan.className = 'x';
+        xspan.textContent = ' ×';
+        xspan.onclick = function() {
+          pt.remove();
+          S.files = S.files.filter(function(f){return f.name !== name;});
+        };
+        pt.appendChild(xspan);
+      };
+    })(file, file.name, progTag);
+    reader.readAsArrayBuffer(file);
+  }
+  fileInput.value = '';
+});
+
+// ====== INIT ======
+(function init() {
+  S.loading = false;
+  if (S.timer) { clearInterval(S.timer); S.timer = null; }
+  var st = $('status');
+  if (S.key && S.code) {
+    if (st) { st.textContent = S.key && S.code ? '🤖 决策模式' : '⚠️ 未配置'; st.className = S.key && S.code ? 'ok' : ''; }
+    setTimeout(checkLinkAIStatus, 1000);
+    setInterval(checkLinkAIStatus, 120000);
+    status.addEventListener('click', function() { checkLinkAIStatus(); });
+    try {
+      var saved = JSON.parse(localStorage.getItem('la_msgs') || '[]');
+      if (saved.length) {
+        saved.forEach(function(m) { msg(m.role, m.content, m.reasoning); });
+      }
+    } catch(e) {
+      localStorage.removeItem('la_msgs');
+    }
+  }
+
+
+function dollarToCny(usd) { return usd * 6.85; }
+
+function recalcDash() {
+  var a_pos = parseFloat(localStorage.getItem('dash_a_pos')) || 0;
+  var a_cash = parseFloat(localStorage.getItem('dash_a_cash')) || 0;
+  var b_pos = parseFloat(localStorage.getItem('dash_b_pos')) || 0;
+  var b_cash = parseFloat(localStorage.getItem('dash_b_cash')) || 0;
+  var fixed = parseFloat(localStorage.getItem('dash_fixed')) || 0;
+  var insurance = parseFloat(localStorage.getItem('dash_insurance')) || 0;
+  var b_cny = dollarToCny(b_pos + b_cash);
+  var total = a_pos + a_cash + dollarToCny(b_pos) + dollarToCny(b_cash) + fixed + insurance;
+  var equity = a_pos + dollarToCny(b_pos); // 不含固定持仓
+  var cash = a_cash + dollarToCny(b_cash);
+  if (total > 0) {
+    $('dashTotal').textContent = '¥' + Math.round(total).toLocaleString();
+    $('dashCashRate').innerHTML = '固' + (fixed/total*100).toFixed(0) + '% | 保' + (insurance/total*100).toFixed(0) + '% | 权' + (equity/total*100).toFixed(0) + '% | 现' + (cash/total*100).toFixed(0) + '%';
+    $('dashCashRate').className = 'val ' + (cash/total > 0.08 ? 'green' : cash/total > 0.05 ? 'yellow' : 'red');
+    $('segFixed').style.width = (fixed/total*100).toFixed(1) + '%';
+    $('segInsurance').style.width = (insurance/total*100).toFixed(1) + '%';
+    $('segEquity').style.width = (equity/total*100).toFixed(1) + '%';
+    $('segCash').style.width = (cash/total*100).toFixed(1) + '%';
+  }
+  var pool = a_cash + dollarToCny(b_cash);
+  $('dashPool').textContent = '¥' + pool.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2});
+  $('dashInsurance').textContent = '¥' + Math.round(insurance).toLocaleString();
+  // 权益持仓合计（A持仓+B持仓折算人民币）
+  var equityTotal = a_pos + dollarToCny(b_pos);
+  var eqEl = $('dashEquityTotal');
+  if (eqEl) eqEl.textContent = '¥' + equityTotal.toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function makeEditable(id, prefix, key, cb) {
+  var el = $(id); if (!el) return;
+  el.style.cursor = 'pointer'; el.title = '点击编辑';
+  el.addEventListener('click', function() {
+    var cur = el.textContent.replace(prefix, '').replace(/,/g, '');
+    var inp = document.createElement('input');
+    inp.type = 'text'; inp.value = cur === '---' ? '' : cur;
+    inp.style.cssText = 'width:80px;padding:2px 4px;border:1px solid var(--color-accent);border-radius:4px;font-size:12px;font-weight:600;text-align:right;font-family:inherit;background:var(--bg-msg-assistant);color:var(--color-text)';
+    inp.addEventListener('blur', function() {
+      var num = parseFloat(inp.value.replace(/,/g, ''));
+      if (isNaN(num) || inp.value.trim() === '') { el.textContent = prefix + '---'; localStorage.removeItem('dash_'+key); }
+      else { el.textContent = prefix + Number(num).toLocaleString(); localStorage.setItem('dash_'+key, num); }
+      if (cb) cb();
+    });
+    inp.addEventListener('keydown', function(e) { if (e.key==='Enter') inp.blur(); });
+    el.textContent = ''; el.appendChild(inp); inp.focus(); inp.select();
+  });
+}
+
+function initDashboard() {
+  var fields = [
+    ['dashAPos', '¥', 'a_pos'], ['dashACash', '¥', 'a_cash'],
+    ['dashBPos', '$', 'b_pos'], ['dashBCash', '$', 'b_cash'],
+  ];
+  // 固定持仓也做成可编辑，复用 segFixed 旁边的空位... 不，加个单独的字段
+  fields.forEach(function(f) {
+    var v = localStorage.getItem('dash_'+f[2]);
+    if (v) $(f[0]).textContent = f[1] + Number(v).toLocaleString();
+    makeEditable(f[0], f[1], f[2], recalcDash);
+  });
+  var dv_fixed = localStorage.getItem('dash_fixed');
+  if (dv_fixed) $('dashFixed').textContent = '¥' + Number(dv_fixed).toLocaleString();
+  makeEditable('dashFixed', '¥', 'fixed', recalcDash);
+  var dv_ins = localStorage.getItem('dash_insurance');
+  if (dv_ins) $('dashInsurance').textContent = '¥' + Number(dv_ins).toLocaleString();
+  makeEditable('dashInsurance', '¥', 'insurance', recalcDash);
+  recalcDash();
+  // 宏观状态点击切换
+  var badge = $('dashMacro');
+  if (badge) {
+    badge.style.cursor = 'pointer'; badge.title = '点击切换';
+    var sts = ['green','yellow','red'], lbs = ['🟢 正常运行','🟡 速率预警','🔴 熔断'];
+    var cur = localStorage.getItem('dash_macro') || 'green';
+    badge.textContent = lbs[sts.indexOf(cur)]; badge.className = 'macro-badge ' + cur;
+    badge.addEventListener('click', function() {
+      var i = (sts.indexOf(localStorage.getItem('dash_macro')||'green')+1)%3;
+      localStorage.setItem('dash_macro', sts[i]);
+      badge.textContent = lbs[i]; badge.className = 'macro-badge ' + sts[i];
+    });
+  }
+}
+
+  initDashboard();
+  // 欢迎消息
+  sys('🦐 投资决策专家已就绪 · 左侧面板查看全局状态和快捷指令');
+})();
+
+// ========== Parse DOCX (via JSZip) ==========
+function parseDocx(arrayBuffer) {
+  return JSZip.loadAsync(arrayBuffer).then(function(zip) {
+    return zip.file('word/document.xml').async('string');
+  }).then(function(xmlStr) {
+    var parser = new DOMParser();
+    var xmlDoc = parser.parseFromString(xmlStr, 'text/xml');
+    var tEls = xmlDoc.getElementsByTagNameNS('http://schemas.openxmlformats.org/wordprocessingml/2006/main', 't');
+    if (tEls.length === 0) { tEls = xmlDoc.getElementsByTagName('t'); }
+    var texts = [];
+    for (var i = 0; i < tEls.length; i++) { texts.push(tEls[i].textContent); }
+    return texts.join('');
+  });
+}
+
+// ========== Parse XLSX (via JSZip) ==========
+function parseXlsx(arrayBuffer) {
+  return JSZip.loadAsync(arrayBuffer).then(function(zip) {
+    var ssPromise;
+    var ssFile = zip.file('xl/sharedStrings.xml');
+    if (ssFile) {
+      ssPromise = ssFile.async('string').then(function(xmlStr) {
+        var parser = new DOMParser();
+        var xmlDoc = parser.parseFromString(xmlStr, 'text/xml');
+        var sis = xmlDoc.getElementsByTagNameNS('http://schemas.openxmlformats.org/spreadsheetml/2006/main', 'si');
+        if (sis.length === 0) { sis = xmlDoc.getElementsByTagName('si'); }
+        var strs = [];
+        for (var i = 0; i < sis.length; i++) {
+          var tElms = sis[i].getElementsByTagNameNS('http://schemas.openxmlformats.org/spreadsheetml/2006/main', 't');
+          if (tElms.length === 0) { tElms = sis[i].getElementsByTagName('t'); }
+          var txt = '';
+          for (var j = 0; j < tElms.length; j++) { txt += tElms[j].textContent; }
+          strs.push(txt);
+        }
+        return strs;
+      });
+    } else { ssPromise = Promise.resolve([]); }
+    return ssPromise.then(function(sharedStrs) {
+      var sheetEntry = null;
+      zip.forEach(function(relPath, entry) {
+        if (/xl\/worksheets\/sheet\d+\.xml$/.test(relPath) && !sheetEntry) { sheetEntry = entry; }
+      });
+      if (!sheetEntry) return '';
+      return sheetEntry.async('string').then(function(xmlStr) {
+        var parser = new DOMParser();
+        var xmlDoc = parser.parseFromString(xmlStr, 'text/xml');
+        var rows = xmlDoc.getElementsByTagNameNS('http://schemas.openxmlformats.org/spreadsheetml/2006/main', 'row');
+        if (rows.length === 0) { rows = xmlDoc.getElementsByTagName('row'); }
+        var output = [];
+        for (var ri = 0; ri < rows.length; ri++) {
+          var cells = rows[ri].getElementsByTagNameNS('http://schemas.openxmlformats.org/spreadsheetml/2006/main', 'c');
+          if (cells.length === 0) { cells = rows[ri].getElementsByTagName('c'); }
+          var rowVals = [];
+          for (var ci = 0; ci < cells.length; ci++) {
+            var cell = cells[ci];
+            var vEl = cell.getElementsByTagName('v')[0];
+            var val = vEl ? vEl.textContent : '';
+            var tAttr = cell.getAttribute('t');
+            if (tAttr === 's' && sharedStrs.length > 0) {
+              var idx = parseInt(val, 10);
+              if (!isNaN(idx) && idx >= 0 && idx < sharedStrs.length) { val = sharedStrs[idx]; }
+            }
+            rowVals.push(val);
+          }
+          output.push(rowVals.join('\t'));
+        }
+        return output.join('\n');
+      });
+    });
+  });
+}
+
+// ========== Finish upload (shared helper) ==========
+function finishUpload(name, pt, byteLen, extra, icon) {
+  pt.textContent = '📎 ' + esc(name) + ' ✅' + (extra ? ' (' + extra + ')' : '');
+  pt.classList.add('ok');
+  pt.style.cssText = 'color:var(--color-green)';
+  var xspan = document.createElement('span');
+  xspan.className = 'x';
+  xspan.textContent = ' ×';
+  xspan.onclick = function() { pt.remove(); S.files = S.files.filter(function(f){return f.name !== name;}); };
+  pt.appendChild(xspan);
+  var attachEl = document.createElement('div');
+  attachEl.className = 'msg user';
+  attachEl.style.cssText = 'background:var(--color-border);color:var(--color-text);font-size:13px;display:flex;align-items:center;gap:8px;position:relative';
+  attachEl.innerHTML = '<span style="font-size:20px">' + icon + '</span><span>' + esc(name) + '</span><span style="font-size:11px;color:var(--color-text-muted)">' + Math.round(byteLen/1024) + 'KB</span>';
+  var xBtn = document.createElement('span');
+  xBtn.textContent = '✕';
+  xBtn.style.cssText = 'position:absolute;top:2px;right:6px;cursor:pointer;color:var(--color-text-muted);font-size:11px;opacity:0;transition:opacity .2s';
+  xBtn.onclick = function() {
+    attachEl.remove();
+    S.files = S.files.filter(function(f){ return f.name !== name; });
+    var tags = fileTags.querySelectorAll('.file-tag');
+    for (var t = 0; t < tags.length; t++) {
+      if (tags[t].textContent.indexOf(name) >= 0) { tags[t].remove(); break; }
+    }
+  };
+  attachEl.appendChild(xBtn);
+  attachEl.addEventListener('mouseenter', function(){ xBtn.style.opacity = '1'; });
+  attachEl.addEventListener('mouseleave', function(){ xBtn.style.opacity = '0'; });
+  attachEl._fileName = name;
+  chat.appendChild(attachEl);
+  scroll();
+}
+</script>
+</body>
+</html>
