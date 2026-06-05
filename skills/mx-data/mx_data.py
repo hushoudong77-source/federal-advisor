@@ -327,7 +327,7 @@ def main():
     """命令行入口 - 保持与 MX_FinData 一致的使用方式，输出 Excel 多 sheet"""
     if len(sys.argv) < 2:
         print(f"用法: {sys.argv[0]} \"查询问句\" [输出目录]")
-        print(f"默认输出目录: /root/.openclaw/workspace/mx_data/output/")
+        print(f"默认输出目录: /home/agent/cow/tmp/mx_data/output/")
         print("示例: python mx_data.py \"同花顺最近3年每天的最新价\"")
         sys.exit(1)
     
@@ -338,7 +338,7 @@ def main():
     else:
         query = " ".join(sys.argv[1:])
         # Default output to fixed directory
-        output_dir = Path("/root/.openclaw/workspace/mx_data/output")
+        output_dir = Path("/home/agent/cow/tmp/mx_data/output")
     
     # Ensure output directory exists
     output_dir.mkdir(parents=True, exist_ok=True)

@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "updated_at": "2026-06-03T21:34:17.840262",
+  "updated_at": "2026-06-05T21:36:00.210158",
   "tasks": {
     "cc1d241a": {
       "id": "cc1d241a",
       "name": "每日地缘追踪早报",
       "enabled": true,
       "created_at": "2026-04-19T17:12:52.709167",
-      "updated_at": "2026-06-03T08:04:34.719601",
+      "updated_at": "2026-06-05T10:10:52.897341",
       "schedule": {
         "type": "cron",
         "expression": "0 8 * * *"
@@ -20,15 +20,15 @@
         "is_group": false,
         "channel_type": "weixin"
       },
-      "next_run_at": "2026-06-04T08:00:00",
-      "last_run_at": "2026-06-03T08:00:10.043452"
+      "next_run_at": "2026-06-06T08:00:00",
+      "last_run_at": "2026-06-04T08:00:00.813922"
     },
     "1d9c4c40": {
       "id": "1d9c4c40",
       "name": "市场日报-完整版",
       "enabled": true,
       "created_at": "2026-04-19T17:17:06.809966",
-      "updated_at": "2026-06-03T08:04:48.678686",
+      "updated_at": "2026-06-05T10:10:52.924022",
       "schedule": {
         "type": "cron",
         "expression": "0 8 * * *"
@@ -41,15 +41,15 @@
         "is_group": false,
         "channel_type": "weixin"
       },
-      "next_run_at": "2026-06-04T08:00:00",
-      "last_run_at": "2026-06-03T08:00:10.043452"
+      "next_run_at": "2026-06-06T08:00:00",
+      "last_run_at": "2026-06-04T08:00:00.813922"
     },
     "1929f0e3": {
       "id": "1929f0e3",
       "name": "workday-scan-1000",
       "enabled": true,
       "created_at": "2026-04-23T00:31:14.082037",
-      "updated_at": "2026-06-03T10:04:50.585845",
+      "updated_at": "2026-06-05T10:10:52.990986",
       "schedule": {
         "type": "cron",
         "expression": "0 10 * * 1-5"
@@ -62,15 +62,15 @@
         "is_group": false,
         "channel_type": "weixin"
       },
-      "next_run_at": "2026-06-04T10:00:00",
-      "last_run_at": "2026-06-03T10:01:40.558583"
+      "next_run_at": "2026-06-08T10:00:00",
+      "last_run_at": "2026-06-04T10:00:04.475869"
     },
     "fb504945": {
       "id": "fb504945",
       "name": "workday-scan-2130",
       "enabled": true,
       "created_at": "2026-04-23T00:31:27.267228",
-      "updated_at": "2026-06-03T21:34:17.829518",
+      "updated_at": "2026-06-05T21:36:00.198752",
       "schedule": {
         "type": "cron",
         "expression": "30 21 * * 1-5"
@@ -83,8 +83,8 @@
         "is_group": false,
         "channel_type": "weixin"
       },
-      "next_run_at": "2026-06-04T21:30:00",
-      "last_run_at": "2026-06-03T21:30:25.782912"
+      "next_run_at": "2026-06-08T21:30:00",
+      "last_run_at": "2026-06-05T21:30:27.893440"
     }
   }
 }

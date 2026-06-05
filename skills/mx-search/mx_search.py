@@ -153,7 +153,7 @@ def main():
     # 解析参数
     if len(sys.argv) < 2:
         print(f"用法: {sys.argv[0]} \"搜索问句\" [输出目录]")
-        print(f"默认输出目录: /root/.openclaw/workspace/mx_data/output/")
+        print(f"默认输出目录: /home/agent/cow/tmp/mx_data/output/")
         print("示例: python mx_search.py \"格力电器最新研报\"")
         sys.exit(1)
     
@@ -164,7 +164,7 @@ def main():
     else:
         query = " ".join(sys.argv[1:])
         # 默认输出到固定目录
-        output_dir = Path("/root/.openclaw/workspace/mx_data/output")
+        output_dir = Path("/home/agent/cow/tmp/mx_data/output")
     
     # 确保输出目录存在
     output_dir.mkdir(parents=True, exist_ok=True)

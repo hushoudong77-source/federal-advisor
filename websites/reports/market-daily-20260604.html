@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>联邦投顾 · 市场日报 — 2026-06-04（周三早报）</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0e14;
+    color: #c8d6e5;
+    line-height: 1.6;
+    padding: 0;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 24px 20px; }
+  
+  header {
+    text-align: center;
+    padding: 40px 20px 30px;
+    border-bottom: 1px solid #1e2d3d;
+    margin-bottom: 30px;
+  }
+  header h1 { font-size: 1.8em; color: #f0f0f0; font-weight: 700; }
+  header .subtitle { color: #5c7a9a; font-size: 0.9em; margin-top: 6px; }
+  header .date-badge {
+    display: inline-block;
+    background: #1a2733;
+    border: 1px solid #2a4a5e;
+    border-radius: 6px;
+    padding: 4px 14px;
+    margin-top: 10px;
+    font-size: 0.85em;
+    color: #7dabcf;
+  }
+
+  .section {
+    background: #111922;
+    border: 1px solid #1e2d3d;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .section-header {
+    background: #162130;
+    padding: 14px 20px;
+    font-weight: 600;
+    font-size: 1.05em;
+    color: #e0e8f0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-header .icon { font-size: 1.2em; }
+  .section-body { padding: 20px; }
+
+  .alert-banner {
+    background: linear-gradient(135deg, #1a0a0a, #2a1015);
+    border: 1px solid #4a2020;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    color: #f0a0a0;
+  }
+  .alert-banner .alert-title { font-weight: 700; font-size: 1.1em; color: #ff6060; margin-bottom: 8px; }
+  .alert-banner .alert-body { font-size: 0.95em; line-height: 1.7; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88em;
+  }
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    background: #162130;
+    color: #7dabcf;
+    font-weight: 600;
+    font-size: 0.82em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  td {
+    padding: 9px 12px;
+    border-top: 1px solid #1a2a3a;
+  }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .up { color: #4caf50; font-weight: 600; }
+  .down { color: #f44336; font-weight: 600; }
+  .flat { color: #8899aa; }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.78em;
+    font-weight: 600;
+  }
+  .tag-green { background: #0d2818; color: #4caf50; }
+  .tag-red { background: #2a0d0d; color: #f44336; }
+  .tag-yellow { background: #2a2005; color: #ffc107; }
+  .tag-blue { background: #0d1a2a; color: #64b5f6; }
+  .tag-gray { background: #1a1a1a; color: #8899aa; }
+
+  .macro-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .macro-card {
+    background: #111922;
+    border: 1px solid #1e2d3d;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .macro-card .label { font-size: 0.78em; color: #5c7a9a; text-transform: uppercase; letter-spacing: 0.5px; }
+  .macro-card .value { font-size: 1.4em; font-weight: 700; color: #e0e8f0; margin: 4px 0; }
+  .macro-card .change { font-size: 0.85em; }
+
+  .insight-block {
+    background: #111922;
+    border-left: 3px solid #3a6b8c;
+    padding: 14px 18px;
+    margin: 12px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .insight-block.red { border-left-color: #c0392b; }
+  .insight-block.green { border-left-color: #27ae60; }
+  .insight-block.yellow { border-left-color: #f39c12; }
+
+  .footer-note {
+    text-align: center;
+    color: #3a5068;
+    font-size: 0.78em;
+    padding: 30px 0 20px;
+    border-top: 1px solid #1e2d3d;
+    margin-top: 30px;
+  }
+
+  .pos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) { .pos-grid { grid-template-columns: 1fr; } }
+
+  .highlight-num {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    color: #e0e8f0;
+  }
+
+  .divider { border: none; border-top: 1px solid #1a2a3a; margin: 16px 0; }
+
+  .cmd-list { list-style: none; }
+  .cmd-list li {
+    padding: 10px 14px;
+    margin: 6px 0;
+    background: #111922;
+    border-radius: 6px;
+    border-left: 3px solid #1e2d3d;
+  }
+  .cmd-list li.p0 { border-left-color: #c0392b; }
+  .cmd-list li.p1 { border-left-color: #f39c12; }
+  .cmd-list li.p2 { border-left-color: #3a6b8c; }
+  .cmd-num {
+    display: inline-block;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 22px;
+    font-weight: 700;
+    font-size: 0.78em;
+    margin-right: 8px;
+  }
+  .cmd-num.red { background: #c0392b; color: #fff; }
+  .cmd-num.yellow { background: #f39c12; color: #000; }
+  .cmd-num.blue { background: #3a6b8c; color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<header>
+  <h1>🛰️ 联邦投顾 · 市场日报</h1>
+  <div class="subtitle">2026-06-04（周三早报）· 非农周第三天</div>
+  <div class="date-badge">数据截止：A股 6/3 收盘 · 美股 6/2 收盘</div>
+</header>
+
+<!-- 核心摘要 -->
+<div class="alert-banner">
+  <div class="alert-title">⚡ 核心摘要 — 央行逆回购归零 · 流动性边际收紧信号</div>
+  <div class="alert-body">
+    6月3日央行7天期逆回购操作<span style="color:#ff6060;font-weight:700">归零</span>——单日净回笼1776亿元，三天累计净回笼6734亿元。DR007降至<span class="highlight-num">1.3428%</span>大幅低于政策利率1.40%。A股连续两日反弹（科创50两日累计+3.7%），但恒生科技6/3回落-1.69%，港股与A股继续背离。美股6/2温和上涨，US10Y维持4.49%。<strong>非农前夜（6/5周四）——市场进入静默待命状态。</strong>
+  </div>
+</div>
+
+<!-- 宏观锚点 -->
+<div class="section">
+  <div class="section-header">
+    <span class="icon">🌐</span> 宏观重力场
+  </div>
+  <div class="section-body">
+    <div class="macro-grid">
+      <div class="macro-card">
+        <div class="label">US10Y</div>
+        <div class="value">4.49%</div>
+        <div class="change"><span class="up">+3bp</span> (6/3 vs 6/2 4.46%)</div>
+      </div>
+      <div class="macro-card">
+        <div class="label">IEF 哨兵</div>
+        <div class="value">94.24</div>
+        <div class="change"><span class="flat">+0.07%</span> (6/2) · 🟢安全区</div>
+      </div>
+      <div class="macro-card">
+        <div class="label">DR007</div>
+        <div class="value">1.3428%</div>
+        <div class="change"><span class="down">-0.14bp</span> (6/3) · 🟢极度宽松</div>
+      </div>
+      <div class="macro-card">
+        <div class="label">USDCNY 中间价</div>
+        <div class="value">6.8184</div>
+        <div class="change"><span class="flat">-0.16%</span> (6/3)</div>
+      </div>
+      <div class="macro-card">
+        <div class="label">SHIBOR ON</div>
+        <div class="value">1.316%</div>
+        <div class="change"><span class="flat">+0.1bp</span> (6/3)</div>
+      </div>
+      <div class="macro-card">
+        <div class="label">VIX</div>
+        <div class="value">~16.05</div>
+        <div class="change"><span class="flat">NORMAL</span> (6/1)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 全球指数收盘 -->
+<div class="section">
+  <div class="section-header">
+    <span class="icon">📊</span> 全球指数收盘
+  </div>
+  <div class="section-body">
+    <table>
+      <thead>
+        <tr><th>指数</th><th>代码</th><th>收盘价</th><th>涨跌幅</th><th>趋势</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>标普500</td><td>SPY</td><td>$759.57</td><td class="up">+0.14%</td><td>▲ 6/2</td></tr>
+        <tr><td>纳斯达克100</td><td>QQQ</td><td>$746.16</td><td class="up">+0.46%</td><td>▲ 6/2</td></tr>
+        <tr><td>沪深300</td><td>000300</td><td>4,938.81</td><td class="up">+0.49%</td><td>▲ 6/3</td></tr>
+        <tr><td>中证500</td><td>000905</td><td>8,362.16</td><td class="up">+0.49%</td><td>▲ 6/3</td></tr>
+        <tr><td>创业板</td><td>399006</td><td>4,122.99</td><td class="up">+1.65%</td><td>▲ 6/3</td></tr>
+        <tr><td>科创50</td><td>000688</td><td>1,726.18</td><td class="up">+2.11%</td><td>▲ 6/3（两日累+3.7%）</td></tr>
+        <tr><td>恒生科技</td><td>513180</td><td>¥0.641</td><td class="down">-1.69%</td><td>▼ 6/3</td></tr>
+        <tr><td>红利指数</td><td>513910</td><td>¥1.576</td><td class="down">-0.38%</td><td>→ 6/3</td></tr>
+        <tr><td>日经225</td><td>BBJP</td><td>$75.78</td><td class="up">+0.57%</td><td>▲ 6/2</td></tr>
+        <tr><td>英国富时</td><td>VEA</td><td>$72.32</td><td class="up">+0.63%</td><td>▲ 6/2</td></tr>
+        <tr><td>韩国综合</td><td>EWY</td><td>$214.53</td><td class="down">-1.00%</td><td>▼ 6/2</td></tr>
+        <tr><td>越南胡志明</td><td>VNM</td><td>$18.13</td><td class="down">-1.68%</td><td>▼ 6/2</td></tr>
+        <tr><td>印度CNX</td><td>FLIN</td><td>$34.51</td><td class="flat">0.00%</td><td>→ 6/2</td></tr>
+        <tr><td>印度小盘</td><td>SMIN</td><td>$66.80</td><td class="up">+0.39%</td><td>▲ 6/2</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 持仓诊断 -->
+<div class="section">
+  <div class="section-header">
+    <span class="icon">💹</span> 持仓诊断
+  </div>
+  <div class="section-body">
+    <div class="pos-grid">
+      <div>
+        <h4 style="color:#7dabcf;margin-bottom:10px;">🟢 权益仓（美股）</h4>
+        <table>
+          <thead><tr><th>标的</th><th>成本</th><th>现价</th><th>估损</th><th>止损</th><th>状态</th></tr></thead>
+          <tbody>
+            <tr><td>QQQ (7股)</td><td>$711.71</td><td class="highlight-num">$746.16</td><td class="up">+4.8%</td><td>追踪</td><td><span class="tag tag-green">🟢浮盈</span></td></tr>
+            <tr><td>IVV (6股)</td><td>$744.63</td><td class="highlight-num">$763.06</td><td class="up">+2.5%</td><td>追踪</td><td><span class="tag tag-green">🟢浮盈</span></td></tr>
+            <tr><td>BBJP (397股)</td><td>$75.69</td><td class="highlight-num">$75.78</td><td class="up">+0.1%</td><td>$71.03</td><td><span class="tag tag-green">🟢建仓首日</span></td></tr>
+            <tr><td>MUFG (614股)</td><td>$18.84</td><td class="highlight-num">$19.17</td><td class="up">+1.8%</td><td>追踪</td><td><span class="tag tag-green">🟢浮盈</span></td></tr>
+            <tr><td>VTI (13股)</td><td>$372.75</td><td class="highlight-num">$374.36</td><td class="up">+0.4%</td><td>固定层</td><td><span class="tag tag-blue">🔵永持</span></td></tr>
+            <tr><td>VEA (72股)</td><td>$72.17</td><td class="highlight-num">$72.32</td><td class="up">+0.2%</td><td>固定层</td><td><span class="tag tag-blue">🔵永持</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h4 style="color:#7dabcf;margin-bottom:10px;">🟡 A股持仓</h4>
+        <table>
+          <thead><tr><th>标的</th><th>成本</th><th>现价</th><th>估损</th><th>止损</th><th>状态</th></tr></thead>
+          <tbody>
+            <tr><td>513910 (¥184K)</td><td>¥1.602</td><td class="highlight-num">¥1.576</td><td class="down">-1.6%</td><td>反击</td><td><span class="tag tag-yellow">🟡浮亏</span></td></tr>
+            <tr><td>159302 (¥99K)</td><td>¥1.322</td><td class="highlight-num">¥1.319</td><td class="down">-0.2%</td><td>反击</td><td><span class="tag tag-yellow">🟡浮亏</span></td></tr>
+            <tr><td>518880</td><td>—</td><td class="highlight-num">¥9.281</td><td class="down">-1.37%</td><td>金盾</td><td><span class="tag tag-gray">⚪空仓</span></td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="color:#7dabcf;margin:14px 0 10px;">🥇 黄金/商品</h4>
+        <table>
+          <thead><tr><th>标的</th><th>成本</th><th>现价</th><th>估损</th><th>止损</th><th>状态</th></tr></thead>
+          <tbody>
+            <tr><td>IAU</td><td>—</td><td>$84.42</td><td class="up">+0.18%</td><td>金盾</td><td><span class="tag tag-gray">⚪已清仓</span></td></tr>
+            <tr><td>CANE (2,525股)</td><td>$9.899</td><td>$9.77</td><td class="down">-1.3%</td><td>$8.414</td><td><span class="tag tag-yellow">🟡浮亏</span></td></tr>
+          </tbody>
+        </table>
+
+        <h4 style="color:#7dabcf;margin:14px 0 10px;">💰 现金/债券</h4>
+        <table>
+          <thead><tr><th>标的</th><th>金额</th><th>状态</th></tr></thead>
+          <tbody>
+            <tr><td>SGOV</td><td>$162,247</td><td><span class="tag tag-green">🟢待命</span></td></tr>
+            <tr><td>511880</td><td>¥311,463</td><td><span class="tag tag-green">🟢待命</span></td></tr>
+            <tr><td>A账户现金</td><td>¥266,578</td><td><span class="tag tag-green">🟢待命</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 分类汇总 -->
+<div class="section">
+  <div class="section-header">
+    <span class="icon">📈</span> 分类汇总
+  </div>
+  <div class="section-body">
+    <table>
+      <thead><tr><th>类别</th><th>今日表现</th><th>重点观察</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>美股</strong> (QQQ/SPY)</td>
+          <td><span class="up">+0.1~0.5%</span></td>
+          <td>US10Y 4.49%仍低于熔断线，IEF 94.24安全区。<strong>非农前温和上涨，无异常</strong></td>
+        </tr>
+        <tr>
+          <td><strong>中港</strong> (红利/科技)</td>
+          <td><span class="flat">分化</span></td>
+          <td>科创50两日累+3.7%反弹，但513180回落-1.69%。<strong>A股与港股继续背离——北向资金在A股买、港股卖？</strong></td>
+        </tr>
+        <tr>
+          <td><strong>亚太</strong> (日/韩/越/印)</td>
+          <td><span class="flat">分化</span></td>
+          <td>BBJP +0.57%接近建仓价，EWY -1.00%回吐周一暴涨。VNM连续两日跌-3%+</td>
+        </tr>
+        <tr>
+          <td><strong>避险</strong> (黄金/SGOV)</td>
+          <td><span class="down">黄金承压</span></td>
+          <td>518880 -1.37%报¥9.281，IAU +0.18%报$84.42。金盾V1.4框架运行中</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 关键洞察 -->
+<div class="section">
+  <div class="section-header">
+    <span class="icon">🔍</span> 今日关键洞察
+  </div>
+  <div class="section-body">
+
+    <div class="insight-block yellow">
+      <strong>🟡 央行逆回购归零 — 流动性边际收紧</strong><br>
+      6/3央行7天期逆回购操作归零，单日净回笼1776亿元，三天累计6734亿元。DR007 1.3428%大幅低于政策利率1.40%。多位经济学家判断并非收紧总量，而是引导过低短期利率温和回归。但<strong>信号意义不可忽视——这是2024年8月以来首次归零。</strong>对A股的影响：短期中性（流动性仍充裕），中期看央行下一步操作（若持续归零则需警惕）。
+    </div>
+
+    <div class="insight-block">
+      <strong>🔵 科创50两日反弹+3.7% — 是超跌反弹还是趋势转折？</strong><br>
+      周一-5.00%暴跌后，周二+1.61%、周三+2.11%。588000从¥1.754反弹至¥1.823（+3.9%）。但513180（恒生科技）6/3回落-1.69%，港股并未跟随A股科技反弹。<strong>A股科技反弹的独立性需要北向资金数据验证——如果北向在净卖出，反弹可能是内资独自支撑的虚假信号。</strong>
+    </div>
+
+    <div class="insight-block green">
+      <strong>🟢 美股温和上涨 · 非农前夜静默</strong><br>
+      QQQ $746.16（+0.46%）、SPY $759.57（+0.14%）。US10Y微升至4.49%但仍低于4.60%安全线。IEF 94.24连续站稳安全区。VIX ~16低位。非农（6/5周四）前市场进入静默模式，无方向性押注。进攻仓位（QQQ/IVV/BBJP/MUFG）持有不动。
+    </div>
+
+    <div class="insight-block red">
+      <strong>🔴 黄金继续承压 — 518880跌至¥9.281</strong><br>
+      518880 6/3-1.37%至¥9.281，距MA120（~9.74）差-4.7%。IAU $84.42小幅反弹但仍在低位。US10Y 4.49%压制金价。金盾V1.4四条件未全绿——<strong>518880暂不买入。</strong>
+    </div>
+
+  </div>
+</div>
+
+<!-- 执行建议 -->
+<div class="section">
+  <div class="section-header">
+    <span class="icon">⚡</span> 今日执行建议
+  </div>
+  <div class="section-body">
+    <ul class="cmd-list">
+      <li class="p0">
+        <span class="cmd-num red">1</span>
+        <strong>🔴 非农前夜（6/5周四20:30）— 不开新仓，持有现有仓位不动</strong><br>
+        非农数据是美联储取消前瞻指引后的<strong>第一个关键数据</strong>，影响力被放大。QQQ/IVV/BBJP/MUFG现有仓位持有，不加仓不减仓。513910/159302同样等待非农落地。
+      </li>
+      <li class="p1">
+        <span class="cmd-num yellow">2</span>
+        <strong>🟡 央行逆回购归零 — 关注后续操作</strong><br>
+        若周四/周五继续归零或"地量"，需重新评估A股流动性环境。当前DR007 1.3428%仍极度宽松，暂不触发熔断。但信号已从"宽松"转为"边际回收"。
+      </li>
+      <li class="p2">
+        <span class="cmd-num blue">3</span>
+        <strong>🔵 恒生科技与A股科技背离 — 需审计北向资金</strong><br>
+        513180 6/3-1.69% vs 科创50+2.11%。建议守东盘中观察北向资金实时流向——若北向净卖出则A股科技反弹的持续性存疑。
+      </li>
+      <li class="p2">
+        <span class="cmd-num blue">4</span>
+        <strong>🔵 SGOV/511880满功率 — 非农前最佳配置</strong><br>
+        现金约¥578K（A+B账户合计）在非农前是最优战略配置。年化~5.2%收益照常入账。
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="footer-note">
+  报告由联邦投顾系统自动生成 | V14.0 | 全池17标覆盖<br>
+  数据源：Tushare P2（美股6/2·A股6/3）| AnySearch P4（DR007/USDCNY）| SHIBOR P2<br>
+  ⚠️ 非农数据6/5周四20:30公布，市场预期+8万（上月-62万）
+</div>
+
+</div>
+</body>
+</html>

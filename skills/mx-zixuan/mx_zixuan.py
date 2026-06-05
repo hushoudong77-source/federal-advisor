@@ -2,7 +2,7 @@
 """
 妙想自选管理skill (mx_zixuan)
 支持查询、添加、删除东方财富自选股
-统一输出到 /root/.openclaw/workspace/mx_data/output/
+统一输出到 /home/agent/cow/tmp/mx_data/output/
 """
 
 import os
@@ -188,12 +188,12 @@ def main():
     parser = argparse.ArgumentParser(description="妙想自选管理工具 (mx_zixuan)")
     parser.add_argument("command", nargs="?", help="命令: query/add/delete 或自然语言指令")
     parser.add_argument("stock", nargs="?", help="股票名称或代码（可选）")
-    parser.add_argument("--output-dir", dest="output_dir", help=f"输出目录，默认 {Path('/root/.openclaw/workspace/mx_data/output')}")
+    parser.add_argument("--output-dir", dest="output_dir", help=f"输出目录，默认 {Path('/home/agent/cow/tmp/mx_data/output')}")
     
     args = parser.parse_args()
     
     # Default output directory
-    default_output = Path("/root/.openclaw/workspace/mx_data/output")
+    default_output = Path("/home/agent/cow/tmp/mx_data/output")
     output_dir = Path(args.output_dir) if args.output_dir else default_output
     output_dir.mkdir(parents=True, exist_ok=True)
     

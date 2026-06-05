@@ -134,41 +134,6 @@
         "enabled": true,
         "category": "database"
     },
-    "mx-data": {
-        "name": "mx-data",
-        "description": "基于东方财富权威数据库的金融数据查询工具，支持行情、财务及关联关系数据。",
-        "source": "custom",
-        "enabled": true,
-        "category": "skill"
-    },
-    "mx-search": {
-        "name": "mx-search",
-        "description": "本skill基于东方财富妙想搜索能力，基于金融场景进行信源智能筛选，用于获取涉及时效性信息或特定事件信息的任务，包括新闻、公告、研报、政策、交易规则、具体事件、各种影响分析、以及需要检索外部数据的非常识信息等。避免AI在搜索金融场景信息时，参考到非权威、及过时的信息。",
-        "source": "custom",
-        "enabled": true,
-        "category": "skill"
-    },
-    "mx-xuangu": {
-        "name": "mx-xuangu",
-        "description": "本 Skill 支持基于股票选股条件，如行情指标、财务指标等，筛选满足条件的股票；可查询指定行业 / 板块内的股票、上市公司，以及板块指数的成分股；同时支持股票、上市公司、板块 / 指数推荐等相关任务，采用此skill可避免大模型在选股时使用了过时信息。",
-        "source": "custom",
-        "enabled": true,
-        "category": "skill"
-    },
-    "mx-zixuan": {
-        "name": "mx-zixuan",
-        "description": "妙想自选管理skill，基于东方财富通行证账户数据及行情底层数据构建，支持通过自然语言查询、添加、删除自选股。",
-        "source": "custom",
-        "enabled": true,
-        "category": "skill"
-    },
-    "mx-moni": {
-        "name": "mx-moni",
-        "description": "妙想提供的股票模拟组合管理系统，支持持仓查询、买卖操作、撤单、委托查询、历史成交查询和资金查询等功能。通过安全认证的API接口实现真实交易体验。",
-        "source": "custom",
-        "enabled": true,
-        "category": "skill"
-    },
     "wallstreetcn-news": {
         "name": "wallstreetcn-news",
         "description": "获取华尔街见闻财经新闻。当用户询问华尔街见闻、wallstreetcn、财经新闻、市场动态、金融资讯、股市行情、热文、头条、搜索文章时使用。使用 web_fetch 直接调用 API 获取最新文章、头条文章、热文和搜索结果。",
@@ -200,6 +165,34 @@
     "self-improvement": {
         "name": "self-improvement",
         "description": "Captures learnings, errors, and corrections to enable continuous improvement. Use when: (1) A command or operation fails unexpectedly, (2) User corrects Claude ('No, that's wrong...', 'Actually...'), (3) User requests a capability that doesn't exist, (4) An external API or tool fails, (5) Claude realizes its knowledge is outdated or incorrect, (6) A better approach is discovered for a recurring task. Also review learnings before major tasks.",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "mx-data": {
+        "name": "mx-data",
+        "description": "基于东方财富权威数据库的金融数据查询工具，支持行情、财务及关联关系数据。",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "mx-search": {
+        "name": "mx-search",
+        "description": "本skill基于东方财富妙想搜索能力，基于金融场景进行信源智能筛选，用于获取涉及时效性信息或特定事件信息的任务，包括新闻、公告、研报、政策、交易规则、具体事件、各种影响分析、以及需要检索外部数据的非常识信息等。避免AI在搜索金融场景信息时，参考到非权威、及过时的信息。",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "mx-xuangu": {
+        "name": "mx-xuangu",
+        "description": "本 Skill 支持基于股票选股条件，如行情指标、财务指标等，筛选满足条件的股票；可查询指定行业 / 板块内的股票、上市公司，以及板块指数的成分股；同时支持股票、上市公司、板块 / 指数推荐等相关任务，采用此skill可避免大模型在选股时使用了过时信息。",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
+    "mx-zixuan": {
+        "name": "mx-zixuan",
+        "description": "妙想自选管理skill，基于东方财富通行证账户数据及行情底层数据构建，支持通过自然语言查询、添加、删除自选股。",
         "source": "custom",
         "enabled": true,
         "category": "skill"

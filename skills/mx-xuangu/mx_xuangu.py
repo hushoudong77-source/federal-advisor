@@ -188,7 +188,7 @@ def main():
     parser = argparse.ArgumentParser(description='通过自然语言查询进行智能选股（A股/港股/美股/板块/基金/ETF）')
     parser.add_argument('query', nargs='?', help='自然语言查询，如「股价大于10元的A股」')
     parser.add_argument('--query', dest='query_opt', help='自然语言查询（显式参数）')
-    parser.add_argument('--output-dir', dest='output_dir', help='输出目录，默认 /root/.openclaw/workspace/mx_data/output/')
+    parser.add_argument('--output-dir', dest='output_dir', help='输出目录，默认 /home/agent/cow/tmp/mx_data/output/')
     args = parser.parse_args()
     
     # Resolve query
@@ -197,8 +197,8 @@ def main():
         parser.print_help()
         sys.exit(1)
     
-    # Default output directory is fixed to /root/.openclaw/workspace/mx_data/output/
-    default_output = Path("/root/.openclaw/workspace/mx_data/output")
+    # Default output directory is fixed to /home/agent/cow/tmp/mx_data/output/
+    default_output = Path("/home/agent/cow/tmp/mx_data/output")
     output_dir = Path(args.output_dir) if args.output_dir else default_output
     output_dir.mkdir(parents=True, exist_ok=True)
     

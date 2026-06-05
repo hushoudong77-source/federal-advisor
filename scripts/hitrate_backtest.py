@@ -38,9 +38,9 @@ TICKER_CONFIG = {
     },
     '588000': {
         'name': '科创50ETF',
-        'anchor': 30, 'k': 5.0, 'hold_days': 10,
+        'anchor': 30, 'k': 5.0, 'hold_days': 15,
         'tushare_code': '588000.SH', 'type': 'fund_daily',
-        'tier': 'L2成长', 'note': 'r28 CR修正：维持MA30×5.0，加码RSI(14)<40前置过滤'
+        'tier': 'L2成长', 'note': 'r28.7 二维过滤（去量能→深度回调）：MA30×5.0 + 乖离MA30<-5% + RSI(14)<40 + H=15天。k=4.0→5.0（深度增加25%）。HR 55.6%/EV +2.70%/PF 2.34/信号18笔/3年/最大连亏3笔。全面优于旧版（HR +15.6pp/EV +1.94pp/PF +1.00/连亏-4笔）'
     },
     '513770': {
         'name': '港股小盘ETF',
@@ -145,11 +145,17 @@ def fetch_data(ticker, cfg, years=3):
 
 
 def calc_technical_indicators(df, anchor_period):
-    """计算ATR(14)、MA(anchor_period)和RSI(14)"""
+    """计算ATR(14)、MA(anchor_period)、RSI(14)、20日均量、乖离MA30"""
     df = df.copy()
     
     # MA
     df['MA'] = df['Close'].rolling(window=anchor_period).mean()
+    
+    # MA30（用于乖离率计算，与anchor_period独立）
+    df['MA30'] = df['Close'].rolling(window=30).mean()
+    
+    # 乖离MA30（%）
+    df['DeviationMA30'] = (df['Close'] - df['MA30']) / df['MA30'] * 100
     
     # ATR(14)
     df['prev_close'] = df['Close'].shift(1)
@@ -171,6 +177,11 @@ def calc_technical_indicators(df, anchor_period):
     df['RSI14'] = 100 - (100 / (1 + rs))
     df['RSI14'] = df['RSI14'].fillna(50)  # 初始值填充
     
+    # 20日均量（量能比 = 当日成交量 / 20日均量）
+    df['Volume_MA20'] = df['Volume'].rolling(window=20).mean()
+    df['Volume_Ratio'] = df['Volume'] / df['Volume_MA20']
+    df['Volume_Ratio'] = df['Volume_Ratio'].fillna(1.0)  # 初始值填充
+    
     return df
 
 
@@ -178,10 +189,12 @@ def calc_technical_indicators(df, anchor_period):
 # §1-2 买入区间 + 独立信号识别
 # ============================================================
 
-def identify_signals(df, anchor_period, k, hold_days, cooldown=10, stop_mult=2.0, rsi_filter=False, rsi_threshold=40):
+def identify_signals(df, anchor_period, k, hold_days, cooldown=10, stop_mult=2.0, 
+                     use_3d_filter=False):
     """
     §1 买入区间逐日计算
     §2 独立信号识别（冷却期去重）
+    §3 三维过滤（588000专用）：乖离<-5% + RSI<35 + 量能>1.0
     """
     signals = []
     n = len(df)
@@ -211,11 +224,16 @@ def identify_signals(df, anchor_period, k, hold_days, cooldown=10, stop_mult=2.0
         
         # 独立信号触发
         if is_in_zone and not in_zone:
-            # RSI前置过滤（r28：588000专用）
-            if rsi_filter:
+            # 🔴 二维过滤（r28.5 — 588000专用：乖离+RSI，已去量能）
+            if use_3d_filter:
+                dev = df.loc[i, 'DeviationMA30']
                 rsi_val = df.loc[i, 'RSI14']
-                if pd.notna(rsi_val) and rsi_val >= rsi_threshold:
-                    continue  # RSI未满足超卖条件，跳过此信号
+                
+                # 二维条件：乖离<-5% + RSI<40（量能维度无区分度，r28.5移除）
+                if pd.isna(dev) or pd.isna(rsi_val):
+                    continue
+                if dev >= -5.0 or rsi_val >= 40:
+                    continue  # 任一维度不满足，跳过此信号
             
             stop_price = zone_lower - stop_mult * atr_val
             
@@ -422,12 +440,12 @@ def run_backtest(ticker, cfg, years=3, verbose=True):
     # 添加ticker
     df['ticker'] = ticker
     
-    # 识别信号
-    rsi_filter = (ticker == '588000')
+    # 识别信号（588000启用三维过滤）
+    use_3d = (ticker == '588000')
     signals = identify_signals(
         df, cfg['anchor'], cfg['k'], 
         cfg['hold_days'], cooldown=10, stop_mult=2.0,
-        rsi_filter=rsi_filter, rsi_threshold=40
+        use_3d_filter=use_3d
     )
     
     # 计算盈亏
