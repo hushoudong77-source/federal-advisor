@@ -29,6 +29,15 @@ Thumbs.db
 .vscode/
 .idea/
 
+# === API 缓存（自动生成） ===
+.tushare_cache/
+
+# === 技能中的环境配置/密钥 ===
+config/openclaw.json
+skills/*/.env
+skills/*/config.json
+skills/*/auth*
+
 # === Git ===
 .git/
 backups/
