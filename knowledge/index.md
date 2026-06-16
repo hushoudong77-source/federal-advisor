@@ -163,3 +163,4 @@
 
 - [A股数据四剑客对比矩阵 V2.0](concepts/a-stock-data-triad-v1.md) — Tushare/BaoStock/AKShare/efinance全维度对比。V2.0新增efinance（东财轻量化接口，3,700+ Star，零注册，一行代码，实时行情+基金+期货+可转债全覆盖）。四剑客口诀：「入门BaoStock，日常efinance，探索AKShare，生产Tushare」。2026-06-07更新。
 - [Python量化交易全流程工具链 V1.0](concepts/python-quant-toolchain-v1.md) — 六大环节工具链全景（数据/策略/回测/实盘/AI/风控）。联邦审计：已覆盖数据+策略+风控，未覆盖回测框架(VectorBT推荐)+实盘自动下单(永久跳过)。2026-06-14入库。
+
