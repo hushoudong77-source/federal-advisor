@@ -44,12 +44,18 @@ else
     echo "       已提交: ${COMMIT_MSG}"
 fi
 
-# Step 3: 推送
-echo "[3/3] 推送至 GitHub..."
-if git push origin "$BRANCH" 2>&1; then
+# Step 3: 推送（通过 ghproxy.net 代理 — 腾讯云到 GitHub TCP 阻断的解决方案）
+echo "[3/3] 推送至 GitHub（via ghproxy.net）..."
+# 确保 remote 使用代理 + Token 嵌入（避免交互认证失败）
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+    git remote set-url origin "https://${GITHUB_TOKEN}@ghproxy.net/https://github.com/hushoudong77-source/federal-advisor.git" 2>/dev/null || true
+else
+    git remote set-url origin https://ghproxy.net/https://github.com/hushoudong77-source/federal-advisor.git 2>/dev/null || true
+fi
+if timeout 30 git push origin "$BRANCH" 2>&1; then
     echo "       ✅ 推送成功"
 else
-    echo "       ❌ 推送失败"
+    echo "       ❌ 推送失败（代理超时，稍后重试）"
     exit 1
 fi
 
