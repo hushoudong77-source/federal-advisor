@@ -1,16 +1,16 @@
 # Knowledge Index
 
-> 最后整理：2026-06-21 17:30 | 文件数：91 | V5.8.2r32.0 在线 | 博弈态V2.0层级投票体系焊入 | RPS+RSI强势股回调框架入库
+> 最后整理：2026-06-22 07:15 | 文件数：92 | V5.8.2r33.0 在线 | TD9全策略嵌入+确认条件硬化焊入
 
 ## 🔴 核心执行法典（唯一真源）
 
 - [V5.8.2r25 全量合并版](analysis/v56/v57-merged.md) — ⚠️已冻结（真源严重滞后，禁止用于执行参考）。拆分版为唯一真源。2026-05-21签发。
 - [V5.8.2r30 §0 固定层宪法](analysis/v56/v56-constitution.md) — VEA+VTI 永不离场。r30新增§0.6固定层建仓纪律（买入区间/VIX熔断/冷却期/宏观事件静默期）。2026-06-10。
-- [V5.8.2r29 §2 路由判断](analysis/v56/v56-routing.md) — 全池17标路由逻辑。r29新增步骤0-G宏观事件日历前置检查。2026-06-06签发。
+- [V5.8.2r31.6 §2 路由判断](analysis/v56/v56-routing.md) — 全池19标路由逻辑。r31.6自审P0修复（属地清单+800005替换）。2026-06-22签发。
 - [V5.8.2r30 §3.1 进攻策略](analysis/v56/v56-spearhead.md) — Spearhead Protocol。r30新增C3.1大型IPO抽血事件（日本≥500亿日元/全球≥$300亿/A股≥300亿元）。2026-06-10签发。
 - [V5.8.2r24 §3.2 反击策略](analysis/v56/v56-counterpunch.md) — Counterpunch Protocol。⭐r24新增§3.2.4反击系统物理死亡判定≥50笔。r23双区间+SMIN剥夺+暂停降仓+48h冷却期保留。2026-05-21签发。
 - [V5.8.2r29 §1+§4+§5](analysis/v56/v56-macros.md) — 数据输入+波动率状态机+执行闭环。r29新增§4.7宏观事件日历前置检查（四层宏观防御体系全景）。2026-06-06签发。
-- [V5.8.2r30 开火档案](fire-archive-v582.md) — 执行级快速参考。r30宪法同步（2026-06-10）：固定层建仓纪律焊入§0.6；C3.1新增IPO抽血事件。
+- [V5.8.2r33.0 开火档案](fire-archive-v582.md) — 执行级快速参考。r33.0新增§九独立动量跟随策略参数矩阵（FLIN/SMIN/EWY V1.1动态回撤止盈）。2026-06-22签发。
 - [金盾总纲 V1.4](concepts/gold-shield-protocol-v1.md) — IAU/518880黄金专属操作协议，七级卖点体系。V1.4三段划分回测校准：S4阈值升至3.5%，S6=3.0×/C3=1.2×/C4维持，2023年后C1-C4入场信号系统性失效。独立于通用法典。2026-05-23签发。
 - [金盾战术前置方案](concepts/gold-shield-tactical-vanguard-v1.md) — ⭐2026-06-16焊入AGENT.md。金盾正统四条件的战术级前置补充。C1双顺风+MACD金叉+FOMC落地→三分之一仓位先行入场。剩余⅔等正统四条件全绿。仅适用于宏观拐点过渡窗口，非体系永久降级。
 - [宏观危机状态机 V1.0](analysis/macro-crisis-state-machine-v1.md) — ⭐2026-06-03焊入AGENT.md模块十二。§4.4 VIX四档阈值（NORMAL≤20/ALERT 20-35/CRISIS 35-50/MELTDOWN>50）+ §6三阶段框架（崩盘确认期→政策干预期→复苏早期）。与US10Y形成双熔断互补，覆盖2020年3月式流动性危机（US10Y低但VIX飙升）。全池17标逐标三阶段处置矩阵。基于2000/2008/2020三次危机历史回测。
@@ -54,6 +54,7 @@
 - [守东量价交易系统 V1.0](concepts/shou-dong-two-kline-system-v1.md) — 删光所有指标，只剩两条K线：上车K线（缩量阴线→放量阳线站回）和下⻋K线（放量跌破趋势线）。核心逻辑：盈亏比优先于胜率，亏小钱赚大钱。2026-05-27入库。
 - [ETF动量轮动策略 — RPS排名 vs 法典对撞](concepts/etf-momentum-rps-v1.md) — 84% ETF老油条最终只用一个动量排名信号的访谈结论，与法典三层均线+ATR止损+分层管理的对撞审计。确认共识与分歧，提出C3+RPS组合方案。V2.0追加实盘验证：全池18标RPS排名表+四个穿透审计发现+RPS焊入/开火模板规则。2026-06-02入库/实盘验证。
 - [RPS + RSI 强势股回调框架](concepts/rps-rsi-strong-stock-pullback-v1.md) — 欧奈尔体系：RPS高位选强 + RSI低值择时，叠加板块共振/跌幅控制/缩量确认三过滤。联邦审计：逻辑自洽，与进攻策略互补，但RPS数据基础设施不支持实时计算，当前不焊入法典，作为人工辅助过滤层。2026-06-21入库。
+- [FLIN/SMIN 动量跟随策略 V1.1](concepts/flin-smin-momentum-follow-v1.md) — ⭐2026-06-22焊入→同日V1.1动态回撤止盈。MACD金叉+价<MA20入场→止损2×ATR/两阶段退出（浮盈<1.5ATR→MA60止盈/浮盈≥1.5ATR→1.5ATR回撤止盈）。全仓进出不分批。FLIN V1.1 23笔/Sharpe 0.381/胜率60.9%，SMIN V1.1 34笔/Sharpe 0.163/胜率52.9%。均线过滤全面否决。
 
 - [达利奥决策方法论](concepts/principles-dalio-methodology.md) — 五步进化循环、创意择优、圣杯配置
 - [大师战术精华](concepts/trading-masters-tactics.md) — 全天候实战操盘知识库
@@ -84,7 +85,7 @@
 - [2026年厄尔尼诺→商品资产传导全链路 V1.0](concepts/el-nino-commodity-chain-2026-v1.md) — 国盛证券5/20报告+NOAA预测+历史13次厄尔尼诺复盘。覆盖白糖(6年周期见底)/棕榈油(滞后4Q)/橡胶(滞后5Q)/棉花(需求库存约束)/煤炭电力(高温传导链)。与CANE协议直接对账。2026-05-26入库。
 - [产业事件驱动交易模块 V1.0](concepts/event-driven-trading-module-v1.md) — 三层漏斗的事件驱动交易体系
 - [K线形态 + MACD 动能审计附录 V1.1](concepts/kline-macd-audit-appendix-v1.md) — 12种K线形态识别 + MACD动能审计 + 多维裁决协议
-- [技术指标自主计算集成协议 V1.2](concepts/technical-indicators-integration-protocol-v1.md) — MACD/ATR/RSI/TD九转自主计算
+- [技术指标自主计算集成协议 V1.3](concepts/technical-indicators-integration-protocol-v1.md) — MACD/ATR/RSI/TD9全策略嵌入+确认条件硬化。V1.3新增低位9转/高位9转命名纠正、三确认条件AND（缩量<0.8+小实体<0.3×ATR）、五策略嵌入位置、calc_td9.py计算引擎。2026-06-22焊入。
 - [黄金分析记忆关联协议 V2.0](concepts/gold-analysis-memory-protocol.md) — 五维对撞体系
 - [妙想 Skill 使用指南 V1.0](concepts/mx-skills-usage-guide-v1.md) — 五大Skill实测覆盖度与限制
 - [GEMINI V20.34.5 数据供弹协议](concepts/gemini-v20.34.5-data-supply-protocol.md)
