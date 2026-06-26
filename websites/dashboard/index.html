@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>联邦持仓仪表盘 — 战场指挥中心</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #0a0d14;
+    --bg-panel: #111620;
+    --bg-card: #151b26;
+    --border: #1e2a3a;
+    --border-active: #2a3a52;
+    --text-primary: #e8ecf1;
+    --text-secondary: #8899b4;
+    --text-muted: #556880;
+    --accent-green: #00d4aa;
+    --accent-red: #ff4757;
+    --accent-gold: #f0b90b;
+    --accent-blue: #4da6ff;
+    --accent-purple: #a78bfa;
+    --accent-cyan: #22d3ee;
+    --glow-green: 0 0 20px rgba(0, 212, 170, 0.15);
+    --glow-red: 0 0 20px rgba(255, 71, 87, 0.15);
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-sans: 'Noto Sans SC', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(rgba(30, 42, 58, 0.15) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30, 42, 58, 0.15) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Noise overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px 32px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-left h1 {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+  }
+
+  .header-left .subtitle {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    margin-top: 4px;
+  }
+
+  .header-right {
+    display: flex;
+    gap: 32px;
+    text-align: right;
+  }
+
+  .header-stat .label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .header-stat .value {
+    font-family: var(--font-mono);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .header-stat .value.green { color: var(--accent-green); }
+  .header-stat .value.red { color: var(--accent-red); }
+  .header-stat .change {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  .header-stat .change.up { color: var(--accent-green); }
+  .header-stat .change.down { color: var(--accent-red); }
+
+  /* Macro Strip */
+  .macro-strip {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 24px;
+  }
+
+  .macro-item {
+    flex: 1;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    position: relative;
+  }
+  .macro-item:first-child { border-radius: 4px 0 0 4px; }
+  .macro-item:last-child { border-radius: 0 4px 4px 0; }
+
+  .macro-item .mac-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+  }
+  .macro-item .mac-value {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .macro-item .mac-change {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    margin-top: 2px;
+  }
+
+  .macro-item .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    position: absolute;
+    top: 16px; right: 16px;
+  }
+  .status-dot.green { background: var(--accent-green); box-shadow: var(--glow-green); }
+  .status-dot.red { background: var(--accent-red); box-shadow: var(--glow-red); }
+  .status-dot.yellow { background: var(--accent-gold); box-shadow: 0 0 12px rgba(240, 185, 11, 0.2); }
+
+  /* Main Grid */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(21, 27, 38, 0.5);
+  }
+
+  .panel-header h3 {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .panel-header .panel-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+  }
+  .badge-a { background: rgba(77, 166, 255, 0.15); color: var(--accent-blue); }
+  .badge-b { background: rgba(167, 139, 250, 0.15); color: var(--accent-purple); }
+
+  /* Holding Table */
+  .holdings-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .holdings-table th {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 10px 16px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10, 13, 20, 0.4);
+  }
+  .holdings-table th:first-child { text-align: left; padding-left: 20px; }
+  .holdings-table th:nth-child(2) { text-align: left; }
+
+  .holdings-table td {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 11px 16px;
+    text-align: right;
+    border-bottom: 1px solid rgba(30, 42, 58, 0.5);
+    color: var(--text-primary);
+  }
+  .holdings-table td:first-child { text-align: left; padding-left: 20px; font-weight: 600; }
+  .holdings-table td:nth-child(2) { text-align: left; color: var(--text-secondary); font-size: 10px; }
+
+  .holdings-table tr:hover td {
+    background: rgba(77, 166, 255, 0.03);
+  }
+
+  .holdings-table .pnl-pos { color: var(--accent-green); }
+  .holdings-table .pnl-neg { color: var(--accent-red); }
+
+  .route-tag {
+    display: inline-block;
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+  }
+  .route-attack { background: rgba(0, 212, 170, 0.12); color: var(--accent-green); }
+  .route-counter { background: rgba(240, 185, 11, 0.12); color: var(--accent-gold); }
+  .route-fixed { background: rgba(77, 166, 255, 0.12); color: var(--accent-blue); }
+  .route-shield { background: rgba(167, 139, 250, 0.12); color: var(--accent-purple); }
+  .route-standalone { background: rgba(34, 211, 238, 0.12); color: var(--accent-cyan); }
+
+  /* Summary Row */
+  .holdings-table .summary-row td {
+    border-top: 1px solid var(--border-active);
+    border-bottom: none;
+    font-weight: 700;
+    font-size: 13px;
+    background: rgba(21, 27, 38, 0.6);
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+
+  /* Allocation Bar */
+  .alloc-section {
+    padding: 16px 20px;
+  }
+
+  .alloc-bar-track {
+    height: 8px;
+    background: var(--bg-deep);
+    border-radius: 4px;
+    display: flex;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .alloc-segment {
+    height: 100%;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .alloc-segment.attack { background: var(--accent-green); }
+  .alloc-segment.counter { background: var(--accent-gold); }
+  .alloc-segment.fixed { background: var(--accent-blue); }
+  .alloc-segment.shield { background: var(--accent-purple); }
+  .alloc-segment.cash { background: #2a3a52; }
+  .alloc-segment.standalone { background: var(--accent-cyan); }
+
+  .alloc-legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .alloc-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .alloc-legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+  }
+
+  /* Bottom panels */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .risk-list {
+    padding: 16px 20px;
+    list-style: none;
+  }
+
+  .risk-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(30, 42, 58, 0.4);
+  }
+  .risk-item:last-child { border-bottom: none; }
+
+  .risk-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .risk-content .risk-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .risk-content .risk-detail {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-family: var(--font-mono);
+  }
+
+  /* Game State Banner */
+  .gamestate-banner {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .gamestate-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .gamestate-value {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent-gold);
+    letter-spacing: 1px;
+  }
+
+  .gamestate-divider {
+    width: 1px; height: 32px;
+    background: var(--border);
+  }
+
+  .gamestate-detail {
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .gamestate-detail span {
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel, .macro-item, .gamestate-banner {
+    animation: fadeInUp 0.5s ease both;
+  }
+  .macro-item:nth-child(1) { animation-delay: 0.05s; }
+  .macro-item:nth-child(2) { animation-delay: 0.1s; }
+  .macro-item:nth-child(3) { animation-delay: 0.15s; }
+  .macro-item:nth-child(4) { animation-delay: 0.2s; }
+  .macro-item:nth-child(5) { animation-delay: 0.25s; }
+  .macro-item:nth-child(6) { animation-delay: 0.3s; }
+  .main-grid .panel:nth-child(1) { animation-delay: 0.2s; }
+  .main-grid .panel:nth-child(2) { animation-delay: 0.25s; }
+  .bottom-grid .panel:nth-child(1) { animation-delay: 0.3s; }
+  .bottom-grid .panel:nth-child(2) { animation-delay: 0.35s; }
+
+  /* Timestamp */
+  .timestamp {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-top: 24px;
+    letter-spacing: 1px;
+  }
+
+  /* Responsive */
+  @media (max-width: 1200px) {
+    .main-grid, .bottom-grid { grid-template-columns: 1fr; }
+    .macro-strip { flex-wrap: wrap; }
+    .macro-item { flex: 1 1 30%; border-radius: 4px !important; }
+    .header { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .header-right { gap: 20px; }
+    .gamestate-banner { flex-wrap: wrap; gap: 12px; }
+    .gamestate-divider { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <h1>⚔️ 联邦持仓仪表盘</h1>
+      <div class="subtitle">Battlefield Command Center — V5.8.2r32.0</div>
+    </div>
+    <div class="header-right">
+      <div class="header-stat">
+        <div class="label">合并总资产</div>
+        <div class="value">¥1,521,980</div>
+        <div class="change up">USDCNY 7.0920</div>
+      </div>
+      <div class="header-stat">
+        <div class="label">总权益仓位</div>
+        <div class="value">14.8%</div>
+        <div class="change down">— 防御姿态</div>
+      </div>
+      <div class="header-stat">
+        <div class="label">可用现金</div>
+        <div class="value green">¥1,296,564</div>
+        <div class="change">含 SGOV/511880</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Macro Strip -->
+  <div class="macro-strip">
+    <div class="macro-item">
+      <div class="mac-label">DXY 美元指数</div>
+      <div class="mac-value">98.52</div>
+      <div class="mac-change" style="color:var(--accent-green)">↓ −0.31</div>
+      <div class="status-dot green"></div>
+    </div>
+    <div class="macro-item">
+      <div class="mac-label">US10Y 十年期</div>
+      <div class="mac-value">4.48%</div>
+      <div class="mac-change" style="color:var(--accent-green)">↓ −3bp</div>
+      <div class="status-dot green"></div>
+    </div>
+    <div class="macro-item">
+      <div class="mac-label">VIX 恐慌指数</div>
+      <div class="mac-value">15.82</div>
+      <div class="mac-change" style="color:var(--accent-green)">↓ −0.64</div>
+      <div class="status-dot green"></div>
+    </div>
+    <div class="macro-item">
+      <div class="mac-label">ES/NQ 标普期货</div>
+      <div class="mac-value">6,247</div>
+      <div class="mac-change" style="color:var(--accent-red)">↓ −0.4%</div>
+      <div class="status-dot yellow"></div>
+    </div>
+    <div class="macro-item">
+      <div class="mac-label">DR007 流动性</div>
+      <div class="mac-value">1.82%</div>
+      <div class="mac-change" style="color:var(--text-muted)">→ 持平</div>
+      <div class="status-dot green"></div>
+    </div>
+    <div class="macro-item">
+      <div class="mac-label">USDCNY 在岸</div>
+      <div class="mac-value">7.0920</div>
+      <div class="mac-change" style="color:var(--accent-green)">↓ −42bp</div>
+      <div class="status-dot green"></div>
+    </div>
+  </div>
+
+  <!-- Game State -->
+  <div class="gamestate-banner">
+    <div class="gamestate-label">博弈态判定</div>
+    <div class="gamestate-value">噪音衰退态 +5</div>
+    <div class="gamestate-divider"></div>
+    <div class="gamestate-detail">
+      VIX <span>15.82</span> · ADX中位数 <span>24.3</span> · 成交量比值 <span>0.76</span>
+    </div>
+    <div class="gamestate-divider"></div>
+    <div class="gamestate-detail">
+      仓位上限 <span>20%</span> · 当前权益仓位 <span>14.8%</span> · 
+      <span style="color:var(--accent-green)">合规</span>
+    </div>
+  </div>
+
+  <!-- Main Grid: A Account + B Account -->
+  <div class="main-grid">
+    <!-- A Account -->
+    <div class="panel">
+      <div class="panel-header">
+        <h3>A 账户 · 人民币</h3>
+        <span class="panel-badge badge-a">¥1,046,134</span>
+      </div>
+      <table class="holdings-table">
+        <thead>
+          <tr>
+            <th>标的</th>
+            <th>路由</th>
+            <th>持仓量</th>
+            <th>成本</th>
+            <th>现价</th>
+            <th>市值</th>
+            <th>盈亏</th>
+            <th>仓位%</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>511880</td>
+            <td><span class="route-tag route-fixed">现金等价</span></td>
+            <td>311,652 份</td>
+            <td>¥0.999</td>
+            <td>¥1.000</td>
+            <td>¥311,652</td>
+            <td class="pnl-pos">+¥344</td>
+            <td>29.8%</td>
+          </tr>
+          <tr>
+            <td>现金</td>
+            <td><span class="route-tag route-fixed">弹药库</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>¥734,482</td>
+            <td style="color:var(--text-muted)">—</td>
+            <td>70.2%</td>
+          </tr>
+          <tr class="summary-row">
+            <td colspan="3">A账户权益0% · 全现金掩体</td>
+            <td></td><td></td>
+            <td>¥1,046,134</td>
+            <td class="pnl-pos">+¥344</td>
+            <td>100%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- B Account -->
+    <div class="panel">
+      <div class="panel-header">
+        <h3>B 账户 · 美元</h3>
+        <span class="panel-badge badge-b">$428,892</span>
+      </div>
+      <table class="holdings-table">
+        <thead>
+          <tr>
+            <th>标的</th>
+            <th>路由</th>
+            <th>持仓量</th>
+            <th>成本</th>
+            <th>现价</th>
+            <th>市值</th>
+            <th>盈亏</th>
+            <th>仓位%</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SGOV</td>
+            <td><span class="route-tag route-fixed">现金等价</span></td>
+            <td>3,414 股</td>
+            <td>$100.18</td>
+            <td>$100.20</td>
+            <td>$342,082</td>
+            <td class="pnl-pos">+$68</td>
+            <td>79.8%</td>
+          </tr>
+          <tr>
+            <td>VEA</td>
+            <td><span class="route-tag route-fixed">固定层</span></td>
+            <td>72 股</td>
+            <td>$47.82</td>
+            <td>$47.95</td>
+            <td>$3,452</td>
+            <td class="pnl-pos">+$9</td>
+            <td>0.8%</td>
+          </tr>
+          <tr>
+            <td>VTI</td>
+            <td><span class="route-tag route-fixed">固定层</span></td>
+            <td>13 股</td>
+            <td>$287.40</td>
+            <td>$288.10</td>
+            <td>$3,745</td>
+            <td class="pnl-pos">+$9</td>
+            <td>0.9%</td>
+          </tr>
+          <tr>
+            <td>QQQ</td>
+            <td><span class="route-tag route-attack">进攻</span></td>
+            <td>7 股</td>
+            <td>$481.20</td>
+            <td>$479.80</td>
+            <td>$3,359</td>
+            <td class="pnl-neg">−$10</td>
+            <td>0.8%</td>
+          </tr>
+          <tr>
+            <td>IVV</td>
+            <td><span class="route-tag route-attack">进攻</span></td>
+            <td>6 股</td>
+            <td>$585.30</td>
+            <td>$584.50</td>
+            <td>$3,507</td>
+            <td class="pnl-neg">−$5</td>
+            <td>0.8%</td>
+          </tr>
+          <tr>
+            <td>MUFG</td>
+            <td><span class="route-tag route-attack">进攻</span></td>
+            <td>614 股</td>
+            <td>$18.51</td>
+            <td>$18.62</td>
+            <td>$11,433</td>
+            <td class="pnl-pos">+$68</td>
+            <td>2.7%</td>
+          </tr>
+          <tr>
+            <td>CANE</td>
+            <td><span class="route-tag route-standalone">独立</span></td>
+            <td>2,525 股</td>
+            <td>$9.879</td>
+            <td>$9.305</td>
+            <td>$23,495</td>
+            <td class="pnl-neg">−$1,449</td>
+            <td>5.5%</td>
+          </tr>
+          <tr class="summary-row">
+            <td colspan="3">B账户权益20.2%</td>
+            <td></td><td></td>
+            <td>$428,892</td>
+            <td class="pnl-neg">−$1,310</td>
+            <td>100%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Allocation Bar -->
+  <div class="panel" style="margin-bottom:20px;">
+    <div class="panel-header">
+      <h3>全局仓位结构</h3>
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);">按合并总资产 ¥1,521,980</span>
+    </div>
+    <div class="alloc-section">
+      <div class="alloc-bar-track">
+        <div class="alloc-segment cash" style="width:85.2%"></div>
+        <div class="alloc-segment fixed" style="width:1.7%"></div>
+        <div class="alloc-segment attack" style="width:4.3%"></div>
+        <div class="alloc-segment standalone" style="width:1.5%"></div>
+        <div class="alloc-segment counter" style="width:0%"></div>
+        <div class="alloc-segment shield" style="width:0%"></div>
+      </div>
+      <div class="alloc-legend">
+        <div class="alloc-legend-item">
+          <div class="alloc-legend-dot" style="background:#2a3a52;"></div>
+          <span>现金掩体 85.2%</span>
+        </div>
+        <div class="alloc-legend-item">
+          <div class="alloc-legend-dot" style="background:var(--accent-blue);"></div>
+          <span>固定层 VEA+VTI 1.7%</span>
+        </div>
+        <div class="alloc-legend-item">
+          <div class="alloc-legend-dot" style="background:var(--accent-green);"></div>
+          <span>进攻 QQQ+IVV+MUFG 4.3%</span>
+        </div>
+        <div class="alloc-legend-item">
+          <div class="alloc-legend-dot" style="background:var(--accent-cyan);"></div>
+          <span>独立 CANE 1.5%</span>
+        </div>
+        <div class="alloc-legend-item">
+          <div class="alloc-legend-dot" style="background:var(--accent-gold);"></div>
+          <span>反击 0%</span>
+        </div>
+        <div class="alloc-legend-item">
+          <div class="alloc-legend-dot" style="background:var(--accent-purple);"></div>
+          <span>金盾 0%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom: Risks + Alerts -->
+  <div class="bottom-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <h3>⚠️ 风险雷达</h3>
+      </div>
+      <ul class="risk-list">
+        <li class="risk-item">
+          <div class="risk-icon">🔴</div>
+          <div class="risk-content">
+            <div class="risk-title">PCE 核弹级事件 — 6/26</div>
+            <div class="risk-detail">核心PCE公布前2交易日进攻⛔冻结。QQQ/IVV冷却期6/20已到期但与PCE仅隔5交易日</div>
+          </div>
+        </li>
+        <li class="risk-item">
+          <div class="risk-icon">🟡</div>
+          <div class="risk-content">
+            <div class="risk-title">CANE 浮亏 −5.8% · EMA150 下方</div>
+            <div class="risk-detail">现价$9.305 vs 成本$9.879。浮亏状态严禁补仓。等EMA150收复后再评估第二批</div>
+          </div>
+        </li>
+        <li class="risk-item">
+          <div class="risk-icon">🟡</div>
+          <div class="risk-content">
+            <div class="risk-title">金盾四条件全红 · IAU/518880 右侧等待</div>
+            <div class="risk-detail">MA60↓ · MACD死叉 · RSI正常 · 波动率正常。战术前置方案待FOMC落地后评估</div>
+          </div>
+        </li>
+        <li class="risk-item">
+          <div class="risk-icon">🟢</div>
+          <div class="risk-content">
+            <div class="risk-title">噪音衰退态 · 仓位上限20% · 当前14.8%合规</div>
+            <div class="risk-detail">博弈态+5，仅金盾专项可小额参与。等待ADX跌破20+成交量<0.8持续5日→冷却静默态</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h3>📅 下周盯防日历</h3>
+      </div>
+      <ul class="risk-list">
+        <li class="risk-item">
+          <div class="risk-icon">🔴</div>
+          <div class="risk-content">
+            <div class="risk-title">6/26 周四 · 核心PCE</div>
+            <div class="risk-detail">P0级 — 进攻⛔暂停 / 反击🟡降级。公布前2后1交易日窗口：6/24-6/27</div>
+          </div>
+        </li>
+        <li class="risk-item">
+          <div class="risk-icon">🟡</div>
+          <div class="risk-content">
+            <div class="risk-title">6/23 周一 · 日本央行会议纪要</div>
+            <div class="risk-detail">P1级 — 关注日元汇率对BBJP/MUFG传导。BBJP冷却期至6/30</div>
+          </div>
+        </li>
+        <li class="risk-item">
+          <div class="risk-icon">🟡</div>
+          <div class="risk-content">
+            <div class="risk-title">6/25 周三 · 美债10年期拍卖</div>
+            <div class="risk-detail">P1级 — 拍卖结果影响US10Y。上次30年期遇冷→收益率跳升</div>
+          </div>
+        </li>
+        <li class="risk-item">
+          <div class="risk-icon">🟢</div>
+          <div class="risk-content">
+            <div class="risk-title">BBJP 冷却期 6/30 到期</div>
+            <div class="risk-detail">P2级 — 到期后重新路由判定。6/5非农止损−$758，趋势性事件驱动</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="timestamp">
+    DATA AS OF 2026-06-21 22:30 CST · FEDERAL ADVISOR V5.8.2r32.0 · 噪音衰退态 +5 · 仓位上限 20%
+  </div>
+</div>
+
+</body>
+</html>

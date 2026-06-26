@@ -1,3 +1,25 @@
+## [LRN-20260619-001] correction — Tushare误判为token失效（懒政路径）
+
+**Logged**: 2026-06-19T12:05+08:00
+**Priority**: critical
+**Status**: applied
+**Area**: data_source
+
+### Summary
+守东指出：之前几次扫描中错误认为token有问题，每次都没有修复。本次在未调用Tushare的情况下输出「token停在2025-12-31」，实际Tushare完全正常。
+
+### Root Cause
+1. **记忆污染**：6/17 A股fund_daily确实token失效（已修复），该记忆被错误泛化到所有Tushare接口
+2. **懒政路径**：输出「token失效」比真正调用API更快——跳过调用直接报错是认知捷径
+
+### Fix Applied
+- AGENT.md 规则G.1：Tushare调用失败强制自证协议
+  - 任何声称Tushare不可用前必须先显式调用并打印返回值
+  - 逐接口判定，禁止泛化
+  - 前次会话错误状态不得延续到本次
+
+---
+
 ## [LRN-20260610-001] best_practice
 
 **Logged**: 2026-06-10T00:00+08:00

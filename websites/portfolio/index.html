@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>联邦持仓仪表盘</title>
+<style>
+:root {
+  --bg: #0a0e14;
+  --card: #131820;
+  --border: #1e2938;
+  --text: #cdd6e0;
+  --dim: #67758b;
+  --green: #00c853;
+  --red: #ff5252;
+  --gold: #ffb300;
+  --blue: #448aff;
+  --purple: #7c4dff;
+  --cyan: #00bcd4;
+  --orange: #ff9100;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code', monospace; min-height:100vh; }
+.header { padding:20px 28px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.header h1 { font-size:20px; font-weight:600; letter-spacing:1px; }
+.header .badge { font-size:11px; color:var(--dim); background:var(--card); padding:4px 10px; border-radius:4px; border:1px solid var(--border); }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; padding:20px 28px; }
+.grid-full { grid-column:1/-1; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:18px; }
+.card h2 { font-size:13px; color:var(--dim); margin-bottom:14px; letter-spacing:1px; text-transform:uppercase; }
+.card h2 .dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; }
+.dot-green { background:var(--green); }
+.dot-gold { background:var(--gold); }
+.dot-blue { background:var(--blue); }
+.dot-purple { background:var(--purple); }
+
+/* 持仓卡片 */
+.holding-row { display:flex; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.04); gap:12px; }
+.holding-row:last-child { border-bottom:none; }
+.holding-symbol { width:60px; font-weight:700; font-size:13px; color:#fff; }
+.holding-name { flex:1; font-size:11px; color:var(--dim); }
+.holding-shares { width:70px; text-align:right; font-size:11px; color:var(--dim); }
+.holding-value { width:100px; text-align:right; font-size:13px; font-weight:600; }
+.holding-pnl { width:85px; text-align:right; font-size:12px; font-weight:600; }
+.holding-pct { width:55px; text-align:right; font-size:11px; }
+.holding-tag { font-size:9px; padding:2px 6px; border-radius:3px; letter-spacing:0.5px; }
+.tag-offense { background:rgba(68,138,255,0.15); color:var(--blue); }
+.tag-fixed { background:rgba(0,188,212,0.15); color:var(--cyan); }
+.tag-independent { background:rgba(255,145,0,0.15); color:var(--orange); }
+.tag-cash { background:rgba(103,117,139,0.15); color:var(--dim); }
+.tag-gold { background:rgba(255,179,0,0.15); color:var(--gold); }
+
+/* 饼图 */
+#pieChart { width:100%; height:280px; }
+
+/* 折线图 */
+#lineChart { width:100%; height:320px; }
+
+/* 汇总 */
+.summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:10px; }
+.summary-item { text-align:center; }
+.summary-value { font-size:24px; font-weight:700; }
+.summary-label { font-size:10px; color:var(--dim); margin-top:2px; }
+
+/* 预警列表 */
+.alert-item { padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:12px; display:flex; gap:8px; align-items:flex-start; }
+.alert-item:last-child { border-bottom:none; }
+.alert-prio { font-size:10px; font-weight:700; padding:1px 6px; border-radius:3px; flex-shrink:0; }
+.alert-p0 { background:rgba(255,82,82,0.2); color:var(--red); }
+.alert-p1 { background:rgba(255,179,0,0.2); color:var(--gold); }
+.alert-p2 { background:rgba(68,138,255,0.2); color:var(--blue); }
+
+.green { color:var(--green); }
+.red { color:var(--red); }
+.gold { color:var(--gold); }
+.dim { color:var(--dim); }
+
+.legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:10px; font-size:10px; }
+.legend-item { display:flex; align-items:center; gap:4px; }
+.legend-dot { width:8px; height:8px; border-radius:2px; }
+
+.tabs { display:flex; gap:4px; margin-bottom:14px; }
+.tab { font-size:10px; padding:4px 10px; cursor:pointer; border-radius:4px; color:var(--dim); border:1px solid transparent; letter-spacing:0.5px; }
+.tab.active { color:#fff; background:rgba(255,255,255,0.06); border-color:var(--border); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚔️ 联邦持仓仪表盘</h1>
+  <span class="badge" id="updateTime"></span>
+</div>
+
+<div class="grid">
+  <!-- 左栏：持仓明细 -->
+  <div class="card">
+    <h2><span class="dot dot-blue"></span>B账户 · 美元持仓</h2>
+    <div id="holdingsB"></div>
+  </div>
+
+  <!-- 右栏：仓位结构 -->
+  <div class="card">
+    <h2><span class="dot dot-green"></span>仓位结构</h2>
+    <canvas id="pieChart"></canvas>
+    <div class="legend" id="pieLegend"></div>
+  </div>
+
+  <!-- 左栏：A账户 -->
+  <div class="card">
+    <h2><span class="dot dot-purple"></span>A账户 · 人民币持仓</h2>
+    <div id="holdingsA"></div>
+    <div class="summary-grid" style="margin-top:16px;" id="summaryA"></div>
+  </div>
+
+  <!-- 右栏：合并总览 -->
+  <div class="card">
+    <h2><span class="dot dot-gold"></span>合并总览</h2>
+    <div class="summary-grid" id="summaryTotal"></div>
+  </div>
+
+  <!-- 全宽：盈亏曲线 -->
+  <div class="card grid-full">
+    <h2><span class="dot dot-blue"></span>市值走势（近90天估计）</h2>
+    <div class="tabs" id="chartTabs">
+      <span class="tab active" data-view="total">总市值</span>
+      <span class="tab" data-view="equity">权益仓位</span>
+      <span class="tab" data-view="pnl">浮动盈亏</span>
+    </div>
+    <canvas id="lineChart"></canvas>
+  </div>
+
+  <!-- 全宽：预警 -->
+  <div class="card grid-full">
+    <h2><span class="dot" style="background:var(--red)"></span>关键预警</h2>
+    <div id="alerts"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(async function(){
+  const resp = await fetch('data.json');
+  const data = await resp.json();
+  document.getElementById('updateTime').textContent = '📡 ' + data.ts;
+
+  const holdings = data.h;
+  const prices = data.p;
+  const fx = data.fx;
+
+  // ===== 持仓卡片 =====
+  function renderHoldings(containerId, items, currency) {
+    const el = document.getElementById(containerId);
+    let html = '';
+    let totalValue = 0;
+    items.forEach(h => {
+      const val = h.q * h.p;
+      const costVal = h.q * h.c;
+      const pnl = val - costVal;
+      const pnlPct = costVal > 0 ? (pnl / costVal * 100) : 0;
+      totalValue += val;
+      let tagClass = 'tag-cash';
+      if (h.t === '进攻') tagClass = 'tag-offense';
+      else if (h.t === '固定层') tagClass = 'tag-fixed';
+      else if (h.t === '独立') tagClass = 'tag-independent';
+      
+      const sign = currency === 'USD' ? '$' : '¥';
+      html += `<div class="holding-row">
+        <span class="holding-symbol">${h.s}</span>
+        <span class="holding-name">${h.n}</span>
+        <span class="holding-shares">${h.q}${h.t==='现金'?'':currency==='USD'?'股':'份'}</span>
+        <span class="holding-value">${sign}${(val).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}</span>
+        <span class="holding-pnl ${pnl>=0?'green':'red'}">${pnl>=0?'+':''}${sign}${Math.abs(pnl).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}</span>
+        <span class="holding-pct ${pnl>=0?'green':'red'}">${pnl>=0?'+':''}${pnlPct.toFixed(2)}%</span>
+        <span class="holding-tag ${tagClass}">${h.t}</span>
+      </div>`;
+    });
+    el.innerHTML = html;
+    return totalValue;
+  }
+
+  const bTotal = renderHoldings('holdingsB', holdings.B, 'USD');
+  const aTotal = renderHoldings('holdingsA', holdings.A, 'CNY');
+
+  // A账户汇总
+  document.getElementById('summaryA').innerHTML = `
+    <div class="summary-item"><div class="summary-value">¥${(aTotal).toLocaleString()}</div><div class="summary-label">总资产</div></div>
+    <div class="summary-item"><div class="summary-value green">+¥344</div><div class="summary-label">持仓盈亏</div></div>
+    <div class="summary-item"><div class="summary-value">0%</div><div class="summary-label">权益仓位</div></div>
+  `;
+
+  // 合并总览
+  const bTotalCNY = bTotal * fx;
+  const mergedTotal = aTotal + bTotalCNY;
+  // 权益仓位 = 不含SGOV的B账户 + A账户权益（0）
+  let equityB = 0, cashB = 0, fixedB = 0, independentB = 0;
+  holdings.B.forEach(h => {
+    const v = h.q * h.p;
+    if (h.t === '现金') cashB += v;
+    else if (h.t === '进攻') equityB += v;
+    else if (h.t === '固定层') fixedB += v;
+    else if (h.t === '独立') independentB += v;
+  });
+  const totalEquity = (equityB + fixedB + independentB) * fx;
+  const equityPct = (totalEquity / mergedTotal * 100);
+
+  document.getElementById('summaryTotal').innerHTML = `
+    <div class="summary-item"><div class="summary-value">¥${(mergedTotal).toLocaleString()}</div><div class="summary-label">合并总资产</div></div>
+    <div class="summary-item"><div class="summary-value ${equityPct > 20 ? 'gold' : 'green'}">${equityPct.toFixed(1)}%</div><div class="summary-label">权益仓位</div></div>
+    <div class="summary-item"><div class="summary-value dim">¥${(cashB * fx + aTotal).toLocaleString()}</div><div class="summary-label">现金掩体</div></div>
+  `;
+
+  // ===== 饼图 =====
+  const pieCtx = document.getElementById('pieChart').getContext('2d');
+  const pieLabels = ['美股进攻(QQQ+IVV)', '日本(MUFG)', '固定层(VEA+VTI)', '商品(CANE)', '美元现金(SGOV)', '人民币现金'];
+  const pieValues = [equityB*fx, holdings.B.find(h=>h.s==='MUFG').q*holdings.B.find(h=>h.s==='MUFG').p*fx, fixedB*fx, independentB*fx, cashB*fx, aTotal];
+  const pieColors = ['#448aff', '#ff5252', '#00bcd4', '#ff9100', '#67758b', '#7c4dff'];
+
+  new Chart(pieCtx, {
+    type: 'doughnut',
+    data: {
+      labels: pieLabels,
+      datasets: [{ data: pieValues, backgroundColor: pieColors, borderColor: '#131820', borderWidth: 2 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.label}: ¥${ctx.raw.toLocaleString()} (${(ctx.raw/mergedTotal*100).toFixed(1)}%)` } }
+      }
+    }
+  });
+
+  document.getElementById('pieLegend').innerHTML = pieLabels.map((l,i) => 
+    `<span class="legend-item"><span class="legend-dot" style="background:${pieColors[i]}"></span>${l} ${(pieValues[i]/mergedTotal*100).toFixed(1)}%</span>`
+  ).join('');
+
+  // ===== 折线图 =====
+  const lineCtx = document.getElementById('lineChart').getContext('2d');
+  
+  // 计算每日总市值估计
+  const holdingConfigs = [
+    {code:'MUFG', shares:614, cost:18.51},
+    {code:'VEA', shares:72, cost:69.30},
+    {code:'QQQ', shares:7, cost:722.14},
+    {code:'IVV', shares:6, cost:736.36},
+    {code:'VTI', shares:13, cost:361.08},
+    {code:'CANE', shares:2525, cost:9.879},
+  ];
+
+  // 找到所有有数据的日期
+  let dateMap = {};
+  holdingConfigs.forEach(hc => {
+    const series = prices[hc.code];
+    if (!series) return;
+    series.forEach(([date, close]) => {
+      if (!dateMap[date]) dateMap[date] = {};
+      dateMap[date][hc.code] = close;
+    });
+  });
+
+  // SGOV: 假设稳定在$100.2附近
+  const sgovPrice = 100.20;
+  const sgovShares = 3414;
+
+  let dates = Object.keys(dateMap).sort();
+  let totalValues = [];
+  let equityValues = [];
+  let pnlValues = [];
+  let totalCost = 0;
+  holdingConfigs.forEach(hc => totalCost += hc.shares * hc.cost);
+  totalCost += sgovShares * sgovPrice;
+
+  dates.forEach(date => {
+    let equityVal = 0, totalVal = 0;
+    holdingConfigs.forEach(hc => {
+      const close = (dateMap[date] && dateMap[date][hc.code]) || 0;
+      if (close > 0) {
+        equityVal += hc.shares * close;
+      }
+    });
+    totalVal = equityVal + sgovShares * sgovPrice;
+    totalValues.push(totalVal * fx);
+    equityValues.push(equityVal * fx);
+    pnlValues.push((totalVal - totalCost) * fx);
+  });
+
+  let currentView = 'total';
+  const lineColors = { total: '#448aff', equity: '#ff9100', pnl: '#00c853' };
+  const lineLabels = { total: '总市值(¥)', equity: '权益市值(¥)', pnl: '浮动盈亏(¥)' };
+  const lineData = { total: totalValues, equity: equityValues, pnl: pnlValues };
+
+  const lineChart = new Chart(lineCtx, {
+    type: 'line',
+    data: {
+      labels: dates.map(d => d.slice(4)),
+      datasets: [{
+        label: lineLabels.total,
+        data: totalValues,
+        borderColor: '#448aff',
+        backgroundColor: 'rgba(68,138,255,0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 0,
+        borderWidth: 1.5
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `¥${ctx.raw.toLocaleString(undefined,{maximumFractionDigits:0})}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#67758b', font: {size:9}, maxTicksLimit:15, autoSkip:true }, grid: { color: 'rgba(255,255,255,0.03)' } },
+        y: { ticks: { color: '#67758b', font: {size:9}, callback: v => '¥'+(v/10000).toFixed(1)+'万' }, grid: { color: 'rgba(255,255,255,0.03)' } }
+      }
+    }
+  });
+
+  // Tab切换
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      const view = this.dataset.view;
+      currentView = view;
+      lineChart.data.datasets[0].data = lineData[view];
+      lineChart.data.datasets[0].label = lineLabels[view];
+      lineChart.data.datasets[0].borderColor = lineColors[view];
+      lineChart.data.datasets[0].backgroundColor = lineColors[view].replace(')','').replace('rgb','rgba').replace('a','a,0.1)') || 'rgba(68,138,255,0.1)';
+      lineChart.update();
+    });
+  });
+
+  // ===== 预警 =====
+  document.getElementById('alerts').innerHTML = `
+    <div class="alert-item"><span class="alert-prio alert-p0">P0</span><span><b>MUFG保本止损已触发</b> — 现价$21.08，S1保本$18.51已锁。6/26 PCE前若回调破$18.51执行止损。冷却至6/28。</span></div>
+    <div class="alert-item"><span class="alert-prio alert-p0">P0</span><span><b>QQQ/IVV C4+冷却期双触发</b> — 但6/26 PCE仅5个交易日，五维评估🟡半仓。守东自行裁决是否开火。</span></div>
+    <div class="alert-item"><span class="alert-prio alert-p1">P1</span><span><b>CANE浮亏−5.35%</b> — EMA50<$9.68低于EMA150$9.81，空头排列。浮亏禁补。等EMA50重新上穿EMA150。</span></div>
+    <div class="alert-item"><span class="alert-prio alert-p2">P2</span><span><b>PCE 6/26</b> — 数据公布前4交易日（6/22-6/26）事件静默维度将变🔴，进攻⛔冻结。</span></div>
+    <div class="alert-item"><span class="alert-prio alert-p2">P2</span><span><b>A账户弹药充足</b> — ¥734,482现金待命。等513910/588000/512100/510880买入区间触发。</span></div>
+  `;
+
+})();
+</script>
+</body>
+</html>
