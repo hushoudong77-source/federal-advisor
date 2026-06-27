@@ -1,0 +1,13 @@
+{
+  "rules_count": 50,
+  "timestamp": "2026-06-27",
+  "cycles": [],
+  "mutual_overrides": [],
+  "broken_chains": [],
+  "dangling_refs": [],
+  "zombies": [],
+  "resolved_conflicts": [
+    "R031(博弈态硬上限) vs R032(五维评估建议仓位) — 已声明min(硬上限,建议仓位)",
+    "VIX 28-35博弈态 vs 危机状态机 — 已裁决取更严(0%)"
+  ]
+}
