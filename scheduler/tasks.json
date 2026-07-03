@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "updated_at": "2026-06-24T15:35:20.089837",
+  "updated_at": "2026-07-03T21:33:22.773071",
   "tasks": {
     "cc1d241a": {
       "id": "cc1d241a",
       "name": "每日地缘追踪早报",
       "enabled": true,
       "created_at": "2026-04-19T17:12:52.709167",
-      "updated_at": "2026-06-24T08:01:41.991551",
+      "updated_at": "2026-07-03T08:02:20.271111",
       "schedule": {
         "type": "cron",
         "expression": "0 8 * * *"
@@ -20,15 +20,15 @@
         "is_group": false,
         "channel_type": "weixin"
       },
-      "next_run_at": "2026-06-25T08:00:00",
-      "last_run_at": "2026-06-24T08:00:25.139573"
+      "next_run_at": "2026-07-04T08:00:00",
+      "last_run_at": "2026-07-03T08:00:07.099577"
     },
     "1d9c4c40": {
       "id": "1d9c4c40",
       "name": "市场日报-完整版",
       "enabled": true,
       "created_at": "2026-04-19T17:17:06.809966",
-      "updated_at": "2026-06-24T08:01:53.648405",
+      "updated_at": "2026-07-03T08:03:37.989830",
       "schedule": {
         "type": "cron",
         "expression": "0 8 * * *"
@@ -41,15 +41,15 @@
         "is_group": false,
         "channel_type": "weixin"
       },
-      "next_run_at": "2026-06-25T08:00:00",
-      "last_run_at": "2026-06-24T08:00:25.139573"
+      "next_run_at": "2026-07-04T08:00:00",
+      "last_run_at": "2026-07-03T08:00:07.099577"
     },
     "1929f0e3": {
       "id": "1929f0e3",
       "name": "workday-scan-1000",
       "enabled": true,
       "created_at": "2026-04-23T00:31:14.082037",
-      "updated_at": "2026-06-24T10:01:19.588634",
+      "updated_at": "2026-07-03T10:02:25.016001",
       "schedule": {
         "type": "cron",
         "expression": "0 10 * * 1-5"
@@ -62,15 +62,15 @@
         "is_group": false,
         "channel_type": "weixin"
       },
-      "next_run_at": "2026-06-25T10:00:00",
-      "last_run_at": "2026-06-24T10:00:29.458940"
+      "next_run_at": "2026-07-06T10:00:00",
+      "last_run_at": "2026-07-03T10:00:14.016387"
     },
     "fb504945": {
       "id": "fb504945",
       "name": "workday-scan-2130",
       "enabled": true,
       "created_at": "2026-04-23T00:31:27.267228",
-      "updated_at": "2026-06-23T21:32:53.694500",
+      "updated_at": "2026-07-03T21:33:22.760815",
       "schedule": {
         "type": "cron",
         "expression": "30 21 * * 1-5"
@@ -83,29 +83,8 @@
         "is_group": false,
         "channel_type": "weixin"
       },
-      "next_run_at": "2026-06-24T21:30:00",
-      "last_run_at": "2026-06-23T21:30:29.199272"
-    },
-    "92ec0401": {
-      "id": "92ec0401",
-      "name": "PCE全量扫描",
-      "enabled": true,
-      "created_at": "2026-06-24T15:35:20.078629",
-      "updated_at": "2026-06-24T15:35:20.078635",
-      "schedule": {
-        "type": "once",
-        "run_at": "2026-06-26T20:31:00"
-      },
-      "action": {
-        "type": "agent_task",
-        "task_description": "美国5月核心PCE数据已公布。请立即执行以下动作：\n1. 搜索最新核心PCE数据（AnySearch CLI search \"US core PCE May 2026 actual vs expected\"）\n2. 拉取Tushare全池日线（us_daily + fund_daily）\n3. 拉取腾讯实时行情\n4. 获取VIX/US10Y/DXY\n5. 输出完整/扫描报告（V3.0模板），重点分析：\n   - PCE数据vs预期的偏差\n   - US10Y反应（是否逼近5.00%熔断线）\n   - DXY方向\n   - 博弈态是否切换\n   - 全池18标路由更新\n   - PCE静默窗口解除后的操作建议\n   - 特别关注：513910是否仍在买入区间内 + MA40是否走平/翻多",
-        "receiver": "session__status_95149",
-        "receiver_name": "未知",
-        "is_group": false,
-        "channel_type": "weixin",
-        "notify_session_id": "session__status_95149"
-      },
-      "next_run_at": "2026-06-26T20:31:00"
+      "next_run_at": "2026-07-06T21:30:00",
+      "last_run_at": "2026-07-03T21:30:30.003579"
     }
   }
 }

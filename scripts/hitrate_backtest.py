@@ -26,9 +26,9 @@ TICKER_CONFIG = {
     # === A股 ===
     '513910': {
         'name': '港股通央企红利ETF',
-        'anchor': 40, 'k': 4.5, 'hold_days': 20,
+        'anchor': 40, 'k': 2.0, 'hold_days': 20,
         'tushare_code': '513910.SH', 'type': 'fund_daily',
-        'tier': 'L1红利', 'note': 'r28 CR修正：锚线MA20→MA40，k维持4.5'
+        'tier': 'L1红利', 'note': 'r33.20→r33.21 k参数修正：k=4.5→1.5→2.0（L2回测：k=2.0均收益翻转点−1.0%→+1.7%，24月窗口100%胜率）'
     },
     '159302': {
         'name': '恒生红利ETF',
@@ -38,9 +38,9 @@ TICKER_CONFIG = {
     },
     '588000': {
         'name': '科创50ETF',
-        'anchor': 30, 'k': 5.0, 'hold_days': 15,
+        'anchor': 40, 'k': 3.0, 'hold_days': 15,
         'tushare_code': '588000.SH', 'type': 'fund_daily',
-        'tier': 'L2成长', 'note': 'r28.7 二维过滤（去量能→深度回调）：MA30×5.0 + 乖离MA30<-5% + RSI(14)<40 + H=15天。k=4.0→5.0（深度增加25%）。HR 55.6%/EV +2.70%/PF 2.34/信号18笔/3年/最大连亏3笔。全面优于旧版（HR +15.6pp/EV +1.94pp/PF +1.00/连亏-4笔）'
+        'tier': 'L2成长', 'note': 'r33.22 k=2.0→3.0（实战SOP回测确权：胜率7%→36%）'
     },
     '513770': {
         'name': '港股小盘ETF',
@@ -50,16 +50,16 @@ TICKER_CONFIG = {
     },
     '510500': {
         'name': '中证500ETF',
-        'anchor': 60, 'k': 3.5, 'hold_days': 15,
+        'anchor': 40, 'k': 3.5, 'hold_days': 15,
         'tushare_code': '510500.SH', 'type': 'fund_daily',
-        'tier': 'L3宽基', 'note': 'r28 CR修正：k=5.0→3.5，反击资格待审计（附带条件）'
+        'tier': 'L3宽基', 'note': 'r33.22 k=2.0→3.5（实战SOP回测确权：最大回撤−15%→−5.4%）'
     },
     # === 美股 ===
     'VTI': {
         'name': '美股全市场ETF',
-        'anchor': 60, 'k': 4.0, 'hold_days': 15,
+        'anchor': 60, 'k': 4.5, 'hold_days': 15,
         'tushare_code': 'VTI', 'type': 'us_daily',
-        'tier': 'L2发达', 'note': ''
+        'tier': 'L2发达', 'note': 'r33.22 k=4.0→4.5（实战SOP回测确权：得分转正）'
     },
     'VEA': {
         'name': '发达市场ETF',
@@ -81,9 +81,9 @@ TICKER_CONFIG = {
     },
     'VNM': {
         'name': '越南ETF',
-        'anchor': 20, 'k': 1.0, 'hold_days': 10,
+        'anchor': 40, 'k': 2.5, 'hold_days': 10,
         'tushare_code': 'VNM', 'type': 'us_daily',
-        'tier': 'L2新兴', 'note': '高波动'
+        'tier': 'L2新兴', 'note': 'r33.23 k=2.0→2.5（实战SOP回测确权）'
     },
     'FLIN': {
         'name': '印度ETF',

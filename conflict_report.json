@@ -1,0 +1,29 @@
+{
+  "version": "V5.8.2r33.9",
+  "checked_at": "2026-06-27",
+  "total_rules": 22,
+  "total_conflicts": 3,
+  "conflicts_by_type": {
+    "悬浮引用": 3
+  },
+  "conflicts": [
+    {
+      "type": "悬浮引用",
+      "rule": "R-009: 博弈态VIX否决层前置分流",
+      "dangling_dep": "D1 VIX数据",
+      "detail": "R-009 depends_on 「D1 VIX数据」，该规则不存在"
+    },
+    {
+      "type": "悬浮引用",
+      "rule": "R-011: 宏观危机状态机: VIX四档阈值",
+      "dangling_dep": "VIX数据",
+      "detail": "R-011 depends_on 「VIX数据」，该规则不存在"
+    },
+    {
+      "type": "悬浮引用",
+      "rule": "R-021: 金盾战术前置: C1+MACD+FOMC",
+      "dangling_dep": "金盾总纲V1.4",
+      "detail": "R-021 depends_on 「金盾总纲V1.4」，该规则不存在"
+    }
+  ]
+}

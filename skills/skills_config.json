@@ -132,6 +132,13 @@
         "enabled": true,
         "category": "skill"
     },
+    "codex-auditor": {
+        "name": "codex-auditor",
+        "description": "联邦法典独立审计技能。对 AGENT.md 投资法典执行六层全量逻辑审计，输出结构化 BUG 报告。使用场景：(1) /自审 指令触发时自动调用；(2) 法典版本更新后手动审计；(3) 守东要求对特定模块进行逻辑一致性检查。此技能以「黑帽审计官」人格运行，不输出投资建议，只输出逻辑缺陷报告。",
+        "source": "custom",
+        "enabled": true,
+        "category": "skill"
+    },
     "wallstreetcn-news": {
         "name": "wallstreetcn-news",
         "description": "获取华尔街见闻财经新闻。当用户询问华尔街见闻、wallstreetcn、财经新闻、市场动态、金融资讯、股市行情、热文、头条、搜索文章时使用。使用 web_fetch 直接调用 API 获取最新文章、头条文章、热文和搜索结果。",

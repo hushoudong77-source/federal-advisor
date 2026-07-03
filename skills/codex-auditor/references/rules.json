@@ -1,0 +1,700 @@
+[
+  {
+    "id": "R001",
+    "code": "P0_PRIORITY",
+    "name": "P0用户真值无条件最高权威",
+    "category": "data",
+    "condition": "用户投喂数据 vs 任何外部数据源",
+    "action": "P0胜出，禁止用外部数据质疑P0",
+    "priority": "highest",
+    "depends_on": [],
+    "overrides": [],
+    "source": "AGENT.md 模块零"
+  },
+  {
+    "id": "R002",
+    "code": "P2_TUSHARE_PRIMARY",
+    "name": "Tushare付费API为技术指标唯一真源，与P3/P4冲突时P2自动胜出",
+    "category": "data",
+    "condition": "任何技术指标计算",
+    "action": "必须使用Tushare日线自算，严禁使用替代源",
+    "priority": "high",
+    "depends_on": [],
+    "overrides": [],
+    "source": "AGENT.md 模块零"
+  },
+  {
+    "id": "R003",
+    "code": "RULE_A",
+    "name": "美股ETF日线强制通过Tushare获取",
+    "category": "data",
+    "condition": "需要美股ETF OHLCV/MA/乖离率",
+    "action": "必须调用pro.us_daily()",
+    "priority": "high",
+    "depends_on": [
+      "P2_TUSHARE_PRIMARY"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则A"
+  },
+  {
+    "id": "R004",
+    "code": "RULE_B",
+    "name": "A股ETF数据强制通过Tushare fund_daily获取",
+    "category": "data",
+    "condition": "需要A股ETF现价/OHLCV/技术指标",
+    "action": "全天候统一走pro.fund_daily()",
+    "priority": "high",
+    "depends_on": [
+      "P2_TUSHARE_PRIMARY"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则B"
+  },
+  {
+    "id": "R005",
+    "code": "RULE_C",
+    "name": "SHIBOR强制通过Tushare获取，严禁web_search",
+    "category": "data",
+    "condition": "需要SHIBOR各期限数据",
+    "action": "必须调用pro.shibor()",
+    "priority": "high",
+    "depends_on": [
+      "P2_TUSHARE_PRIMARY"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则C"
+  },
+  {
+    "id": "R006",
+    "code": "RULE_D",
+    "name": "美债收益率强制通过Tushare获取",
+    "category": "data",
+    "condition": "需要US10Y/US20Y",
+    "action": "优先调用pro.us_tycr()",
+    "priority": "high",
+    "depends_on": [
+      "P2_TUSHARE_PRIMARY"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则D"
+  },
+  {
+    "id": "R007",
+    "code": "RULE_L",
+    "name": "所有技术指标必须来自P2 Tushare或P0投喂，严禁AI推断值",
+    "category": "data",
+    "condition": "涉及任何技术指标输出",
+    "action": "禁止P5推断，技术指标来源必须可追溯至Tushare或P0",
+    "priority": "high",
+    "depends_on": [
+      "P2_TUSHARE_PRIMARY"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则L"
+  },
+  {
+    "id": "R008",
+    "code": "RULE_M1",
+    "name": "技术指标新鲜度强制自检 — 所有指标必须基于Tushare最新日线重算",
+    "category": "data",
+    "condition": "/开火 /扫描 /分析 /进攻 /反击输出前",
+    "action": "逐标逐指标校验计算窗口=latest_date，过期强制重算",
+    "priority": "high",
+    "depends_on": [
+      "P2_TUSHARE_PRIMARY",
+      "RULE_L"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则M.1"
+  },
+  {
+    "id": "R009",
+    "code": "RULE_G",
+    "name": "扫描/分析启动强制拉齐SOP — 先拉腾讯现价再用Tushare算指标",
+    "category": "data",
+    "condition": "/扫描 /分析 /路由触发",
+    "action": "us_daily+fund_daily+腾讯实时+shibor+us_tycr+DR007+杠杆率全部拉取",
+    "priority": "high",
+    "depends_on": [
+      "RULE_A",
+      "RULE_B",
+      "RULE_C",
+      "RULE_D"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则G"
+  },
+  {
+    "id": "R010",
+    "code": "RULE_G1",
+    "name": "声称Tushare不可用前必须先显式调用验证，禁止凭印象判断",
+    "category": "data",
+    "condition": "输出中声称Tushare不可用/停更/token失效",
+    "action": "先执行G.1.1显式调用+打印返回值，逐接口判定禁止泛化",
+    "priority": "high",
+    "depends_on": [
+      "P2_TUSHARE_PRIMARY"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则G.1"
+  },
+  {
+    "id": "R011",
+    "code": "RULE_N1",
+    "name": "跨会话记忆污染免疫 — 每次新会话Tushare状态从'未验证'开始",
+    "category": "data",
+    "condition": "新会话首次提及Tushare状态",
+    "action": "禁止引用前次会话故障记忆，先执行四接口探测",
+    "priority": "high",
+    "depends_on": [
+      "RULE_G1"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则N.1"
+  },
+  {
+    "id": "R012",
+    "code": "RULE_N",
+    "name": "执行链强制锁 — G→I→K→M.1→J→K.5六步硬链接不可跳过",
+    "category": "execution",
+    "condition": "/扫描 /开火 /进攻 /反击 /分析 /路由 /盘前 /持仓 /大师对撞触发",
+    "action": "Step 0→0.5→1→2→3→3.5→4→5→6→6.5逐步执行，任一步失败即中断",
+    "priority": "highest",
+    "depends_on": [
+      "RULE_G",
+      "RULE_M1",
+      "RULE_K",
+      "RULE_O",
+      "RULE_K6",
+      "RULE_K5"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则N"
+  },
+  {
+    "id": "R013",
+    "code": "HL0",
+    "name": "硬锁零：执行事实禁止推断 — 守东没说的=没发生，信号≠执行",
+    "category": "personality",
+    "condition": "任何涉及持仓变更的事实陈述",
+    "action": "守东确认→事实成立，信号触发→标注待执行，守东没说→持仓不变",
+    "priority": "highest",
+    "depends_on": [],
+    "overrides": [
+      "RULE_P",
+      "RULE_O"
+    ],
+    "source": "AGENT.md 硬锁零"
+  },
+  {
+    "id": "R014",
+    "code": "HL1",
+    "name": "硬锁一：禁止脑补 — 每个事实断言必须可追溯至P0/P2/MEMORY/决策日志",
+    "category": "personality",
+    "condition": "任何涉及事实性陈述的输出前",
+    "action": "四源均无法追溯→禁止输出，标注未确权",
+    "priority": "highest",
+    "depends_on": [
+      "P0_PRIORITY",
+      "P2_TUSHARE_PRIMARY"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 硬锁一"
+  },
+  {
+    "id": "R015",
+    "code": "RULE_K",
+    "name": "P0/P1覆写协议 — 投喂现价覆写Tushare收盘价，技术指标保持Tushare计算",
+    "category": "data",
+    "condition": "Tushare批量拉取完成+逐标对账完成后",
+    "action": "K1扫描当日memory→K2扫描前日→K3逐标比对→覆写现价→K4.1 C4/H20强制P0覆写",
+    "priority": "high",
+    "depends_on": [
+      "P0_PRIORITY",
+      "P2_TUSHARE_PRIMARY"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则K"
+  },
+  {
+    "id": "R016",
+    "code": "RULE_P",
+    "name": "执行事实禁止推断协议 — 信号状态三态严格隔离",
+    "category": "execution",
+    "condition": "信号触发后守东未告知执行结果",
+    "action": "持仓状态不变，标注⚠️信号触发待执行，禁止标注已清仓/已买入",
+    "priority": "highest",
+    "depends_on": [
+      "HL0"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则P"
+  },
+  {
+    "id": "R017",
+    "code": "RULE_O",
+    "name": "持仓事实强制校验 — 持仓=MEMORY.md确权段+决策日志交叉验证",
+    "category": "execution",
+    "condition": "/持仓 /扫描 /开火 /进攻 /反击输出前",
+    "action": "Step 0.5.1-0.5.4逐标对账，MEMORY持仓vs决策日志清仓记录",
+    "priority": "high",
+    "depends_on": [
+      "HL0"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则O"
+  },
+  {
+    "id": "R018",
+    "code": "RULE_K6",
+    "name": "持仓成本强制来源校验 — 任何成本数值输出前必须验证来源",
+    "category": "data",
+    "condition": "输出包含成本/止损/止盈/浮盈亏计算",
+    "action": "读取MEMORY.md确权段→当日memory→逐源比对→标注成本来源日期",
+    "priority": "high",
+    "depends_on": [
+      "RULE_K"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则K.6"
+  },
+  {
+    "id": "R019",
+    "code": "RULE_K5",
+    "name": "K5覆写摘要强制输出 — 任何标的审计输出首段必须显式出现",
+    "category": "data",
+    "condition": "任何包含标的审计/扫描/路由/分析的输出",
+    "action": "输出P0覆写标的/Tushare标的/无数据标的摘要段落",
+    "priority": "high",
+    "depends_on": [
+      "RULE_K"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 规则K.5"
+  },
+  {
+    "id": "R020",
+    "code": "US10Y_MELTDOWN",
+    "name": "US10Y≥5.00%全局熔断 — 暂停一切进攻开火，反击正常",
+    "category": "macro",
+    "condition": "US10Y ≥ 5.00%",
+    "action": "暂停所有进攻开火，反击正常执行",
+    "priority": "high",
+    "depends_on": [],
+    "overrides": [],
+    "source": "AGENT.md §4.4"
+  },
+  {
+    "id": "R021",
+    "code": "VIX_NORMAL",
+    "name": "VIX≤20 NORMAL状态 — 所有策略正常执行",
+    "category": "macro",
+    "condition": "VIX ≤ 20",
+    "action": "全法典正常执行，进攻+反击+固定层+金盾",
+    "priority": "normal",
+    "depends_on": [],
+    "overrides": [],
+    "source": "AGENT.md §4.4"
+  },
+  {
+    "id": "R022",
+    "code": "VIX_ALERT",
+    "name": "20<VIX≤35 ALERT状态 — 进攻仓位减半，停止新进攻开火",
+    "category": "macro",
+    "condition": "20 < VIX ≤ 35",
+    "action": "进攻单笔10%→5%，停止新进攻开火，反击正常",
+    "priority": "high",
+    "depends_on": [],
+    "overrides": [],
+    "source": "AGENT.md §4.4"
+  },
+  {
+    "id": "R023",
+    "code": "VIX_CRISIS",
+    "name": "35<VIX≤50 CRISIS状态 — 暂停所有进攻/反击开火，黄金不买入",
+    "category": "macro",
+    "condition": "35 < VIX ≤ 50",
+    "action": "⛔暂停进攻/反击新信号，进攻止损收紧至3×ATR，黄金禁止买入",
+    "priority": "high",
+    "depends_on": [],
+    "overrides": [
+      "C3.1_MACRO_WINDOW",
+      "SPEARHEAD_C1C4"
+    ],
+    "source": "AGENT.md §4.4"
+  },
+  {
+    "id": "R024",
+    "code": "VIX_MELTDOWN",
+    "name": "VIX>50 MELTDOWN状态 — 全局熔断，非固定层全部审查离场",
+    "category": "macro",
+    "condition": "VIX > 50",
+    "action": "进攻全部清仓，反击止损收紧至-10%，固定层永不离场",
+    "priority": "highest",
+    "depends_on": [],
+    "overrides": [
+      "VIX_ALERT",
+      "VIX_CRISIS",
+      "C3.1_MACRO_WINDOW",
+      "SPEARHEAD_C1C4",
+      "COUNTERPUNCH_R0R2"
+    ],
+    "source": "AGENT.md §4.4"
+  },
+  {
+    "id": "R025",
+    "code": "C3.1_MACRO_WINDOW",
+    "name": "宏观事件前置窗口 — 非农/CPI/FOMC/央行决议前72h进攻降级",
+    "category": "macro",
+    "condition": "未来72h内有P0级宏观事件",
+    "action": "进攻⛔暂停，反击按分层规则执行",
+    "priority": "high",
+    "depends_on": [],
+    "overrides": [],
+    "source": "AGENT.md C3.1"
+  },
+  {
+    "id": "R026",
+    "code": "SPEARHEAD_C1C4",
+    "name": "进攻策略四条件C1-C4 AND — 全部满足方可开火",
+    "category": "spearhead",
+    "condition": "C1(EMA50>EMA150) AND C2(MACD金叉) AND C3(RSI<70) AND C4(现价≤H20×0.98)",
+    "action": "单笔10%仓位，5×ATR追踪止损，30天冷却期",
+    "priority": "high",
+    "depends_on": [
+      "VIX_ALERT",
+      "C3.1_MACRO_WINDOW"
+    ],
+    "overrides": [],
+    "source": "AGENT.md §3.1"
+  },
+  {
+    "id": "R027",
+    "code": "COUNTERPUNCH_R0R2",
+    "name": "反击策略R0-R2 AND — 均值回归建仓条件",
+    "category": "counterpunch",
+    "condition": "R0.5(锚线方向过滤) AND R1(现价≤MA40−2×ATR) AND R2(RSI<40)",
+    "action": "正金字塔两层建仓(30%+70%)，2×ATR止损+SRC-6 -15%硬止损",
+    "priority": "high",
+    "depends_on": [
+      "VIX_CRISIS"
+    ],
+    "overrides": [],
+    "source": "AGENT.md §3.2"
+  },
+  {
+    "id": "R028",
+    "code": "GOLD_SHIELD_V14",
+    "name": "金盾总纲V1.4 — 四条件全绿方可满仓买入黄金",
+    "category": "gold_shield",
+    "condition": "MA60方向↑ AND MACD金叉 AND RSI<70 AND 波动率正常",
+    "action": "满仓买入IAU/518880，S1-S7七级卖点体系",
+    "priority": "high",
+    "depends_on": [
+      "VIX_CRISIS"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 金盾总纲V1.4"
+  },
+  {
+    "id": "R029",
+    "code": "GOLD_TACTICAL_VANGUARD",
+    "name": "金盾战术前置方案 — C1双顺风+MACD金叉+FOMC落地→三分之一先行",
+    "category": "gold_shield",
+    "condition": "US10Y MA20↓ AND DXY MA20↓ AND MACD金叉 AND FOMC已落地",
+    "action": "满仓目标三分之一先行入场，剩余三分之二等四条件全绿",
+    "priority": "normal",
+    "depends_on": [
+      "GOLD_SHIELD_V14"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 金盾战术前置方案"
+  },
+  {
+    "id": "R030",
+    "code": "GAMESTATE_V2",
+    "name": "博弈态V2.0层级投票 — VIX否决层+ADX/成交量联合判定+D4辅助确认",
+    "category": "game_state",
+    "condition": "每次扫描启动",
+    "action": "三步串行：VIX前置分流→ADX+成交量联合判定→D4辅助确认",
+    "priority": "high",
+    "depends_on": [
+      "VIX_NORMAL",
+      "VIX_ALERT",
+      "VIX_CRISIS"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 模块八"
+  },
+  {
+    "id": "R031",
+    "code": "GAMESTATE_POSITION_CAP",
+    "name": "博弈态仓位硬上限 — 效用值→仓位上限硬绑定",
+    "category": "game_state",
+    "condition": "博弈态判定结果",
+    "action": "+10→60%, +5→20%, 0→0%, -3→0%, -∞→0%",
+    "priority": "high",
+    "depends_on": [
+      "GAMESTATE_V2"
+    ],
+    "overrides": [
+      "FIVEDIM_ASSESS"
+    ],
+    "source": "AGENT.md 模块八"
+  },
+  {
+    "id": "R032",
+    "code": "FIVEDIM_ASSESS",
+    "name": "大势确定性五维评估 — 利率/美元/恐慌/事件/博弈态汇总裁决",
+    "category": "five_dim",
+    "condition": "/开火 /进攻 /反击触发",
+    "action": "5/5🟢→全仓, 4/5→半仓, 3/5→仅反击, ≤2/5→休战",
+    "priority": "high",
+    "depends_on": [
+      "GAMESTATE_V2"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 模块十三"
+  },
+  {
+    "id": "R033",
+    "code": "STOP_LOSS_COOLDOWN",
+    "name": "止损后反手冷却 — 48h强制冷却+急跌性质二分类判定",
+    "category": "stop_loss",
+    "condition": "止损执行后",
+    "action": "48h禁止同标的买入，超卖型→48h后可路由，趋势型→额外等待5交易日",
+    "priority": "high",
+    "depends_on": [],
+    "overrides": [],
+    "source": "AGENT.md 止损后反手冷却规则"
+  },
+  {
+    "id": "R034",
+    "code": "STOP_LOSS_2D_MATRIX",
+    "name": "止损决策两维判定矩阵 — 事件驱动×MA60趋势联合判定",
+    "category": "stop_loss",
+    "condition": "急跌触发止损位",
+    "action": "MA60↑+无事件→超卖型可能不触发止损, MA60↓→立即止损",
+    "priority": "high",
+    "depends_on": [
+      "STOP_LOSS_COOLDOWN"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 止损后反手冷却规则V1.1"
+  },
+  {
+    "id": "R035",
+    "code": "INDEP_DISC_D1D3",
+    "name": "独立标的买入纪律 — D1价格≤EMA150×1.02 + D2 EMA50≥EMA150 + D3分批≤50%",
+    "category": "independent",
+    "condition": "CANE等独立标的买入/加仓",
+    "action": "三条件AND方可建仓，四项硬熔断(VIX>35/ATR>5%/静默期/现价>EMA150×1.10)",
+    "priority": "high",
+    "depends_on": [
+      "VIX_CRISIS"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 独立标的买入纪律"
+  },
+  {
+    "id": "R036",
+    "code": "MOMENTUM_FLIN_SMIN_EWY",
+    "name": "FLIN/SMIN/EWY动量跟随策略 — MACD金叉+价<MA20入场，V1.1动态回撤止盈",
+    "category": "momentum",
+    "condition": "MACD金叉 AND 现价<MA20",
+    "action": "全仓进出，止损2×ATR，两阶段退出(浮盈<1.5ATR→MA60止盈，≥1.5ATR→动态回撤)",
+    "priority": "normal",
+    "depends_on": [
+      "VIX_CRISIS",
+      "C3.1_MACRO_WINDOW"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 动量跟随策略"
+  },
+  {
+    "id": "R037",
+    "code": "FIXED_LAYER_DISC",
+    "name": "固定层建仓纪律 — 买入区间[MA60−4×ATR, MA60+2×ATR)，VIX>20暂停新增",
+    "category": "fixed_layer",
+    "condition": "VEA/VTI建仓",
+    "action": "VIX>20暂停，冷却期30天，宏观事件静默期静默",
+    "priority": "normal",
+    "depends_on": [
+      "VIX_ALERT"
+    ],
+    "overrides": [],
+    "source": "AGENT.md §0.6"
+  },
+  {
+    "id": "R038",
+    "code": "CAPITAL_CURVE_A",
+    "name": "规则A — 同策略累计亏损熔断，滚动5笔<−4R锁该策略池",
+    "category": "capital_curve",
+    "condition": "同策略滚动5笔累计盈亏 < −4R",
+    "action": "仅暂停该策略池新开仓14天+博弈态≥+5或下一笔盈利解除",
+    "priority": "high",
+    "depends_on": [],
+    "overrides": [],
+    "source": "AGENT.md 模块十五"
+  },
+  {
+    "id": "R039",
+    "code": "CAPITAL_CURVE_B",
+    "name": "规则B — 顺境加仓，滚动12月Sharpe>全周期×150%→仓位上限+50%",
+    "category": "capital_curve",
+    "condition": "滚动12月Sharpe > 全周期Sharpe × 150% AND 博弈态=冷却静默(+10)",
+    "action": "单笔仓位上限上浮50%(进攻10%→15%，反击5%→7.5%)",
+    "priority": "normal",
+    "depends_on": [
+      "GAMESTATE_V2"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 模块十五"
+  },
+  {
+    "id": "R040",
+    "code": "CAPITAL_CURVE_C",
+    "name": "规则C — 回撤vs失效判定，同策略系统失效则锁池+参数复审",
+    "category": "capital_curve",
+    "condition": "同策略累计≥−4R且跳空止损>40%，或连续6笔无盈利，或滚动Sharpe<0",
+    "action": "仅暂停该策略池新开仓+触发参数复审",
+    "priority": "high",
+    "depends_on": [
+      "CAPITAL_CURVE_A"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 模块十五"
+  },
+  {
+    "id": "R041",
+    "code": "C3.1_IPO_DRAIN",
+    "name": "大型IPO抽血事件 — 日本≥500亿日元/全球≥$300亿/A股≥300亿元触发窗口",
+    "category": "macro",
+    "condition": "大型IPO≥阈值",
+    "action": "进攻降级⛔",
+    "priority": "normal",
+    "depends_on": [
+      "C3.1_MACRO_WINDOW"
+    ],
+    "overrides": [],
+    "source": "AGENT.md C3.1"
+  },
+  {
+    "id": "R042",
+    "code": "CHINA_ANCHOR_V3",
+    "name": "中国区压强三锚 — DR007+债市杠杆率分位+USDCNY/USDCNH",
+    "category": "china_anchor",
+    "condition": "涉及人民币资产审计",
+    "action": "DR007连续5日>2.1%→减仓互联网/科创，杠杆率≥95%→物理熔断增仓",
+    "priority": "high",
+    "depends_on": [],
+    "overrides": [],
+    "source": "AGENT.md 模块八"
+  },
+  {
+    "id": "R043",
+    "code": "POLICY_SIGNAL_FALSIFY",
+    "name": "政策信号市场证伪协议 — 政策表态需市场真金白银确认后才纳入决策",
+    "category": "china_anchor",
+    "condition": "政策表态/官员讲话/论坛宣言",
+    "action": "三条件证伪(反向波动/无视缩量/脉冲回吐)，证伪后禁止纳入决策",
+    "priority": "high",
+    "depends_on": [],
+    "overrides": [],
+    "source": "AGENT.md 模块八"
+  },
+  {
+    "id": "R044",
+    "code": "RUINS_HARVEST_V2",
+    "name": "废墟收割协议V2.0 — 双参数体系-2.50/-1.25，假废墟率14.4%",
+    "category": "ruins",
+    "condition": "cond④=-2.50 AND cond⑤=-1.25",
+    "action": "资金上限¥32,000，走反击建仓SOP",
+    "priority": "normal",
+    "depends_on": [
+      "COUNTERPUNCH_R0R2"
+    ],
+    "overrides": [],
+    "source": "AGENT.md 废墟收割协议"
+  },
+  {
+    "id": "R045",
+    "code": "LADDER_STOP_PROFIT",
+    "name": "阶梯止盈机制 — +10%保本/+20%锁一半/+30%锁三分之二/+50%趋势跟踪",
+    "category": "spearhead",
+    "condition": "浮盈达到对应阶梯",
+    "action": "单向上移不下调，与SRC-1取max，收盘确认",
+    "priority": "normal",
+    "depends_on": [],
+    "overrides": [],
+    "source": "AGENT.md 阶梯止盈"
+  },
+  {
+    "id": "R046",
+    "code": "TD9_RULE",
+    "name": "TD9确认三条件 — 计数=9+缩量<0.8+小实体<0.3×ATR",
+    "category": "counterpunch",
+    "condition": "反击策略价格触及买入区间",
+    "action": "TD9确认后建仓，未确认不砍仓位，方向矛盾⛔暂停",
+    "priority": "normal",
+    "depends_on": [
+      "COUNTERPUNCH_R0R2"
+    ],
+    "overrides": [],
+    "source": "AGENT.md TD9"
+  },
+  {
+    "id": "R047",
+    "code": "MACD_KDJ_OBV_CONFLUENCE",
+    "name": "MACD+KDJ+OBV三指标合体信号 — 辅助确认层，不替代法典路由",
+    "category": "technical",
+    "condition": "/技术指令触发",
+    "action": "三指标共振✅→评分上调一档，冲突时以法典为准",
+    "priority": "normal",
+    "depends_on": [],
+    "overrides": [],
+    "source": "AGENT.md 段九.五"
+  },
+  {
+    "id": "R048",
+    "code": "CANE_S6_S7",
+    "name": "CANE独立止损 — S6=−13%=$8.595(减仓50%)，S7=−19%=$8.002(全仓清仓)",
+    "category": "independent",
+    "condition": "CANE持仓浮亏触及止损线",
+    "action": "基于12年波动率实测，误触发概率5%",
+    "priority": "high",
+    "depends_on": [
+      "INDEP_DISC_D1D3"
+    ],
+    "overrides": [],
+    "source": "AGENT.md CANE止损"
+  },
+  {
+    "id": "R049",
+    "code": "BACKTEST_L1_L3",
+    "name": "/回测三层体系 — L1周度命中率/L2月度参数重标定/L3季度绩效审计",
+    "category": "backtest",
+    "condition": "周六自动或手动触发",
+    "action": "输出参数对比表+优化建议，修改权在守东",
+    "priority": "normal",
+    "depends_on": [],
+    "overrides": [],
+    "source": "AGENT.md 模块十六"
+  },
+  {
+    "id": "R050",
+    "code": "VEA_VTI_NEVER_SELL",
+    "name": "固定层宪法 — VEA+VTI 30%永不离场",
+    "category": "fixed_layer",
+    "condition": "任何市场状态",
+    "action": "30%固定层永不离场，不做波段操作",
+    "priority": "highest",
+    "depends_on": [],
+    "overrides": [
+      "VIX_CRISIS",
+      "VIX_MELTDOWN"
+    ],
+    "source": "AGENT.md §0"
+  }
+]

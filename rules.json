@@ -1,0 +1,526 @@
+{
+  "version": "V5.8.2r33.9",
+  "extracted_at": "2026-06-27",
+  "total_rules": 22,
+  "auto_extracted": 22,
+  "manual_added": 0,
+  "rules": [
+    {
+      "id": "R-008",
+      "type": "execution_rule",
+      "name": "F: 自检硬化",
+      "module": "🚨 模块零：数据取数强制流程（第0号模块 — 优先级高于模块一至九）",
+      "section": "🔴 取数强制行动规则（API硬化版）",
+      "line": 358,
+      "conditions": [],
+      "actions": [],
+      "forbidden": [],
+      "triggers": [],
+      "priority": "",
+      "overrides": [],
+      "depends_on": []
+    },
+    {
+      "id": "R-015",
+      "type": "execution_rule",
+      "name": "M.1: 技术指标新鲜度强制自检（2026-06-05焊入）",
+      "module": "🚨 模块零：数据取数强制流程（第0号模块 — 优先级高于模块一至九）",
+      "section": "自检熔断",
+      "line": 571,
+      "conditions": [],
+      "actions": [],
+      "forbidden": [
+        "🔴 触发：执行链Step 1任何Tushare接口返回空/报错 → **强制激活规则G.1证明链**（逐接口显式调用→打印返回值→禁止泛化），G.1证明链跑完后才可标注Step 1结果为❌。禁止跳过G.1直接在Step 1标注「Tushare不可用」"
+      ],
+      "triggers": [],
+      "priority": "P.1是规则P的执行层硬化——规则P定义三态隔离，P.1确保每次输出前强制执行三态检查。两者互补，P不定义P.1则不保证执行。",
+      "overrides": [],
+      "depends_on": []
+    },
+    {
+      "id": "R-018",
+      "type": "execution_rule",
+      "name": "C: 回撤vs失效判定（单策略判定，V5.8.2r33.4修正）",
+      "module": "资金曲线贝叶斯反馈（模块十五 — 逐策略判定）",
+      "section": "🔴 模块十四：自审修复日志（2026-06-21）",
+      "line": 3101,
+      "conditions": [],
+      "actions": [
+        "- 系统失效动作：⛔ **仅暂停该策略池新开仓** + 触发该策略参数复审（由守东决定是否调整参数或暂停该策略）"
+      ],
+      "forbidden": [],
+      "triggers": [],
+      "priority": "",
+      "overrides": [],
+      "depends_on": []
+    },
+    {
+      "id": "R-004",
+      "type": "priority_chain",
+      "name": "取数优先级链: P0 > P1 > P2 > P2.5 > P3 > P4 > P5",
+      "module": "模块零",
+      "section": "取数优先级",
+      "line": 0,
+      "conditions": [
+        "任何数据获取场景"
+      ],
+      "actions": [
+        "按优先级链逐级获取，上级可用则禁止使用下级"
+      ],
+      "forbidden": [
+        "跳级",
+        "用P4质疑P2",
+        "用P5质疑P0-P2"
+      ],
+      "triggers": [],
+      "priority": "最高",
+      "overrides": [],
+      "depends_on": []
+    },
+    {
+      "id": "R-005",
+      "type": "execution_rule",
+      "name": "规则A: 美股ETF日线强制获取",
+      "module": "模块零",
+      "section": "取数强制行动规则",
+      "line": 0,
+      "conditions": [
+        "审计需要美股ETF OHLCV"
+      ],
+      "actions": [
+        "调用pro.us_daily()",
+        "技术指标自算"
+      ],
+      "forbidden": [
+        "等待用户投喂日线"
+      ],
+      "triggers": [],
+      "priority": "P2",
+      "overrides": [],
+      "depends_on": []
+    },
+    {
+      "id": "R-006",
+      "type": "execution_rule",
+      "name": "规则B: A股ETF数据强制获取",
+      "module": "模块零",
+      "section": "取数强制行动规则",
+      "line": 0,
+      "conditions": [
+        "需要A股ETF OHLCV"
+      ],
+      "actions": [
+        "全天候走pro.fund_daily()"
+      ],
+      "forbidden": [
+        "等待用户投喂A股日线"
+      ],
+      "triggers": [],
+      "priority": "P2",
+      "overrides": [],
+      "depends_on": []
+    },
+    {
+      "id": "R-007",
+      "type": "execution_rule",
+      "name": "规则C: SHIBOR强制通过Tushare",
+      "module": "模块零",
+      "section": "取数强制行动规则",
+      "line": 0,
+      "conditions": [
+        "需要SHIBOR"
+      ],
+      "actions": [
+        "调用pro.shibor()"
+      ],
+      "forbidden": [
+        "web_search获取SHIBOR"
+      ],
+      "triggers": [],
+      "priority": "P2",
+      "overrides": [],
+      "depends_on": []
+    },
+    {
+      "id": "R-008",
+      "type": "execution_rule",
+      "name": "规则D: 美债收益率强制通过Tushare",
+      "module": "模块零",
+      "section": "取数强制行动规则",
+      "line": 0,
+      "conditions": [
+        "需要US10Y/US20Y"
+      ],
+      "actions": [
+        "调用pro.us_tycr()"
+      ],
+      "forbidden": [
+        "web_search获取美债收益率"
+      ],
+      "triggers": [],
+      "priority": "P2",
+      "overrides": [],
+      "depends_on": []
+    },
+    {
+      "id": "R-009",
+      "type": "state_machine",
+      "name": "博弈态VIX否决层前置分流",
+      "module": "模块八",
+      "section": "博弈态判定V2.0",
+      "line": 0,
+      "conditions": [
+        "VIX>40→崩溃态",
+        "28<VIX≤40→震荡爆发态",
+        "VIX≤28→进入Step2"
+      ],
+      "actions": [
+        "VIX>28时终止判定"
+      ],
+      "forbidden": [
+        "跳过VIX前置分流直接判定博弈态"
+      ],
+      "triggers": [],
+      "priority": "Step1否决层",
+      "overrides": [
+        "覆盖Step2/Step3"
+      ],
+      "depends_on": [
+        "D1 VIX数据"
+      ]
+    },
+    {
+      "id": "R-010",
+      "type": "position_constraint",
+      "name": "博弈态仓位硬上限约束",
+      "module": "模块八",
+      "section": "博弈态判定V2.0",
+      "line": 0,
+      "conditions": [
+        "震荡爆发(-3)→0%",
+        "多空绞杀(0)→0%",
+        "噪音衰退(+5)→20%",
+        "冷却静默(+10)→60%",
+        "崩溃(-∞)→0%"
+      ],
+      "actions": [
+        "仓位=min(博弈态硬上限%, 五维评估建议%)"
+      ],
+      "forbidden": [
+        "超硬上限建仓"
+      ],
+      "triggers": [],
+      "priority": "硬上限",
+      "overrides": [
+        "覆盖五维评估建议仓位"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "R-011",
+      "type": "state_machine",
+      "name": "宏观危机状态机: VIX四档阈值",
+      "module": "模块十二",
+      "section": "VIX危机阈值",
+      "line": 0,
+      "conditions": [
+        "VIX≤20→NORMAL",
+        "20<VIX≤35→ALERT",
+        "35<VIX≤50→CRISIS",
+        "VIX>50→MELTDOWN"
+      ],
+      "actions": [
+        "按对应状态执行"
+      ],
+      "forbidden": [
+        "CRISIS/MELTDOWN买入非固定层"
+      ],
+      "triggers": [],
+      "priority": "与模块零同级",
+      "overrides": [
+        "覆盖进攻/反击/金盾开火"
+      ],
+      "depends_on": [
+        "VIX数据"
+      ]
+    },
+    {
+      "id": "R-012",
+      "type": "conflict_resolution",
+      "name": "VIX28-35博弈态vs危机状态机裁决",
+      "module": "模块十二",
+      "section": "VIX危机阈值",
+      "line": 0,
+      "conditions": [
+        "博弈态判0%仓位，危机状态机ALERT允许反击"
+      ],
+      "actions": [
+        "取更严: 博弈态0%覆盖ALERT反击"
+      ],
+      "forbidden": [
+        "VIX28-35区间执行反击开火"
+      ],
+      "triggers": [],
+      "priority": "博弈态仓位 > 危机状态机ALERT",
+      "overrides": [
+        "覆盖ALERT反击正常执行"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "R-013",
+      "type": "decision_matrix",
+      "name": "大势五维评估汇总裁决",
+      "module": "模块十三",
+      "section": "五维评估",
+      "line": 0,
+      "conditions": [
+        "5/5🟢→全仓",
+        "4/5🟢~🟡→半仓",
+        "3/5🟢~🟡→仅反击/固定层",
+        "≤2/5→现金掩体"
+      ],
+      "actions": [
+        "五维→三规则→C3.1→开火判定，四步串行"
+      ],
+      "forbidden": [
+        "五维🔴但裁决🟢",
+        "事件静默🔴但输出进攻"
+      ],
+      "triggers": [],
+      "priority": "/开火/进攻/反击前置",
+      "overrides": [],
+      "depends_on": [
+        "博弈态",
+        "危机状态机"
+      ]
+    },
+    {
+      "id": "R-014",
+      "type": "veto",
+      "name": "事件静默一票否决",
+      "module": "模块十三",
+      "section": "事件静默",
+      "line": 0,
+      "conditions": [
+        "P0事件前2后1=4交易日窗口"
+      ],
+      "actions": [
+        "进攻⛔暂停",
+        "反击🟡降级"
+      ],
+      "forbidden": [
+        "窗口内进攻开火"
+      ],
+      "triggers": [],
+      "priority": "覆盖五维其他维度",
+      "overrides": [
+        "覆盖进攻C1-C4"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "R-015",
+      "type": "circuit_breaker",
+      "name": "规则A: 同策略累计亏损熔断",
+      "module": "模块十五",
+      "section": "资金曲线贝叶斯",
+      "line": 0,
+      "conditions": [
+        "同策略5笔<−4R"
+      ],
+      "actions": [
+        "仅锁该策略池",
+        "冷却14天+博弈态≥+5或下一笔盈利→解除"
+      ],
+      "forbidden": [
+        "跨策略连坐"
+      ],
+      "triggers": [],
+      "priority": "单策略锁",
+      "overrides": [
+        "覆盖该策略池开火"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "R-016",
+      "type": "position_sizing",
+      "name": "规则B: 顺境加仓",
+      "module": "模块十五",
+      "section": "资金曲线贝叶斯",
+      "line": 0,
+      "conditions": [
+        "滚动Sharpe>全周期×150%",
+        "博弈态=冷却静默"
+      ],
+      "actions": [
+        "单笔仓位上限+50%"
+      ],
+      "forbidden": [
+        "非冷却静默态触发"
+      ],
+      "triggers": [],
+      "priority": "仅冷却静默态",
+      "overrides": [],
+      "depends_on": [
+        "博弈态"
+      ]
+    },
+    {
+      "id": "R-017",
+      "type": "failure_detection",
+      "name": "规则C: 同策略回撤vs失效",
+      "module": "模块十五",
+      "section": "资金曲线贝叶斯",
+      "line": 0,
+      "conditions": [
+        "累计≥−4R∧跳空占比>40%",
+        "连续6笔无盈利",
+        "滚动Sharpe<0"
+      ],
+      "actions": [
+        "仅锁该策略池",
+        "触发参数复审"
+      ],
+      "forbidden": [
+        "跨策略连坐"
+      ],
+      "triggers": [],
+      "priority": "单策略判定",
+      "overrides": [],
+      "depends_on": []
+    },
+    {
+      "id": "R-018",
+      "type": "entry_rule",
+      "name": "独立标的买入纪律D1-D3",
+      "module": "独立标的买入纪律",
+      "section": "买入纪律",
+      "line": 0,
+      "conditions": [
+        "D1:现价≤EMA150×1.02",
+        "D2:EMA50≥EMA150",
+        "D3:单批≤50%总仓位"
+      ],
+      "actions": [
+        "三条件AND→建仓"
+      ],
+      "forbidden": [
+        "浮亏补仓",
+        "VIX>35",
+        "ATR>5%",
+        "宏观静默期"
+      ],
+      "triggers": [],
+      "priority": "等同法典策略",
+      "overrides": [
+        "覆盖CANE协议V1.3买入条件"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "R-019",
+      "type": "entry_rule",
+      "name": "动量跟随: MACD金叉+价<MA20",
+      "module": "FLIN/SMIN/EWY动量跟随",
+      "section": "策略参数",
+      "line": 0,
+      "conditions": [
+        "MACD金叉AND现价<MA20"
+      ],
+      "actions": [
+        "次日开盘入场",
+        "−2×ATR止损",
+        "两阶段动态回撤止盈"
+      ],
+      "forbidden": [
+        "VIX>35",
+        "FOMC/非农/CPI前72h",
+        "浮亏补仓"
+      ],
+      "triggers": [],
+      "priority": "独立策略",
+      "overrides": [],
+      "depends_on": []
+    },
+    {
+      "id": "R-020",
+      "type": "cooldown",
+      "name": "止损后反手冷却48h+性质判定",
+      "module": "止损后反手冷却",
+      "section": "Step0-3",
+      "line": 0,
+      "conditions": [
+        "48h强制冷却",
+        "超卖型:48h后可路由",
+        "趋势型:48h+≥5交易日"
+      ],
+      "actions": [
+        "等待=max(48h,标的冷却剩余,规则A冷却剩余)"
+      ],
+      "forbidden": [
+        "止损即反手",
+        "同一轮输出反手"
+      ],
+      "triggers": [],
+      "priority": "与标的冷却并行取max",
+      "overrides": [],
+      "depends_on": [
+        "规则A"
+      ]
+    },
+    {
+      "id": "R-021",
+      "type": "entry_rule",
+      "name": "金盾战术前置: C1+MACD+FOMC",
+      "module": "金盾战术前置",
+      "section": "触发条件",
+      "line": 0,
+      "conditions": [
+        "C1:US10Y↓∧DXY↓",
+        "MACD金叉",
+        "FOMC已落地"
+      ],
+      "actions": [
+        "⅓仓位先行",
+        "⅔等正统四条件全绿"
+      ],
+      "forbidden": [
+        "VIX>35或US10Y≥5%",
+        "满仓买入"
+      ],
+      "triggers": [],
+      "priority": "战术前置(过渡窗口)",
+      "overrides": [],
+      "depends_on": [
+        "金盾总纲V1.4"
+      ]
+    },
+    {
+      "id": "R-022",
+      "type": "confirmation_rule",
+      "name": "TD9确认三条件AND",
+      "module": "模块十四",
+      "section": "L4修复",
+      "line": 0,
+      "conditions": [
+        "计数=9",
+        "缩量<0.8",
+        "小实体<0.3×ATR"
+      ],
+      "actions": [
+        "反击:全确认→正常两层",
+        "未确认→不砍仓位",
+        "矛盾→⛔暂停"
+      ],
+      "forbidden": [
+        "TD9替代买入区间"
+      ],
+      "triggers": [],
+      "priority": "辅助确认(第二性)",
+      "overrides": [],
+      "depends_on": []
+    }
+  ]
+}
