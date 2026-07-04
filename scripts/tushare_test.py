@@ -2,7 +2,7 @@ import tushare as ts
 import os
 
 # 从环境变量读取token，兜底用硬编码
-token = os.environ.get("TUSHARE_TOKEN", "5b9c0bfb18b1d6eaa7e31e7aacb10366a6c1a6bdbf9be7e611e2bc9f")
+token = os.environ.get("TUSHARE_TOKEN", "")
 ts.set_token(token)
 pro = ts.pro_api()
 
