@@ -307,8 +307,8 @@ def compute_one(symbol, info, pro):
     
     ind = {}
     
-    # MA系列 (20/30/40/50/60/150)
-    for w in [20, 30, 40, 50, 60, 150]:
+    # MA系列 (5/20/30/40/50/60/150)
+    for w in [5, 20, 30, 40, 50, 60, 150]:
         val, w_start, w_end = calc_ma(close, w)
         if val is not None:
             dev = calc_deviation(latest_close, val)
