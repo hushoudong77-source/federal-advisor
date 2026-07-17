@@ -54,7 +54,7 @@ TICKER_CONFIG = {
         'tushare_code': 'BBJP', 'type': 'us_daily',
     },
     'VNM': {
-        'name': '越南ETF', 'k': 2.0, 'stop_mult': 3.5, 'cooldown': 9,
+        'name': '越南ETF', 'k': 5.0, 'stop_mult': 1.5, 'cooldown': 9,
         'anchor': 40, 'hold_days': 10,
         'tushare_code': 'VNM', 'type': 'us_daily',
     },

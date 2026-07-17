@@ -54,6 +54,18 @@ TICKER_CONFIG = {
         'tushare_code': '510500.SH', 'type': 'fund_daily',
         'tier': 'L3宽基', 'note': 'r33.31 Optuna三参数联合优化：k=2.8→4.9/止损2.0→2.8/冷却30→60（得分+9.4）'
     },
+    '510300': {
+        'name': '沪深300ETF',
+        'anchor': 40, 'k': 2.0, 'hold_days': 20,
+        'tushare_code': '510300.SH', 'type': 'fund_daily',
+        'tier': 'L3宽基', 'note': 'r33.62全量回测确权：k=2.0/止损4.0×ATR/冷却45d，26笔/胜率50%/累计+98.7%/Sharpe 0.389'
+    },
+    '159915': {
+        'name': '创业板ETF',
+        'anchor': 40, 'k': 2.0, 'hold_days': 20,
+        'tushare_code': '159915.SZ', 'type': 'fund_daily',
+        'tier': 'L3宽基', 'note': 'r33.62全量回测确权：k=2.0/止损4.0×ATR/冷却10d，45笔/胜率48.9%/累计+285.4%/Sharpe 0.368'
+    },
     # === 美股 ===
     'VTI': {
         'name': '美股全市场ETF',
@@ -81,9 +93,9 @@ TICKER_CONFIG = {
     },
     'VNM': {
         'name': '越南ETF',
-        'anchor': 40, 'k': 2.0, 'hold_days': 10,
+        'anchor': 40, 'k': 5.0, 'hold_days': 10,
         'tushare_code': 'VNM', 'type': 'us_daily',
-        'tier': 'L2新兴', 'note': 'r33.31 Optuna三参数联合优化：k=0.9→2.0/止损2.0→3.5/冷却30→9（得分+7.4）'
+        'tier': 'L2新兴', 'note': 'r33.47全量135组回测修正：k=0.9→5.0/止损1.0→1.5×ATR（胜率16%→30%/累计+20%→+130%/连亏12→7笔）。原Optuna k=2.0被全量回测推翻'
     },
     'FLIN': {
         'name': '印度ETF',

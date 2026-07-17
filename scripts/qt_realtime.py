@@ -30,6 +30,10 @@ symbols = [
     ("512100", "sh512100"),
     ("510880", "sh510880"),
     ("159530", "sz159530"),
+    ("510300", "sh510300"),
+    ("159915", "sz159915"),
+    ("513770", "sh513770"),
+    ("159545", "sz159545"),
 ]
 
 codes = [s[1] for s in symbols]
@@ -55,8 +59,15 @@ try:
         
         name = parts[1]
         price = parts[3]
-        change_pct = parts[5] if len(parts) > 5 else "N/A"
         prev_close = parts[4] if len(parts) > 4 else "N/A"
+        # 美股71字段: [31]=涨跌幅 [32]=涨跌额 [33]=最高 [34]=最低
+        # A股88字段: [31]=涨跌额 [32]=涨跌幅 [33]=最高 [34]=最低
+        if qt_code.startswith("us"):
+            change_pct = parts[32] if len(parts) > 32 else "N/A"
+            change_amt = parts[31] if len(parts) > 31 else "N/A"
+        else:
+            change_pct = parts[32] if len(parts) > 32 else "N/A"
+            change_amt = parts[31] if len(parts) > 31 else "N/A"
         high = parts[33] if len(parts) > 33 else "N/A"
         low = parts[34] if len(parts) > 34 else "N/A"
         

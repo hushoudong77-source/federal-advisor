@@ -34,7 +34,7 @@ echo "       远程: ${REMOTE}"
 
 # Step 2: 暂存变更并提交
 echo "[2/3] 暂存变更并提交..."
-git add AGENT.md USER.md RULE.md MEMORY.md knowledge/ scripts/ 2>/dev/null || true
+git add AGENT.md USER.md RULE.md MEMORY.md knowledge/ scripts/ memory/ 2>/dev/null || true
 
 # 检查是否有变更
 if git diff --cached --quiet 2>/dev/null; then
@@ -65,4 +65,4 @@ echo "   仓库: github.com/hushoudong77-source/federal-advisor"
 echo "   分支: ${BRANCH}"
 echo "   提交: ${COMMIT_MSG}"
 echo ""
-echo "   覆盖内容: AGENT.md / USER.md / RULE.md / MEMORY.md / knowledge/ / scripts/"
+echo "   覆盖内容: AGENT.md / USER.md / RULE.md / MEMORY.md / knowledge/ / scripts/ / memory/"
