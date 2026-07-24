@@ -180,7 +180,7 @@
   },
 
   "independent_cane": {
-    "_meta": {"framework": "厄尔尼诺左侧分批", "trigger": "NOAA CPC概率>90%", "batches": 5, "batch_size": "20%", "drawdown_trigger": "−8%", "batch_interval": 30, "hard_stop": "−25%", "resonance_interval": 14},
+    "_meta": {"framework": "厄尔尼诺左侧分批", "trigger": "NOAA CPC概率>90%", "batches": 5, "batch_size": "20%", "drawdown_trigger": "−5%", "batch_interval": 30, "hard_stop": "−25%", "resonance_interval": 14},
     "resonance_acceleration": {"conditions": ["厄尔尼诺>90%", "布油>+5%或ICE>+3%", "制糖比≤40%", "距上批≥14天"], "action": "不等−8%回撤，现价加仓"},
     "stop_system": {"S6": "成本−13%（减仓50%）", "S7": "成本−19%（清仓）", "atr_cross_check": "ATR14×3.5 < S7→以ATR为临时硬止损"}
   },
