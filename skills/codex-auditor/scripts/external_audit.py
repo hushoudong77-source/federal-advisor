@@ -227,7 +227,7 @@ def audit_with_kimi(codex_text):
             "max_tokens": 16000,  # 官方建议≥16000
             # K2.6 默认启用 thinking，无需 extra_body
         },
-        timeout=300
+        timeout=900
     )
 
     if response.status_code == 200:

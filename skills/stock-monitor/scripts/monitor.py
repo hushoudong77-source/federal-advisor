@@ -1,146 +1,29 @@
 #!/usr/bin/env python3
 """
-自选股监控预警工具 - 
-支持 A股、ETF 及 国际现货黄金 (伦敦金)
+Stock Monitor V3.0 — 联邦投顾持仓监控
+新增联邦专属预警层：止损触发/止盈触发/买入区间触发
+盘后技术指标切Tushare（东财API被封）
 """
 
 import requests
 import json
 import time
 import os
-from datetime import datetime
+import re
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
 from pathlib import Path
 
-# ============ 配置区 ============
+# ============ Tushare 初始化 ============
+import tushare as ts
 
-# 监控列表 - 长期挂机通用配置
-# 注意: 伦敦金使用新浪hf_XAU接口，价格为 人民币/克 (约4800元/克 = $2740/盎司)
-# 
-# 预警规则设计原则 (适合长期挂机):
-# 1. 成本百分比预警: 基于持仓成本设置 ±10%/±15% 预警，比固定价格更合理
-# 2. 单日涨跌幅预警: 
-#    - 个股 ±3%~5% (波动大)
-#    - ETF ±1.5%~2.5% (波动小)
-#    - 黄金 ±2%~3% (24H特殊)
-# 3. 防骚扰: 同类预警30分钟内只发一次
+TUSHARE_TOKEN = os.environ.get('TUSHARE_TOKEN', '026f0a2d89332cc6f7bfec218f55b9c65c36967f3c261a3a042dd35a')
+ts.set_token(TUSHARE_TOKEN)
+PRO = ts.pro_api()
 
-# 标的类型定义
-STOCK_TYPE = {
-    "INDIVIDUAL": "individual",  # 个股
-    "ETF": "etf",                # ETF
-    "GOLD": "gold"               # 黄金/贵金属
-}
-
-WATCHLIST = [
-    # ===== 个股: 波动较大，设置较宽的涨跌预警 =====
-    {
-        "code": "600362", 
-        "name": "江西铜业", 
-        "market": "sh",
-        "type": "individual",
-        "cost": 57.00,
-        "alerts": {
-            "cost_pct_above": 15.0,    # 盈利15%
-            "cost_pct_below": -12.0,   # 止损12%
-            "change_pct_above": 4.0,   # 日内异动 ±4%
-            "change_pct_below": -4.0,
-            "volume_surge": 2.0        # 成交量是5日均量2倍
-        }
-    },
-    {
-        "code": "601318", 
-        "name": "中国平安", 
-        "market": "sh",
-        "type": "individual",
-        "cost": 66.00,
-        "alerts": {
-            "cost_pct_above": 12.0,
-            "cost_pct_below": -10.0,
-            "change_pct_above": 3.5,   # 日内异动 ±3.5%
-            "change_pct_below": -3.5,
-            "volume_surge": 2.0
-        }
-    },
-    # ===== ETF: 波动相对较小，设置更敏感的预警 =====
-    {
-        "code": "159892", 
-        "name": "恒生医疗", 
-        "market": "sz",
-        "type": "etf",
-        "cost": 0.80,
-        "alerts": {
-            "cost_pct_above": 15.0,
-            "cost_pct_below": -15.0,
-            "change_pct_above": 2.0,   # ETF日内异动 ±2%
-            "change_pct_below": -2.0,
-            "volume_surge": 1.8        # ETF放量阈值更低
-        }
-    },
-    {
-        "code": "513180", 
-        "name": "恒生科技", 
-        "market": "sh",
-        "type": "etf",
-        "cost": 0.72,
-        "alerts": {
-            "cost_pct_above": 15.0,
-            "cost_pct_below": -15.0,
-            "change_pct_above": 2.0,   # ETF日内异动 ±2%
-            "change_pct_below": -2.0,
-            "volume_surge": 1.8
-        }
-    },
-    {
-        "code": "159681", 
-        "name": "创50ETF", 
-        "market": "sz",
-        "type": "etf",
-        "cost": 1.50,
-        "alerts": {
-            "cost_pct_above": 12.0,
-            "cost_pct_below": -12.0,
-            "change_pct_above": 2.0,   # ETF日内异动 ±2%
-            "change_pct_below": -2.0,
-            "volume_surge": 1.8
-        }
-    },
-    {
-        "code": "516020", 
-        "name": "化工50ETF", 
-        "market": "sh",
-        "type": "etf",
-        "cost": 0.90,
-        "alerts": {
-            "cost_pct_above": 12.0,
-            "cost_pct_below": -12.0,
-            "change_pct_above": 2.0,   # ETF日内异动 ±2%
-            "change_pct_below": -2.0,
-            "volume_surge": 1.8
-        }
-    },
-    # ===== 伦敦金: 24H特殊标的 =====
-    {
-        "code": "XAU", 
-        "name": "伦敦金(人民币/克)", 
-        "market": "fx",
-        "type": "gold",
-        "cost": 4650.0,
-        "alerts": {
-            "cost_pct_above": 10.0,    # 盈利10%
-            "cost_pct_below": -8.0,    # 止损8%
-            "change_pct_above": 2.5,   # 黄金日内异动 ±2.5%
-            "change_pct_below": -2.5
-            # 黄金不监控成交量 (外汇市场无成交量概念)
-        }
-    }
-]
-
-# 智能频率配置
-SMART_SCHEDULE = {
-    "market_open": {"hours": [(9, 30), (11, 30), (13, 0), (15, 0)], "interval": 300},  # 交易时间: 5分钟
-    "after_hours": {"interval": 1800},  # 收盘后: 30分钟
-    "night": {"hours": [(0, 0), (8, 0)], "interval": 3600},  # 凌晨: 1小时(仅伦敦金)
-}
+# ============ 默认监控列表（会被 federal_loader 覆盖）============
+WATCHLIST = []
 
 # ============ 核心代码 ============
 
@@ -150,519 +33,571 @@ class StockAlert:
         self.alert_log = []
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": "Mozilla/5.0"})
+        self._tushare_cache = {}  # 缓存Tushare数据避免重复拉取
+    
+    # ========== 数据获取 ==========
+    
+    def fetch_sina_realtime(self, stocks):
+        """获取A股实时行情"""
+        results = {}
+        if not stocks:
+            return results
         
-    def should_run_now(self):
-        """智能频率控制: 判断当前是否应该执行监控 (基于北京时间)"""
-        # 服务器在纽约(EST)，中国股市用北京时间(CST = EST + 13小时)
-        from datetime import timedelta
-        now = datetime.now() + timedelta(hours=13)  # 转换成北京时间
-        hour, minute = now.hour, now.minute
-        time_val = hour * 100 + minute
-        weekday = now.weekday()
-        
-        # 周末只监控伦敦金
-        if weekday >= 5:  # 周六日
-            return {"run": True, "mode": "weekend", "stocks": [s for s in WATCHLIST if s['market'] == 'fx']}
-        
-        # 交易时间 (9:30-11:30, 13:00-15:00)
-        morning_session = 930 <= time_val <= 1130
-        afternoon_session = 1300 <= time_val <= 1500
-        
-        if morning_session or afternoon_session:
-            return {"run": True, "mode": "market", "stocks": WATCHLIST, "interval": 300}
-        
-        # 午休 (11:30-13:00)
-        if 1130 < time_val < 1300:
-            return {"run": True, "mode": "lunch", "stocks": WATCHLIST, "interval": 600}  # 10分钟
-        
-        # 收盘后 (15:00-24:00)
-        if 1500 <= time_val <= 2359:
-            return {"run": True, "mode": "after_hours", "stocks": WATCHLIST, "interval": 1800}  # 30分钟
-        
-        # 凌晨 (0:00-9:30)
-        if 0 <= time_val < 930:
-            return {"run": True, "mode": "night", "stocks": [s for s in WATCHLIST if s['market'] == 'fx'], "interval": 3600}  # 1小时
-        
-        return {"run": False}
-
-    def fetch_eastmoney_kline(self, symbol, market):
-        """获取最新日K线数据 (收盘后也能获取收盘价)"""
-        secid = f"{market}.{symbol}"
-        url = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
-        params = {
-            'secid': secid,
-            'fields1': 'f1,f2,f3,f4,f5,f6',
-            'fields2': 'f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61',
-            'klt': '101',  # 日线
-            'fqt': '0',
-            'end': '20500101',
-            'lmt': '2'  # 取最近2天，用于计算涨跌幅
-        }
+        codes = [f"{s['market']}{s['code']}" for s in stocks]
+        url = f"https://hq.sinajs.cn/list={','.join(codes)}"
         try:
-            resp = self.session.get(url, params=params, timeout=10)
-            data = resp.json()
-            klines = data.get('data', {}).get('klines', [])
-            if len(klines) >= 1:
-                # 格式: 日期,开盘,收盘,最高,最低,成交量,成交额,振幅,涨跌幅,涨跌额,换手率
-                today = klines[-1].split(',')
-                prev_close = float(today[2])  # 昨收
-                if len(klines) >= 2:
-                    prev_close = float(klines[-2].split(',')[2])  # 前一天收盘
-                return {
-                    'name': data.get('data', {}).get('name', symbol),
-                    'price': float(today[2]),      # 收盘
-                    'prev_close': prev_close,
-                    'volume': int(float(today[5])),
-                    'amount': float(today[6]),
-                    'date': today[0],
-                    'time': '15:00:00'
-                }
+            resp = self.session.get(url, headers={'Referer': 'https://finance.sina.com.cn'}, timeout=10)
+            resp.encoding = 'gb18030'
+            for line in resp.text.strip().split(';'):
+                if 'hq_str_' not in line or '=' not in line:
+                    continue
+                key = line.split('=')[0].split('_')[-1]
+                if len(key) < 8:
+                    continue
+                data_str = line[line.index('"')+1 : line.rindex('"')]
+                p = data_str.split(',')
+                if len(p) > 30 and float(p[3]) > 0:
+                    results[key[2:]] = {
+                        'name': p[0],
+                        'price': float(p[3]),
+                        'prev_close': float(p[2]),
+                        'open': float(p[1]),
+                        'high': float(p[4]),
+                        'low': float(p[5]),
+                        'volume': int(p[8]),
+                        'amount': float(p[9]),
+                        'date': p[30],
+                        'time': p[31],
+                    }
         except Exception as e:
-            print(f"东财K线获取失败 {symbol}: {e}")
-        return None
-
-    def fetch_volume_ma5(self, symbol, market):
-        """获取5日平均成交量"""
-        secid = f"{market}.{symbol}"
-        url = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
-        params = {
-            'secid': secid,
-            'fields1': 'f1,f2,f3,f4,f5,f6',
-            'fields2': 'f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61',
-            'klt': '101',
-            'fqt': '0',
-            'end': '20500101',
-            'lmt': '6'  # 取最近6天(今天+前5天)
-        }
+            print(f"新浪实时行情获取失败: {e}")
+        
+        return results
+    
+    def fetch_us_realtime(self, codes):
+        """通过腾讯API获取美股实时行情"""
+        results = {}
+        if not codes:
+            return results
+        
+        tencent_map = {code: f"us{code}" for code in codes}
+        symbols = ",".join(tencent_map.values())
+        url = f"http://qt.gtimg.cn/q={symbols}"
+        
         try:
-            resp = self.session.get(url, params=params, timeout=10)
-            data = resp.json()
-            klines = data.get('data', {}).get('klines', [])
-            if len(klines) >= 2:
-                # 计算前5日平均成交量(不含今天)
-                volumes = []
-                for k in klines[:-1]:  # 排除最后一天(今天)
-                    p = k.split(',')
-                    volumes.append(float(p[5]))  # 成交量
-                return sum(volumes) / len(volumes) if volumes else 0
+            resp = self.session.get(url, timeout=10)
+            resp.encoding = 'gbk'
+            for line in resp.text.strip().split('\n'):
+                if 'v_' not in line or '=' not in line:
+                    continue
+                key = line.split('=')[0].strip()
+                data_str = line[line.index('"')+1 : line.rindex('"')]
+                if not data_str:
+                    continue
+                
+                tencent_code = key.replace('v_', '')
+                reverse_map = {v: k for k, v in tencent_map.items()}
+                code = reverse_map.get(tencent_code)
+                if not code:
+                    continue
+                
+                p = data_str.split('~')
+                if len(p) < 10:
+                    continue
+                
+                try:
+                    price = float(p[3]) if p[3] else 0
+                    prev_close = float(p[4]) if len(p) > 4 and p[4] else price
+                    
+                    results[code] = {
+                        'name': p[1] if p[1] else code,
+                        'price': price,
+                        'prev_close': prev_close,
+                        'open': price,
+                        'high': price,
+                        'low': price,
+                        'volume': 0,
+                        'amount': 0,
+                        'date': '',
+                        'time': ''
+                    }
+                except (ValueError, IndexError):
+                    continue
         except Exception as e:
-            print(f"获取均量失败 {symbol}: {e}")
-        return 0
-
-    def fetch_ma_data(self, symbol, market):
-        """获取均线数据 (MA5, MA10, MA20) 和 RSI"""
-        secid = f"{market}.{symbol}"
-        url = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
-        params = {
-            'secid': secid,
-            'fields1': 'f1,f2,f3,f4,f5,f6',
-            'fields2': 'f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61',
-            'klt': '101',
-            'fqt': '0',
-            'end': '20500101',
-            'lmt': '30'  # 取最近30天计算MA20和RSI
-        }
+            print(f"美股实时行情获取失败: {e}")
+        
+        return results
+    
+    def fetch_realtime(self, stocks):
+        """统一入口：分离A股/美股"""
+        a_stocks = [s for s in stocks if s.get('market') != 'us']
+        us_stocks = [s for s in stocks if s.get('market') == 'us']
+        
+        results = {}
+        if a_stocks:
+            results.update(self.fetch_sina_realtime(a_stocks))
+        if us_stocks:
+            us_codes = [s['code'] for s in us_stocks]
+            results.update(self.fetch_us_realtime(us_codes))
+        
+        return results
+    
+    # ========== Tushare技术指标（盘后专用）==========
+    
+    def _get_tushare_daily(self, code, is_us=False):
+        """获取Tushare日线数据（带缓存）"""
+        cache_key = f"{code}_{'us' if is_us else 'cn'}"
+        if cache_key in self._tushare_cache:
+            return self._tushare_cache[cache_key]
+        
         try:
-            resp = self.session.get(url, params=params, timeout=10)
-            data = resp.json()
-            klines = data.get('data', {}).get('klines', [])
-            if len(klines) >= 20:
-                closes = []
-                for k in klines:
-                    p = k.split(',')
-                    closes.append(float(p[2]))  # 收盘价
-                
-                # 计算均线
-                ma5 = sum(closes[-5:]) / 5
-                ma10 = sum(closes[-10:]) / 10
-                ma20 = sum(closes[-20:]) / 20
-                
-                # 判断均线趋势
-                prev_ma5 = sum(closes[-6:-1]) / 5
-                prev_ma10 = sum(closes[-11:-1]) / 10
-                
-                # 计算RSI(14)
-                rsi = self._calculate_rsi(closes, 14)
-                
-                return {
-                    'MA5': ma5,
-                    'MA10': ma10,
-                    'MA20': ma20,
-                    'MA5_trend': 'up' if ma5 > prev_ma5 else 'down',
-                    'MA10_trend': 'up' if ma10 > prev_ma10 else 'down',
-                    'golden_cross': prev_ma5 <= prev_ma10 and ma5 > ma10,
-                    'death_cross': prev_ma5 >= prev_ma10 and ma5 < ma10,
-                    'RSI': rsi,
-                    'RSI_overbought': rsi > 70 if rsi else False,
-                    'RSI_oversold': rsi < 30 if rsi else False
-                }
+            end_date = datetime.now().strftime('%Y%m%d')
+            start_date = (datetime.now() - timedelta(days=365)).strftime('%Y%m%d')
+            
+            if is_us:
+                df = PRO.us_daily(ts_code=code, start_date=start_date, end_date=end_date)
+            else:
+                # A股ETF
+                if not code.endswith('.SH') and not code.endswith('.SZ'):
+                    # 默认上海
+                    code = f"{code}.SH"
+                df = PRO.fund_daily(ts_code=code, start_date=start_date, end_date=end_date)
+            
+            if df is not None and len(df) > 0:
+                df = df.sort_values('trade_date').reset_index(drop=True)
+                self._tushare_cache[cache_key] = df
+                return df
         except Exception as e:
-            print(f"获取均线失败 {symbol}: {e}")
+            print(f"Tushare获取 {code} 日线失败: {e}")
+        
         return None
     
-    def _calculate_rsi(self, closes, period=14):
-        """计算RSI指标"""
+    def calc_ma(self, closes, period):
+        """计算简单移动平均"""
+        if len(closes) < period:
+            return None
+        return float(np.mean(closes[-period:]))
+    
+    def calc_ema(self, closes, period):
+        """计算EMA"""
+        if len(closes) < period * 2:
+            return None
+        closes = np.array(closes, dtype=float)
+        alpha = 2.0 / (period + 1)
+        ema = closes[0]
+        for i in range(1, len(closes)):
+            ema = alpha * closes[i] + (1 - alpha) * ema
+        return float(ema)
+    
+    def calc_atr(self, df, period=14):
+        """计算ATR14"""
+        if len(df) < period + 1:
+            return None
+        
+        highs = df['high'].values
+        lows = df['low'].values
+        closes = df['close'].values
+        
+        tr_list = []
+        for i in range(1, len(df)):
+            tr = max(
+                highs[i] - lows[i],
+                abs(highs[i] - closes[i-1]),
+                abs(lows[i] - closes[i-1])
+            )
+            tr_list.append(tr)
+        
+        return float(np.mean(tr_list[-period:])) if len(tr_list) >= period else None
+    
+    def calc_rsi(self, closes, period=14):
+        """计算RSI"""
         if len(closes) < period + 1:
             return None
         
-        gains = []
-        losses = []
+        closes = np.array(closes, dtype=float)
+        deltas = np.diff(closes[-period-1:])
+        gains = np.where(deltas > 0, deltas, 0)
+        losses = np.where(deltas < 0, -deltas, 0)
         
-        for i in range(1, period + 1):
-            change = closes[-i] - closes[-i-1]
-            if change > 0:
-                gains.append(change)
-                losses.append(0)
-            else:
-                gains.append(0)
-                losses.append(abs(change))
-        
-        avg_gain = sum(gains) / period
-        avg_loss = sum(losses) / period
+        avg_gain = np.mean(gains)
+        avg_loss = np.mean(losses)
         
         if avg_loss == 0:
-            return 100
+            return 100.0
         
         rs = avg_gain / avg_loss
-        rsi = 100 - (100 / (1 + rs))
-        return round(rsi, 2)
-
-    def fetch_sina_realtime(self, stocks):
-        """获取实时行情 (优先实时，收盘后用日K)"""
-        stock_list = [s for s in stocks if s['market'] != 'fx']
-        fx_list = [s for s in stocks if s['market'] == 'fx']
-        results = {}
+        return float(100 - (100 / (1 + rs)))
+    
+    def calc_macd(self, closes):
+        """计算MACD (12, 26, 9)"""
+        if len(closes) < 35:
+            return None
         
-        # 1. A股/ETF - 尝试实时接口
-        if stock_list:
-            codes = [f"{s['market']}{s['code']}" for s in stock_list]
-            url = f"https://hq.sinajs.cn/list={','.join(codes)}"
-            try:
-                resp = self.session.get(url, headers={'Referer': 'https://finance.sina.com.cn'}, timeout=10)
-                resp.encoding = 'gb18030'
-                for line in resp.text.strip().split(';'):
-                    if 'hq_str_' not in line or '=' not in line: continue
-                    key = line.split('=')[0].split('_')[-1]
-                    if len(key) < 8: continue
-                    data_str = line[line.index('"')+1 : line.rindex('"')]
-                    p = data_str.split(',')
-                    if len(p) > 30 and float(p[3]) > 0:
-                        # 新浪数据格式: 名称,今日开盘,昨日收盘,当前价,今日最高,今日最低,竞买价,竞卖价,成交量,成交额...
-                        # 保存昨日最高最低价用于跳空检测 (用昨日收盘近似，或用均线数据补充)
-                        results[key[2:]] = {
-                            'name': p[0], 
-                            'price': float(p[3]), 
-                            'prev_close': float(p[2]),
-                            'open': float(p[1]),      # 今日开盘
-                            'high': float(p[4]),      # 今日最高
-                            'low': float(p[5]),       # 今日最低
-                            'volume': int(p[8]), 
-                            'amount': float(p[9]), 
-                            'date': p[30], 
-                            'time': p[31],
-                            'prev_high': float(p[2]) * 1.02,  # 估算昨日最高 (昨收+2%)
-                            'prev_low': float(p[2]) * 0.98    # 估算昨日最低 (昨收-2%)
-                        }
-            except Exception as e: 
-                print(f"实时行情获取失败: {e}")
-            
-            # 2. 如果实时接口返回空或0，用日K线补数据
-            for stock in stock_list:
-                code = stock['code']
-                if code not in results or results[code]['price'] <= 0:
-                    kline_data = self.fetch_eastmoney_kline(code, 1 if stock['market'] == 'sh' else 0)
-                    if kline_data:
-                        results[code] = kline_data
-                        print(f"  {stock['name']}: 使用日K收盘价 {kline_data['price']}")
-
-        # 3. 伦敦金 (新浪hf_XAU接口，人民币/克)
-        if fx_list:
-            url = "https://hq.sinajs.cn/list=hf_XAU"
-            try:
-                resp = self.session.get(url, headers={'Referer': 'https://finance.sina.com.cn'}, timeout=10)
-                line = resp.text.strip()
-                if '"' in line:
-                    data_str = line[line.index('"')+1 : line.rindex('"')]
-                    p = data_str.split(',')
-                    if len(p) >= 13:
-                        # 新浪hf_XAU: 人民币/克 (约4800=2740美元/盎司)
-                        price = float(p[0])
-                        results['XAU'] = {
-                            'name': '伦敦金', 
-                            'price': price, 
-                            'prev_close': float(p[7]),
-                            'volume': 0, 'amount': 0, 
-                            'date': p[11] if len(p) > 11 else datetime.now().strftime('%Y-%m-%d'), 
-                            'time': p[6]
-                        }
-            except Exception as e: 
-                print(f"伦敦金获取失败: {e}")
-            
-        return results
+        closes = np.array(closes, dtype=float)
+        ema12 = self._calc_ema_vector(closes, 12)
+        ema26 = self._calc_ema_vector(closes, 26)
+        
+        diff = ema12 - ema26
+        dea = self._calc_ema_vector(diff, 9)
+        bar = 2 * (diff - dea)
+        
+        return {
+            'DIFF': float(diff[-1]),
+            'DEA': float(dea[-1]),
+            'BAR': float(bar[-1]),
+            'golden_cross': float(diff[-2]) <= float(dea[-2]) and float(diff[-1]) > float(dea[-1]),
+            'death_cross': float(diff[-2]) >= float(dea[-2]) and float(diff[-1]) < float(dea[-1])
+        }
+    
+    def _calc_ema_vector(self, data, period):
+        """向量化EMA计算"""
+        alpha = 2.0 / (period + 1)
+        ema = np.zeros_like(data)
+        ema[0] = data[0]
+        for i in range(1, len(data)):
+            ema[i] = alpha * data[i] + (1 - alpha) * ema[i-1]
+        return ema
+    
+    def get_tech_indicators(self, code, is_us=False):
+        """获取完整技术指标（Tushare盘后）"""
+        df = self._get_tushare_daily(code, is_us)
+        if df is None:
+            return None
+        
+        closes = df['close'].values
+        
+        result = {
+            'latest_date': str(df['trade_date'].iloc[-1]),
+            'MA5': self.calc_ma(closes, 5),
+            'MA10': self.calc_ma(closes, 10),
+            'MA20': self.calc_ma(closes, 20),
+            'MA40': self.calc_ma(closes, 40),
+            'MA60': self.calc_ma(closes, 60),
+            'ATR14': self.calc_atr(df, 14),
+            'RSI14': self.calc_rsi(closes, 14),
+            'MACD': self.calc_macd(closes),
+            'H20': self.calc_ma(df['high'].values, 20) if len(df) >= 20 else None,
+            'VOL_MA20': self.calc_ma(df['vol'].values.astype(float), 20) if len(df) >= 20 else None,
+            'n_days': len(df)
+        }
+        
+        return result
+    
+    # ========== 预警检查 ==========
+    
+    def check_federal_alerts(self, stock_config, data):
+        """
+        联邦专属预警层：
+        - 止损价触发
+        - 止盈价触发
+        - 买入区间触发
+        返回 (alerts, weights)
+        """
+        alerts = []
+        weights = []
+        code = stock_config['code']
+        cost = stock_config.get('cost', 0)
+        price = data['price']
+        fed = stock_config.get('federal', {})
+        
+        if not fed or cost <= 0:
+            return alerts, weights
+        
+        strategy = fed.get('strategy', '')
+        
+        # ─── 止损触发 ───
+        stop_loss = fed.get('stop_loss', '')
+        if stop_loss:
+            # 解析止损位：如果是数字如"¥3.346"或百分比如"S6=−13%"
+            sl_price = self._parse_price_trigger(stop_loss, cost, data)
+            if sl_price and price <= sl_price:
+                if not self._alerted_recently(code, 'federal_stop'):
+                    alerts.append(('federal_stop', f"⛔ 联邦止损触发！现价≤止损 {sl_price:.2f}（{strategy}）"))
+                    weights.append(5)  # 最高权重
+        
+        # ─── 止盈触发 ───
+        take_profit = fed.get('take_profit', '')
+        if take_profit:
+            tp_price = self._parse_tp_trigger(take_profit, cost)
+            if tp_price and price >= tp_price:
+                if not self._alerted_recently(code, 'federal_tp'):
+                    alerts.append(('federal_tp', f"🎯 联邦止盈触发！现价≥止盈 {tp_price:.2f}（{strategy}）"))
+                    weights.append(5)
+        
+        # ─── 买入区间触发 ───
+        entry_zone = fed.get('entry_zone', '')
+        if entry_zone:
+            entry_price = self._parse_entry_zone(entry_zone, cost)
+            if entry_price and price <= entry_price:
+                if not self._alerted_recently(code, 'federal_entry'):
+                    alerts.append(('federal_entry', f"🟢 进入联邦买入区间！现价≤{entry_price:.2f}（{strategy}）"))
+                    weights.append(4)
+        
+        # ─── ATR止损触发（仅盘后有ATR数据）───
+        if 'ATR14' in data and data['ATR14']:
+            atr = data['ATR14']
+            stop_atr_mult = self._parse_atr_stop(stop_loss)
+            if stop_atr_mult and atr > 0:
+                sl_atr_price = cost - stop_atr_mult * atr
+                if price <= sl_atr_price:
+                    if not self._alerted_recently(code, 'federal_atr_stop'):
+                        alerts.append(('federal_atr_stop', 
+                            f"⛔ ATR止损触发！现价≤成本−{stop_atr_mult}×ATR14={sl_atr_price:.2f}"))
+                        weights.append(5)
+        
+        return alerts, weights
+    
+    def _parse_price_trigger(self, text, cost, data):
+        """解析止损/止盈价格"""
+        if not text or cost <= 0:
+            return None
+        
+        # 匹配显式价格: "¥3.346" / "$20.30" / "=$29.94" / "=$8.61"
+        price_match = re.search(r'[=¥$]\s*(\d+(?:\.\d+)?)', text)
+        if price_match:
+            return float(price_match.group(1))
+        
+        # 匹配负百分比（止损专用）: "−13%" / "-15%" / "S6=−13%"
+        neg_match = re.search(r'[−-](\d+(?:\.\d+)?)\s*%', text)
+        if neg_match:
+            pct = float(neg_match.group(1))
+            return cost * (1 - pct / 100)
+        
+        # 如果文本不含负号百分比，说明可能是止盈文字（如"TP+10%"），
+        # 不应该作为止损价格解析 → 返回None
+        return None
+    
+    def _parse_tp_trigger(self, text, cost):
+        """解析止盈价格：优先显式价格，其次正百分比"""
+        if not text or cost <= 0:
+            return None
+        
+        # 匹配显式价格: "=$29.94" / "¥3.346" / "$20.30"
+        price_match = re.search(r'[=¥$]\s*(\d+(?:\.\d+)?)', text)
+        if price_match:
+            return float(price_match.group(1))
+        
+        # 匹配正百分比: "+10%" / "+50%" / "TP+10%"
+        pos_match = re.search(r'\+(\d+(?:\.\d+)?)\s*%', text)
+        if pos_match:
+            pct = float(pos_match.group(1))
+            return cost * (1 + pct / 100)
+        
+        return None
+    
+    def _parse_entry_zone(self, text, cost):
+        """解析买入区间价格"""
+        price_match = re.search(r'[¥$]\s*(\d+(?:\.\d+)?)', text)
+        if price_match:
+            return float(price_match.group(1))
+        return None
+    
+    def _parse_atr_stop(self, text):
+        """解析ATR止损倍数，如 '3.0×ATR14' → 3.0"""
+        if not text:
+            return None
+        match = re.search(r'(\d+(?:\.\d+)?)\s*×\s*ATR', text)
+        if match:
+            return float(match.group(1))
+        return None
     
     def check_alerts(self, stock_config, data):
-        """检查预警条件 (支持成本百分比、单日涨跌幅、分级预警)"""
+        """检查所有预警条件"""
         alerts = []
-        alert_weights = []  # 用于计算预警级别
+        weights = []
         code = stock_config['code']
         cfg = stock_config.get('alerts', {})
         cost = stock_config.get('cost', 0)
-        stock_type = stock_config.get('type', 'individual')
-        price, prev_close = data['price'], data['prev_close']
+        is_us = stock_config.get('market') == 'us'
+        price = data['price']
+        prev_close = data.get('prev_close', price)
         change_pct = (price - prev_close) / prev_close * 100 if prev_close else 0
         
-        # 1. 基于成本的百分比预警 (权重: 高)
+        # ─── 1. 联邦专属预警（最高优先级）───
+        fed_alerts, fed_weights = self.check_federal_alerts(stock_config, data)
+        alerts.extend(fed_alerts)
+        weights.extend(fed_weights)
+        
+        # ─── 2. 成本百分比 ───
         if cost > 0:
             cost_change_pct = (price - cost) / cost * 100
-            
             if 'cost_pct_above' in cfg and cost_change_pct >= cfg['cost_pct_above']:
-                target_price = cost * (1 + cfg['cost_pct_above']/100)
                 if not self._alerted_recently(code, 'cost_above'):
-                    alerts.append(('cost_above', f"🎯 盈利 {cfg['cost_pct_above']:.0f}% (目标价 ¥{target_price:.2f})"))
-                    alert_weights.append(3)  # 高权重
-            
+                    alerts.append(('cost_above', f"🎯 盈利 {cfg['cost_pct_above']:.0f}% (现{price:.2f})"))
+                    weights.append(3)
             if 'cost_pct_below' in cfg and cost_change_pct <= cfg['cost_pct_below']:
-                target_price = cost * (1 + cfg['cost_pct_below']/100)
                 if not self._alerted_recently(code, 'cost_below'):
-                    alerts.append(('cost_below', f"🛑 亏损 {abs(cfg['cost_pct_below']):.0f}% (止损价 ¥{target_price:.2f})"))
-                    alert_weights.append(3)  # 高权重
+                    alerts.append(('cost_below', f"🛑 亏损 {abs(cfg['cost_pct_below']):.0f}% (现{price:.2f})"))
+                    weights.append(3)
         
-        # 2. 基于固定价格的预警 (权重: 中)
-        if 'price_above' in cfg and price >= cfg['price_above'] and not self._alerted_recently(code, 'above'):
-            alerts.append(('above', f"🚀 价格突破 ¥{cfg['price_above']}"))
-            alert_weights.append(2)
-        if 'price_below' in cfg and price <= cfg['price_below'] and not self._alerted_recently(code, 'below'):
-            alerts.append(('below', f"📉 价格跌破 ¥{cfg['price_below']}"))
-            alert_weights.append(2)
+        # ─── 3. 日内涨跌幅 ───
+        if 'change_pct_above' in cfg and change_pct >= cfg['change_pct_above']:
+            if not self._alerted_recently(code, 'pct_up'):
+                alerts.append(('pct_up', f"📈 日内大涨 {change_pct:+.2f}%"))
+                weights.append(2 if change_pct < 7 else 3)
+        if 'change_pct_below' in cfg and change_pct <= cfg['change_pct_below']:
+            if not self._alerted_recently(code, 'pct_down'):
+                alerts.append(('pct_down', f"📉 日内大跌 {change_pct:+.2f}%"))
+                weights.append(2 if change_pct > -7 else 3)
         
-        # 3. 单日涨跌幅预警 (权重: 根据幅度)
-        if 'change_pct_above' in cfg and change_pct >= cfg['change_pct_above'] and not self._alerted_recently(code, 'pct_up'):
-            alerts.append(('pct_up', f"📈 日内大涨 {change_pct:+.2f}%"))
-            # 异动越大权重越高
-            if change_pct >= 7:
-                alert_weights.append(3)  # 涨停附近
-            elif change_pct >= 5:
-                alert_weights.append(2)  # 大涨
-            else:
-                alert_weights.append(1)  # 一般异动
-                
-        if 'change_pct_below' in cfg and change_pct <= cfg['change_pct_below'] and not self._alerted_recently(code, 'pct_down'):
-            alerts.append(('pct_down', f"📉 日内大跌 {change_pct:+.2f}%"))
-            if change_pct <= -7:
-                alert_weights.append(3)  # 跌停附近
-            elif change_pct <= -5:
-                alert_weights.append(2)  # 大跌
-            else:
-                alert_weights.append(1)  # 一般异动
+        # ─── 4. 均线金叉死叉（盘后有tech数据时）───
+        macd = data.get('MACD')
+        if macd:
+            if macd.get('golden_cross') and not self._alerted_recently(code, 'ma_golden'):
+                alerts.append(('ma_golden', f"🌟 MACD金叉 (DIFF={macd['DIFF']:.3f}上穿DEA={macd['DEA']:.3f})"))
+                weights.append(3)
+            if macd.get('death_cross') and not self._alerted_recently(code, 'ma_death'):
+                alerts.append(('ma_death', f"⚠️ MACD死叉 (DIFF={macd['DIFF']:.3f}下穿DEA={macd['DEA']:.3f})"))
+                weights.append(3)
         
-        # 4. 成交量异动检测 (仅股票和ETF)
-        if stock_type != 'gold' and 'volume_surge' in cfg:
-            current_volume = data.get('volume', 0)
-            if current_volume > 0:
-                # 尝试获取5日均量
-                ma5_volume = self.fetch_volume_ma5(code, 1 if stock_config['market'] == 'sh' else 0)
-                if ma5_volume > 0:
-                    volume_ratio = current_volume / ma5_volume
-                    threshold = cfg['volume_surge']
-                    
-                    if volume_ratio >= threshold and not self._alerted_recently(code, 'volume_surge'):
-                        alerts.append(('volume_surge', f"📊 放量 {volume_ratio:.1f}倍 (5日均量)"))
-                        alert_weights.append(2)  # 中等权重
-                    elif volume_ratio <= 0.5 and not self._alerted_recently(code, 'volume_shrink'):
-                        alerts.append(('volume_shrink', f"📉 缩量 {volume_ratio:.1f}倍 (5日均量)"))
-                        alert_weights.append(1)  # 低权重
+        # ─── 5. RSI超买超卖 ───
+        rsi = data.get('RSI14')
+        if rsi:
+            if rsi > 70 and not self._alerted_recently(code, 'rsi_high'):
+                alerts.append(('rsi_high', f"🔥 RSI超买 ({rsi:.1f})，可能回调"))
+                weights.append(2)
+            elif rsi < 30 and not self._alerted_recently(code, 'rsi_low'):
+                alerts.append(('rsi_low', f"❄️ RSI超卖 ({rsi:.1f})，可能反弹"))
+                weights.append(2)
         
-        # 5. 均线系统 (MA金叉死叉)
-        if stock_type != 'gold' and cfg.get('ma_monitor', True):
-            ma_data = self.fetch_ma_data(code, 1 if stock_config['market'] == 'sh' else 0)
-            if ma_data:
-                # 金叉: MA5上穿MA10 (短期转强)
-                if ma_data.get('golden_cross') and not self._alerted_recently(code, 'ma_golden'):
-                    alerts.append(('ma_golden', f"🌟 均线金叉 (MA5¥{ma_data['MA5']:.2f}上穿MA10¥{ma_data['MA10']:.2f})"))
-                    alert_weights.append(3)  # 高权重
-                
-                # 死叉: MA5下穿MA10 (短期转弱)
-                if ma_data.get('death_cross') and not self._alerted_recently(code, 'ma_death'):
-                    alerts.append(('ma_death', f"⚠️ 均线死叉 (MA5¥{ma_data['MA5']:.2f}下穿MA10¥{ma_data['MA10']:.2f})"))
-                    alert_weights.append(3)  # 高权重
-                
-                # RSI超买超卖检测
-                rsi = ma_data.get('RSI')
-                if rsi:
-                    if ma_data.get('RSI_overbought') and not self._alerted_recently(code, 'rsi_high'):
-                        alerts.append(('rsi_high', f"🔥 RSI超买 ({rsi})，可能回调"))
-                        alert_weights.append(2)
-                    elif ma_data.get('RSI_oversold') and not self._alerted_recently(code, 'rsi_low'):
-                        alerts.append(('rsi_low', f"❄️ RSI超卖 ({rsi})，可能反弹"))
-                        alert_weights.append(2)
-        
-        # 5. 跳空缺口检测 (需要昨日数据)
-        if stock_type != 'gold':
-            prev_high = data.get('prev_high', 0)
-            prev_low = data.get('prev_low', 0)
-            current_open = data.get('open', price)  # 当前价近似开盘价
+        # ─── 6. 跳空缺口（A股盘后）───
+        if not is_us:
+            open_price = data.get('open', price)
+            prev_high = data.get('high', price)
+            prev_low = data.get('low', price)
             
-            # 向上跳空: 今日开盘 > 昨日最高
-            if prev_high > 0 and current_open > prev_high * 1.01:  # 1%以上算跳空
-                gap_pct = (current_open - prev_high) / prev_high * 100
+            if prev_high > 0 and open_price > prev_high * 1.01:
+                gap_pct = (open_price - prev_high) / prev_high * 100
                 if not self._alerted_recently(code, 'gap_up'):
                     alerts.append(('gap_up', f"⬆️ 向上跳空 {gap_pct:.1f}%"))
-                    alert_weights.append(2)
-            
-            # 向下跳空: 今日开盘 < 昨日最低
-            elif prev_low > 0 and current_open < prev_low * 0.99:
-                gap_pct = (prev_low - current_open) / prev_low * 100
+                    weights.append(2)
+            elif prev_low > 0 and open_price < prev_low * 0.99:
+                gap_pct = (prev_low - open_price) / prev_low * 100
                 if not self._alerted_recently(code, 'gap_down'):
                     alerts.append(('gap_down', f"⬇️ 向下跳空 {gap_pct:.1f}%"))
-                    alert_weights.append(2)
+                    weights.append(2)
         
-        # 6. 动态止盈/移动止损 (当盈利达到一定幅度后启动)
-        if cost > 0:
-            profit_pct = (price - cost) / cost * 100
-            
-            # 当盈利 >= 10% 时，启动移动止盈
-            if profit_pct >= 10:
-                # 计算回撤幅度 (从最高点回撤)
-                high_since_cost = data.get('high', price)
-                drawdown = (high_since_cost - price) / high_since_cost * 100 if high_since_cost > cost else 0
-                
-                # 回撤5%提醒减仓
-                if drawdown >= 5 and not self._alerted_recently(code, 'trailing_stop_5'):
-                    alerts.append(('trailing_stop_5', f"📉 利润回撤 {drawdown:.1f}%，建议减仓保护利润"))
-                    alert_weights.append(2)
-                
-                # 回撤10%提醒清仓
-                elif drawdown >= 10 and not self._alerted_recently(code, 'trailing_stop_10'):
-                    alerts.append(('trailing_stop_10', f"🚨 利润回撤 {drawdown:.1f}%，建议清仓止损"))
-                    alert_weights.append(3)
+        # ─── 7. 成交量异动（盘后有tech数据时）───
+        vol_ma20 = data.get('VOL_MA20')
+        current_vol = data.get('volume', 0)
+        if vol_ma20 and current_vol > 0:
+            vol_ratio = current_vol / vol_ma20
+            if vol_ratio >= 2.0 and not self._alerted_recently(code, 'volume_surge'):
+                alerts.append(('volume_surge', f"📊 放量 {vol_ratio:.1f}倍 (20日均量)"))
+                weights.append(2)
+            elif vol_ratio <= 0.5 and not self._alerted_recently(code, 'volume_shrink'):
+                alerts.append(('volume_shrink', f"📉 缩量 {vol_ratio:.1f}倍 (20日均量)"))
+                weights.append(1)
         
-        # 6. 计算预警级别
-        level = self._calculate_alert_level(alerts, alert_weights, stock_type)
+        # 计算预警级别
+        level = self._calc_level(alerts, weights)
         
         return alerts, level
     
-    def _calculate_alert_level(self, alerts, weights, stock_type):
-        """计算预警级别: info(提醒) / warning(警告) / critical(紧急)"""
+    def _calc_level(self, alerts, weights):
+        """计算预警级别"""
         if not alerts:
             return None
-        
         total_weight = sum(weights)
-        alert_count = len(alerts)
+        n = len(alerts)
         
-        # 紧急: 多条件共振 或 高权重单一条件
-        if total_weight >= 5 or alert_count >= 3:
+        if total_weight >= 5 or n >= 3:
             return "critical"
-        
-        # 警告: 中等权重 或 2个条件
-        if total_weight >= 3 or alert_count >= 2:
+        if total_weight >= 3 or n >= 2:
             return "warning"
-        
-        # 提醒: 单一低权重条件
         return "info"
     
     def _alerted_recently(self, code, atype):
+        """防重复：同一类型30分钟内不重复"""
         now = time.time()
-        self.alert_log = [l for l in self.alert_log if now - l['t'] < 1800] # 30分钟有效期
+        self.alert_log = [l for l in self.alert_log if now - l['t'] < 1800]
         for l in self.alert_log:
-            if l['c'] == code and l['a'] == atype: return True
+            if l['c'] == code and l['a'] == atype:
+                return True
         return False
     
     def record_alert(self, code, atype):
         self.alert_log.append({'c': code, 'a': atype, 't': time.time()})
     
-    def fetch_news(self, symbol):
-        """抓取个股最近新闻 (新浪/东财聚合) - 简化版"""
-        try:
-            # 使用东财个股新闻API
-            url = f"https://emweb.securities.eastmoney.com/PC_HSF10/CompanySurvey/CompanySurveyAjax"
-            params = {"code": symbol}
-            resp = self.session.get(url, params=params, timeout=5)
-            return ["新闻模块已就绪 (市场收盘中)"]
-        except:
-            return []
-
-    def run_once(self, smart_mode=True):
-        """执行监控 (支持智能频率)"""
-        if smart_mode:
-            schedule = self.should_run_now()
-            if not schedule.get("run"):
-                return []
-            
-            stocks_to_check = schedule.get("stocks", WATCHLIST)
-            mode = schedule.get("mode", "normal")
-            
-            # 只在特定模式打印日志
-            if mode in ["market", "weekend"]:
-                print(f"[{datetime.now().strftime('%H:%M')}] {mode}模式扫描 {len(stocks_to_check)} 只标的...")
-        else:
+    def run_once(self, stocks_to_check=None, tech_scan=False):
+        """
+        执行一次监控
+        stocks_to_check: 要监控的标的列表（None=全部）
+        tech_scan: 是否扫描技术指标（盘后True/盘中False）
+        """
+        if stocks_to_check is None:
             stocks_to_check = WATCHLIST
         
-        data_map = self.fetch_sina_realtime(stocks_to_check)
-        triggered = []
+        # 1. 获取实时价格
+        data_map = self.fetch_realtime(stocks_to_check)
         
+        # 2. 盘后补充Tushare技术指标
+        if tech_scan:
+            for stock in stocks_to_check:
+                code = stock['code']
+                is_us = stock.get('market') == 'us'
+                
+                tech = self.get_tech_indicators(code, is_us)
+                if tech and code in data_map:
+                    # 合并技术指标到data_map
+                    for k, v in tech.items():
+                        data_map[code][k] = v
+                    # Tushare fund_daily vol单位是「手」（100股），转为「股」以匹配新浪
+                    if not is_us and 'VOL_MA20' in tech and tech['VOL_MA20']:
+                        data_map[code]['VOL_MA20'] = tech['VOL_MA20'] * 100
+                    # 同时修正 data 里的 volume（如果新浪没拿到，用 Tushare 的）
+                    if not is_us and 'TUSHARE_VOL' not in data_map[code]:
+                        df = self._get_tushare_daily(code, is_us=False)
+                        if df is not None and len(df) > 0:
+                            data_map[code]['TUSHARE_VOL'] = float(df['vol'].values[-1]) * 100
+        
+        # 3. 检查预警
+        triggered = []
         for stock in stocks_to_check:
             code = stock['code']
-            if code not in data_map: continue
+            if code not in data_map:
+                continue
             
             data = data_map[code]
-            
-            # 数据有效性检查
-            if data['price'] <= 0 or data['prev_close'] <= 0:
+            if data['price'] <= 0:
                 continue
             
             alerts, level = self.check_alerts(stock, data)
             
             if alerts:
-                change_pct = (data['price'] - data['prev_close']) / data['prev_close'] * 100 if data['prev_close'] else 0
+                change_pct = 0
+                if data.get('prev_close', 0) > 0:
+                    change_pct = (data['price'] - data['prev_close']) / data['prev_close'] * 100
                 
-                # 中国习惯: 红色=上涨, 绿色=下跌
-                if change_pct > 0:
-                    color_emoji = "🔴"  # 红涨
-                elif change_pct < 0:
-                    color_emoji = "🟢"  # 绿跌
-                else:
-                    color_emoji = "⚪"
-                
-                # 预警级别标识
-                level_icons = {
-                    "critical": "🚨",  # 紧急
-                    "warning": "⚠️",   # 警告
-                    "info": "📢"       # 提醒
-                }
-                level_icon = level_icons.get(level, "📢")
+                color = "🔴" if change_pct > 0 else ("🟢" if change_pct < 0 else "⚪")
+                level_icon = {"critical": "🚨", "warning": "⚠️", "info": "📢"}.get(level, "📢")
                 level_text = {"critical": "【紧急】", "warning": "【警告】", "info": "【提醒】"}.get(level, "")
                 
-                msg = f"<b>{level_icon} {level_text}{color_emoji} {stock['name']} ({code})</b>\n"
+                msg = f"{level_icon} {level_text}{color} {stock['name']} ({code})\n"
                 msg += f"━━━━━━━━━━━━━━━━━━━━\n"
-                msg += f"💰 当前价格: <b>{data['price']:.2f}</b> ({change_pct:+.2f}%)\n"
+                msg += f"💰 现价: {data['price']:.2f} ({change_pct:+.2f}%)\n"
                 
-                # 显示持仓盈亏
                 cost = stock.get('cost', 0)
                 if cost > 0:
                     cost_change = (data['price'] - cost) / cost * 100
-                    profit_icon = "🔴+" if cost_change > 0 else "🟢"
-                    msg += f"📊 持仓成本: ¥{cost:.2f} | 盈亏: {profit_icon}{cost_change:.2f}%\n"
+                    msg += f"📊 成本: {cost:.2f} | 盈亏: {cost_change:+.2f}%\n"
+                
+                # 联邦参数
+                fed = stock.get('federal', {})
+                if fed:
+                    msg += f"📐 策略: {fed.get('strategy', 'N/A')}\n"
+                    if data.get('ATR14'):
+                        msg += f"📏 ATR14: {data['ATR14']:.2f}\n"
                 
                 msg += f"\n🎯 触发预警 ({len(alerts)}项):\n"
-                for _, text in alerts: 
+                for aid, text in alerts:
                     msg += f"  • {text}\n"
-                    self.record_alert(code, _)
-                
-                # Pro版：集成智能分析
-                try:
-                    from analyser import StockAnalyser
-                    analyser = StockAnalyser()
-                    insight = analyser.generate_insight(stock, {
-                        'price': data['price'],
-                        'change_pct': change_pct
-                    }, alerts)
-                    msg += f"\n{insight}"
-                except Exception:
-                    pass
+                    self.record_alert(code, aid)
                 
                 triggered.append(msg)
         
         return triggered
+
 
 if __name__ == '__main__':
     monitor = StockAlert()

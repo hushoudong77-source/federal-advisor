@@ -1,0 +1,65 @@
+{
+  "_meta": {
+    "version": "V1.0",
+    "description": "/开火 信号计算引擎参数配置文件",
+    "last_updated": "2026-07-07",
+    "synced_with": "AGENT.md V5.8.2r33.37 + MEMORY.md"
+  },
+
+  "counterpunch": {
+    "513910": {"k": 2.7, "stop_atr": 2.8, "cooldown": 16, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "512100": {"k": 2.0, "stop_atr": 1.5, "cooldown": 15, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "510880": {"k": 2.0, "stop_atr": 2.0, "cooldown": 30, "r05_exempt": true,  "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "159530": {"k": 1.5, "stop_atr": 2.0, "cooldown": 30, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "588000": {"k": 4.7, "stop_atr": 3.5, "cooldown": 15, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "510500": {"k": 2.8, "stop_atr": 2.8, "cooldown": 60, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "BBJP":   {"k": 4.3, "stop_atr": 3.5, "cooldown": 14, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "VNM":    {"k": 0.9, "stop_atr": 3.5, "cooldown": 9,  "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120}
+  },
+
+  "offense_us": {
+    "QQQ":  {"cooldown": 30, "stop_atr": 5.0, "position": 0.10, "c4_factor": 0.98},
+    "IVV":  {"cooldown": 30, "stop_atr": 5.0, "position": 0.10, "c4_factor": 0.98},
+    "MUFG": {"cooldown": 30, "stop_atr": 5.0, "position": 0.10, "c4_factor": 0.98},
+    "BOTZ": {"cooldown": 30, "stop_atr": 5.0, "position": 0.10, "c4_factor": 0.98}
+  },
+
+  "offense_cn_ma5": {
+    "512100": {"stop_atr": 2.5, "take_profit": "MA60", "cooldown": 20, "position": 0.05, "ma": 5},
+    "513180": {"stop_atr": 2.0, "take_profit": "MA20", "cooldown": 10, "position": 0.05, "ma": 5},
+    "588000": {"stop_atr": 2.0, "take_profit": "MA20", "cooldown": 10, "position": 0.05, "ma": 5},
+    "510500": {"stop_atr": 2.0, "take_profit": "MA20", "cooldown": 10, "position": 0.05, "ma": 5}
+  },
+
+  "offense_cn_ma60": {
+    "512100": {"ma": 60, "tolerance": 0.045, "macd_window": 2, "vol_threshold": 0.9, "stop_pct": -0.03, "stop_atr": 2.5, "take_profit": 0.20, "max_hold": 100, "cooldown": 30, "position": 0.05},
+    "510500": {"ma": 60, "tolerance": 0.025, "macd_window": 3, "vol_threshold": 1.0, "stop_pct": -0.13, "stop_atr": 2.8, "take_profit": 0.18, "max_hold": 50,  "cooldown": 30, "position": 0.05}
+  },
+
+  "fixed_layer": {
+    "VTI": {"k_buy": 4.5, "k_upper": 2.0, "anchor": "MA60", "cooldown": 30, "position": 0.05},
+    "VEA": {"k_buy": 4.0, "k_upper": 2.0, "anchor": "MA60", "cooldown": 30, "position": 0.05}
+  },
+
+  "momentum": {
+    "FLIN": {"cooldown": 30, "stop_atr": 2.0, "position": 0.05},
+    "SMIN": {"cooldown": 30, "stop_atr": 2.0, "position": 0.05},
+    "EWY":  {"cooldown": 30, "stop_atr": 2.0, "position": 0.05}
+  },
+
+  "golden_shield": {
+    "tactical": {
+      "position_ratio": 0.333
+    },
+    "orthodox": {
+      "position_target": "满仓"
+    }
+  },
+
+  "global_hard_limits": {
+    "single_stock_max": 0.20,
+    "gold_combined_max": 0.25,
+    "meltdown_vix": 35,
+    "meltdown_atr_pct": 0.05
+  }
+}
