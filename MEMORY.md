@@ -74,7 +74,7 @@
 
 ## 系统与工具
 - 快捷指令19条：/扫描 /扫描A股 /扫描美股 /盘前 /分析 /路由 /开火 /进攻 /反击 /止损/止盈 /风控 /结构检查 /命中率 /周报 /持仓 /备份 /技术 /大师对撞 | /持仓已升级为持仓健康度诊断
-- 备份范围：AGENT.md、USER.md、RULE.md、MEMORY.md、knowledge/、scripts/、memory/
+- 备份范围：全量 `git add -A`（AGENT.md/USER.md/RULE.md/MEMORY.md/knowledge/scripts/memory/skills/config/data/scheduler/websites/backup/.learnings/ 全部覆盖）— 守东指令 2026-08-06
 - 版本: V5.8.2r33.80（2026-07-30 output_gate.py输出闸门脚本焊入执行链Step 6.5）
 - 联邦法典V5.8.2r33.70已完整编撰
 - GitHub仓库：https://github.com/hushoudong77-source/federal-advisor

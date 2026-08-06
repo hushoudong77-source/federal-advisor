@@ -32,9 +32,9 @@ REMOTE=$(git remote get-url origin 2>/dev/null | sed 's/https:\/\/[^@]*@/https:\
 echo "       分支: ${BRANCH}"
 echo "       远程: ${REMOTE}"
 
-# Step 2: 暂存变更并提交
-echo "[2/3] 暂存变更并提交..."
-git add AGENT.md USER.md RULE.md MEMORY.md knowledge/ scripts/ memory/ 2>/dev/null || true
+# Step 2: 暂存变更并提交（全量备份——守东指令 2026-08-06）
+echo "[2/3] 暂存变更并提交（全量）..."
+git add -A 2>/dev/null || true
 
 # 检查是否有变更
 if git diff --cached --quiet 2>/dev/null; then
