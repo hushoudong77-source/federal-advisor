@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-06T08:01:14.708229",
+  "updated_at": "2026-08-06T09:35:19.654731",
   "tasks": {
     "cc1d241a": {
       "id": "cc1d241a",
@@ -91,7 +91,7 @@
       "name": "510500止损盯盘提醒",
       "enabled": true,
       "created_at": "2026-07-13T20:15:53.858673",
-      "updated_at": "2026-08-05T09:35:19.270635",
+      "updated_at": "2026-08-06T09:35:19.644154",
       "schedule": {
         "type": "cron",
         "expression": "25 9 * * 1-5"
@@ -105,7 +105,7 @@
         "channel_type": "weixin",
         "notify_session_id": "session__status_95149"
       },
-      "next_run_at": "2026-08-06T09:25:00"
+      "next_run_at": "2026-08-07T09:25:00"
     }
   }
 }
