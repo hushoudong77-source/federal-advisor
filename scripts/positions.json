@@ -5,44 +5,131 @@
     "description": "持仓数据单一真源。LLM需要持仓信息时，必须调用 read_positions.py 读取此文件，禁止凭记忆/推理/缓存生成持仓数据。",
     "update_rule": "仅守东通过 /输入 指令确权后才可修改此文件。自动脚本不修改。"
   },
-
   "accounts": {
     "A": {
       "currency": "CNY",
       "holdings": {
-        "518880": {"shares": 7000, "cost": 8.646, "confirmed": "2026-07-24"},
-        "159915": {"shares": 8500, "cost": 3.548, "confirmed": "2026-07-24"},
-        "510500": {"shares": 5300, "cost": 7.580, "confirmed": "2026-07-24", "note": "含7/24加仓1,300股@¥7.55"},
-        "510300": {"shares": 6000, "cost": 4.783, "confirmed": "2026-07-24"},
-        "159530": {"shares": 13900, "cost": 1.3055, "confirmed": "2026-07-24"},
-        "512100": {"shares": 6900, "cost": 2.929, "confirmed": "2026-07-24"}
+        "518880": {
+          "shares": 7000,
+          "cost": 8.646,
+          "confirmed": "2026-07-24"
+        },
+        "510880": {
+          "shares": 17000,
+          "cost": 3.043,
+          "confirmed": "2026-07-31"
+        },
+        "510500": {
+          "shares": 5300,
+          "cost": 7.581,
+          "confirmed": "2026-07-31"
+        },
+        "512100": {
+          "shares": 10400,
+          "cost": 2.901,
+          "confirmed": "2026-07-31"
+        },
+        "159915": {
+          "shares": 8500,
+          "cost": 3.548,
+          "confirmed": "2026-07-24"
+        },
+        "510300": {
+          "shares": 6000,
+          "cost": 4.783,
+          "confirmed": "2026-07-24"
+        },
+        "159530": {
+          "shares": 15300,
+          "cost": 1.306,
+          "confirmed": "2026-07-31"
+        }
       },
       "cash_approx": 603000,
-      "cleared": ["513910", "510880", "511880"],
-      "never_held": ["588000"]
+      "cleared": [
+        "513910",
+        "511880"
+      ],
+      "never_held": [
+        "588000"
+      ]
     },
-
     "B": {
       "currency": "USD",
       "holdings": {
-        "VEA": {"shares": 216, "cost": 70.707, "confirmed": "2026-07-23"},
-        "VTI": {"shares": 34, "cost": 369.59, "confirmed": "2026-07-23"},
-        "QQQ": {"shares": 7, "cost": 711.706, "confirmed": "2026-07-23"},
-        "CANE": {"shares": 3452, "cost": 9.90, "confirmed": "2026-07-23", "note": "均价≈$9.90，第1+2批"},
-        "MUFG": {"shares": 1644, "cost": 19.961, "confirmed": "2026-07-23"},
-        "EWY": {"shares": 59, "cost": 171.673, "confirmed": "2026-07-23"},
-        "IVV": {"shares": 6, "cost": 744.637, "confirmed": "2026-07-23"},
-        "VNM": {"shares": 800, "cost": 16.51, "confirmed": "2026-07-23", "note": "零止损底仓，等深跌补仓"}
+        "VEA": {
+          "shares": 216,
+          "cost": 70.707,
+          "confirmed": "2026-07-23"
+        },
+        "VTI": {
+          "shares": 34,
+          "cost": 369.59,
+          "confirmed": "2026-07-23"
+        },
+        "QQQ": {
+          "shares": 7,
+          "cost": 711.706,
+          "confirmed": "2026-07-23"
+        },
+        "CANE": {
+          "shares": 3452,
+          "cost": 9.9,
+          "confirmed": "2026-07-23",
+          "note": "均价≈$9.90，第1+2批"
+        },
+        "MUFG": {
+          "shares": 1644,
+          "cost": 19.961,
+          "confirmed": "2026-07-23"
+        },
+        "EWY": {
+          "shares": 59,
+          "cost": 171.673,
+          "confirmed": "2026-07-23"
+        },
+        "IVV": {
+          "shares": 6,
+          "cost": 744.637,
+          "confirmed": "2026-07-23"
+        },
+        "VNM": {
+          "shares": 800,
+          "cost": 16.51,
+          "confirmed": "2026-07-23",
+          "note": "零止损底仓，等深跌补仓"
+        }
       },
       "cash_approx": 124000,
-      "cleared": ["SGOV", "BBJP"],
-      "never_held": ["BOTZ"]
+      "cleared": [
+        "SGOV",
+        "BBJP"
+      ],
+      "never_held": [
+        "BOTZ"
+      ]
     }
   },
-
   "summary": {
-    "total_holdings_count": 14,
-    "A_account_tickers": ["518880", "159915", "510500", "510300", "159530", "512100"],
-    "B_account_tickers": ["VEA", "VTI", "QQQ", "CANE", "MUFG", "EWY", "IVV", "VNM"]
+    "total_holdings_count": 15,
+    "A_account_tickers": [
+      "518880",
+      "510880",
+      "510500",
+      "512100",
+      "159915",
+      "510300",
+      "159530"
+    ],
+    "B_account_tickers": [
+      "VEA",
+      "VTI",
+      "QQQ",
+      "CANE",
+      "MUFG",
+      "EWY",
+      "IVV",
+      "VNM"
+    ]
   }
 }
