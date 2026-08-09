@@ -1,58 +1,77 @@
 {
   "_meta": {
-    "version": "V1.0",
-    "description": "/开火 信号计算引擎参数配置文件",
-    "last_updated": "2026-07-07",
-    "synced_with": "AGENT.md V5.8.2r33.37 + MEMORY.md"
+    "version": "V1.1",
+    "description": "/开火 信号计算引擎参数配置文件 — 与 AGENT.md V5.8.2r33.80 同步",
+    "last_updated": "2026-08-09",
+    "synced_with": "AGENT.md V5.8.2r33.80 + MEMORY.md"
   },
 
   "counterpunch": {
-    "513910": {"k": 2.7, "stop_atr": 2.8, "cooldown": 16, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
-    "512100": {"k": 2.0, "stop_atr": 1.5, "cooldown": 15, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
-    "510880": {"k": 2.0, "stop_atr": 2.0, "cooldown": 30, "r05_exempt": true,  "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
-    "159530": {"k": 1.5, "stop_atr": 2.0, "cooldown": 30, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
-    "588000": {"k": 4.7, "stop_atr": 3.5, "cooldown": 15, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
-    "510500": {"k": 2.8, "stop_atr": 2.8, "cooldown": 60, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
-    "BBJP":   {"k": 4.3, "stop_atr": 3.5, "cooldown": 14, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
-    "VNM":    {"k": 0.9, "stop_atr": 3.5, "cooldown": 9,  "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120}
+    "_note": "k=买入区间MA40−k×ATR, stop_atr=止损ATR倍数, 冷却期已废除r33.68, 仅保留加仓过热(30天≥3次暂停)",
+    "513910": {"k": 2.7, "stop_atr": 3.5, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "512100": {"k": 2.0, "stop_atr": 3.0, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "510880": {"k": 2.0, "stop_atr": 3.0, "take_profit_pct": 0.10, "r05_exempt": true,  "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "159530": {"k": 1.5, "stop_atr": 4.0, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "588000": {"k": 4.7, "stop_atr": 3.0, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "510500": {"k": 2.8, "stop_atr": 2.5, "bear_market_suspend": true, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "BBJP":   {"k": 4.3, "stop_atr": 2.0, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "VNM":    {"k": 5.0, "stop_atr": 1.5, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "510300": {"k": 2.0, "stop_atr": 4.0, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120},
+    "159915": {"k": 2.0, "stop_atr": 4.0, "r05_exempt": false, "anchor": "MA40", "hard_stop": -0.15, "force_exit": 120}
   },
 
   "offense_us": {
-    "QQQ":  {"cooldown": 30, "stop_atr": 5.0, "position": 0.10, "c4_factor": 0.98},
-    "IVV":  {"cooldown": 30, "stop_atr": 5.0, "position": 0.10, "c4_factor": 0.98},
-    "MUFG": {"cooldown": 30, "stop_atr": 5.0, "position": 0.10, "c4_factor": 0.98},
-    "BOTZ": {"cooldown": 30, "stop_atr": 5.0, "position": 0.10, "c4_factor": 0.98}
+    "_note": "C4=H20×0.98, 冷却期已废除r33.68, 止盈逐标独立",
+    "QQQ":  {"stop_atr": 8.0, "take_profit": "dynamic_retrace(+20%,2.5×ATR)", "position": 0.10, "c4_factor": 0.98},
+    "IVV":  {"stop_atr": 2.0, "take_profit": "none(stop_only)", "position": 0.10, "c4_factor": 0.98},
+    "MUFG": {"stop_atr": 7.0, "take_profit": "fixed_+50%", "position": 0.10, "c4_factor": 0.98},
+    "BOTZ": {"stop_atr": 2.0, "take_profit": "none(stop_only)", "position": 0.10, "c4_factor": 0.98}
   },
 
   "offense_cn_ma5": {
-    "512100": {"stop_atr": 2.5, "take_profit": "MA60", "cooldown": 20, "position": 0.05, "ma": 5},
-    "513180": {"stop_atr": 2.0, "take_profit": "MA20", "cooldown": 10, "position": 0.05, "ma": 5},
-    "588000": {"stop_atr": 2.0, "take_profit": "MA20", "cooldown": 10, "position": 0.05, "ma": 5},
-    "510500": {"stop_atr": 2.0, "take_profit": "MA20", "cooldown": 10, "position": 0.05, "ma": 5}
+    "_note": "MA5回踩, 仅牛市执行, 冷却期已废除r33.68, 止盈逐标独立",
+    "512100": {"stop_atr": 3.0, "take_profit": "+20%_all", "position": 0.05, "ma": 5},
+    "513180": {"stop_atr": 2.0, "take_profit": "MA20", "position": 0.05, "ma": 5},
+    "588000": {"stop_atr": 4.0, "take_profit": "30/30/40→+20%/+35%/+50%", "position": 0.05, "ma": 5},
+    "510500": {"stop_atr": 2.0, "take_profit": "50/50→+15%/+25%", "position": 0.05, "ma": 5}
   },
 
-  "offense_cn_ma60": {
-    "512100": {"ma": 60, "tolerance": 0.045, "macd_window": 2, "vol_threshold": 0.9, "stop_pct": -0.03, "stop_atr": 2.5, "take_profit": 0.20, "max_hold": 100, "cooldown": 30, "position": 0.05},
-    "510500": {"ma": 60, "tolerance": 0.025, "macd_window": 3, "vol_threshold": 1.0, "stop_pct": -0.13, "stop_atr": 2.8, "take_profit": 0.18, "max_hold": 50,  "cooldown": 30, "position": 0.05}
+  "offense_cn_ma50": {
+    "_note": "仅512100适用(三指标框架), 510500永久否决r33.52",
+    "512100": {"ma": 50, "tolerance": 0.02, "macd_window": 5, "vol_threshold": 0.8, "stop_pct": -0.05, "stop_atr": 2.0, "take_profit": 0.30, "max_hold": 50, "position": 0.05}
   },
 
   "fixed_layer": {
-    "VTI": {"k_buy": 4.5, "k_upper": 2.0, "anchor": "MA60", "cooldown": 30, "position": 0.05},
-    "VEA": {"k_buy": 4.0, "k_upper": 2.0, "anchor": "MA60", "cooldown": 30, "position": 0.05}
+    "VTI": {"k_buy": 4.5, "k_upper": 2.0, "anchor": "MA60", "position": 0.05},
+    "VEA": {"k_buy": 4.0, "k_upper": 2.0, "anchor": "MA60", "position": 0.05}
   },
 
   "momentum": {
-    "FLIN": {"cooldown": 30, "stop_atr": 2.0, "position": 0.05},
-    "SMIN": {"cooldown": 30, "stop_atr": 2.0, "position": 0.05},
-    "EWY":  {"cooldown": 30, "stop_atr": 2.0, "position": 0.05}
+    "_note": "轨道一: MACD金叉+价<MA20, 冷却30天(策略级). 轨道二: 恐慌抄底详见轨道二参数",
+    "FLIN": {"stop_atr": 5.5, "position": 0.05},
+    "SMIN": {"stop_atr": 9.0, "position": 0.05},
+    "EWY":  {"stop_atr": 10.0, "position": 0.05},
+    "VNM":  {"stop_atr": 1.5, "position": 0.05}
+  },
+
+  "panic_dip": {
+    "_note": "轨道二恐慌抄底, 各标独立阈值",
+    "SMIN": {"threshold": -0.15, "build": "pyramid_3_7", "stop": -0.15, "take_profit": "dynamic_3.5×ATR", "cooldown": 10},
+    "VNM":  {"threshold": -0.20, "build": "all_in", "stop": -0.15, "take_profit": "dynamic_3.5×ATR", "cooldown": 10},
+    "EWY":  {"threshold": -0.20, "build": "pyramid_3_7", "stop": -0.15, "take_profit": "dynamic_3.5×ATR", "cooldown": 10}
   },
 
   "golden_shield": {
+    "_note": "V1.6: C2 MA60→MA40, 二级卖点(S3+S6), S1/S2/S4已废除",
     "tactical": {
-      "position_ratio": 0.333
+      "position_ratio": 0.333,
+      "trigger": "MA40走平(5日变化≤0.1%)+双顺风(DXY_MA20↓)+MACD金叉+FOMC落地"
     },
     "orthodox": {
-      "position_target": "满仓"
+      "c1": "双顺风(DXY_MA20↓)",
+      "c2": "MA40↑",
+      "c3": "H15突破+放量",
+      "c4": "波动率<3.5%"
     }
   },
 

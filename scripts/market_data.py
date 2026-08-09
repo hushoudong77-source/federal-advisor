@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-联邦投顾 — 全量行情取数工具 V5.1
+联邦投顾 — 全量行情取数工具 V5.3
 数据源：腾讯API（实时现价）+ TickFlow批量日线（全池25标，batch()一次调用~0.6秒）
-V5.1: 技术指标统一使用后复权（adjust=backward）计算，消除分红除权失真。
+V5.3: adjust="none"（不复权）真正生效——V5.2注释说none但代码写的是backward，6个标的MA60严重错误。
+不复权=真实成交价=均线正确，与腾讯实时现价在同一价格坐标系。
 美股T+1滞后（技术指标计算不受影响），A股当日15:00后入库。
 盘中现价走腾讯API实时。
 
@@ -22,7 +23,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 # ============================================================
-# V5.1 更新：技术指标统一使用后复权（adjust=backward）计算
+# V5.2 更新：adjust="none"（不复权），V5.1 backward在部分标的上反向复权已修复
 # 后复权不受除权事件影响，消除规则M.2/M.2.5的前复权均线失真问题。
 # 前复权（默认）因分红除权压平历史价格→MA/EMA/H20系统性偏低。
 # 510880前复权vs后复权偏差可达+82%（红利ETF频繁分红）。
@@ -227,11 +228,13 @@ def fetch_tickflow_all():
     tf_symbols = list(ticker_map.keys())
 
     # 批量拉取（as_dataframe=True 返回 DataFrame 而非列式 dict）
-    # V5.1: adjust="backward" — 后复权，消除分红除权对均线/H20的失真
+    # V5.3: adjust="none" — 不复权。V5.2注释说"不复权"但代码写的是 backward（后复权），
+    # 后复权在TickFlow A股ETF上返回除权调整后的非真实价格，导致MA/乖离率全部错乱
+    # （512100 MA60=1.234 vs 真实3.283，偏差-62%）。不复权=真实成交价=均线正确。
     try:
         batch_results = tf.klines.batch(tf_symbols, period="1d",
                                         count=TICKFLOW_KLINES_LIMIT,
-                                        adjust="backward",
+                                        adjust="none",
                                         as_dataframe=True)
     except Exception as e:
         for fed in FULL_POOL:
@@ -385,8 +388,8 @@ def fetch_all():
 def output_table(data):
     """表格格式输出"""
     print(f"\n{'='*120}")
-    print(f"  联邦投顾 全量行情 V5.1 — {data.get('_realtime_ts', '')}")
-    print(f"  数据源: 腾讯实时(现价) + TickFlow后复权(日线+技术指标)")
+    print(f"  联邦投顾 全量行情 V5.3 — {data.get('_realtime_ts', '')}")
+    print(f"  数据源: 腾讯实时(现价) + TickFlow不复权(日线+技术指标)")
     print(f"  TickFlow调用: {data.get('_tickflow_calls', 0)}次 / {data.get('_tickflow_elapsed', 'N/A')}s")
     print(f"{'='*120}")
     print(f"{'标的':8s} | {'名称':16s} | {'现价':>10s} | {'涨跌':>8s} | {'MA20':>10s} | {'MA60':>10s} | {'ATR14':>8s} | {'MACD BAR':>9s} | {'RSI':>5s} | {'方向':4s}")

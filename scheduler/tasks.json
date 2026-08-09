@@ -1,49 +1,7 @@
 {
   "version": 1,
-  "updated_at": "2026-08-06T16:13:11.965161",
+  "updated_at": "2026-08-07T09:35:25.399935",
   "tasks": {
-    "cc1d241a": {
-      "id": "cc1d241a",
-      "name": "每日地缘追踪早报",
-      "enabled": true,
-      "created_at": "2026-04-19T17:12:52.709167",
-      "updated_at": "2026-08-06T08:01:06.948193",
-      "schedule": {
-        "type": "cron",
-        "expression": "0 8 * * *"
-      },
-      "action": {
-        "type": "agent_task",
-        "task_description": "【地缘追踪日报 - 2026-XX-XX】\n\n## 📍 当前时间窗口状态\n- 4.21通牒倒计时：X天\n- 4.22奇点倒计时：X天\n- 欧洲航油储备：约X周（基于IATA 4.19警告）\n\n## 🌍 地缘动态摘要\n[搜索最新霍尔木兹/美伊/中东局势新闻，提炼关键事件]\n\n## 📊 路径概率评估\n| 路径 | 描述 | 概率变化 |\n|------|------|----------|\n| 路径A | 续约/缓和 | ↑/↓/→ |\n| 路径B | 开火/封锁 | ↑/↓/→ |\n\n## 💹 组合状态检查\n| 标的 | 当前价(估) | 止损位 | 状态 |\n|------|-----------|--------|------|\n| MUFG | $XX.XX | $18.51 | 正常/关注 |\n| 518880 | ¥X.XX | MA120 | 正常/关注 |\n\n## ⚡ 执行建议\n[根据最新动态，给出简短行动建议]\n\n---\n报告由联邦投顾系统自动生成 | V14.0",
-        "receiver": "o9cq80_OOEMojbKLhvyz8rrGItxk@im.wechat",
-        "receiver_name": "o9cq80_OOEMojbKLhvyz8rrGItxk@im.wechat",
-        "is_group": false,
-        "channel_type": "weixin"
-      },
-      "next_run_at": "2026-08-07T08:00:00",
-      "last_run_at": "2026-08-06T08:00:28.816175"
-    },
-    "1d9c4c40": {
-      "id": "1d9c4c40",
-      "name": "市场日报-完整版",
-      "enabled": true,
-      "created_at": "2026-04-19T17:17:06.809966",
-      "updated_at": "2026-08-06T08:01:14.699068",
-      "schedule": {
-        "type": "cron",
-        "expression": "0 8 * * *"
-      },
-      "action": {
-        "type": "agent_task",
-        "task_description": "【市场日报 - 2026-XX-XX】\n\n## 📊 全球指数收盘\n\n| 指数 | 代码 | 收盘价 | 涨跌幅 | 趋势 |\n|------|------|--------|--------|------|\n| 标普500 | SPY | $XXX.XX | ±X.XX% | ▲/▼/→ |\n| 纳斯达克100 | QQQ | $XXX.XX | ±X.XX% | ▲/▼/→ |\n| 沪深300 | 000300 | XXX.XX | ±X.XX% | ▲/▼/→ |\n| 中证500 | 000905 | XXX.XX | ±X.XX% | ▲/▼/→ |\n| 创业板 | 399006 | XXX.XX | ±X.XX% | ▲/▼/→ |\n| 科创50 | 000688 | XXX.XX | ±X.XX% | ▲/▼/→ |\n| 恒生科技 | HSTECH | XXX.XX | ±X.XX% | ▲/▼/→ |\n| 红利指数 | HSHYLV | XXX.XX | ±X.XX% | ▲/▼/→ |\n| 日经225 | 1321/BBJP | XXX.XX | ±X.XX% | ▲/▼/→ |\n| 英国富时 | EWU | XXX.XX | ±X.XX% | ▲/▼/→ |\n| 韩国综合 | EWY | XXX.XX | ±X.XX% | ▲/▼/→ |\n| 越南胡志明 | VNM | XXX.XX | ±X.XX% | ▲/▼/→ |\n| 印度CNX | FLIN | XXX.XX | ±X.XX% | ▲/▼/→ |\n| 印度小盘 | SMIN | XXX.XX | ±X.XX% | ▲/▼/→ |\n\n## 🛰️ IEF哨兵\n**读数**：XXX.XX | **区间**：安全/均衡/警戒/熔断\n**解读**：[简单一句话]\n\n## 💹 持仓诊断\n\n### 权益仓（人民币）\n| 标的 | 代码 | 成本 | 估损 | 止损位 | 状态 |\n|------|------|------|------|--------|------|\n| MUFG | MUFG | $18.51 | ±X% | $18.51 | 正常/关注/预警 |\n\n### 黄金/避险\n| 标的 | 代码 | 关键位 | 状态 |\n|------|------|--------|------|\n| 黄金ETF | 518880 | MA120 | 正常/关注 |\n| 黄金现货 | IAU | MA120 | 正常/关注 |\n\n### 现金/债券\n| 标的 | 代码 | 金额 | 状态 |\n|------|------|------|------|\n| 短期国债ETF | SGOV | ~149WRMB等值 | 待命 |\n\n## 📈 分类汇总\n\n| 类别 | 今日表现 | 重点观察 |\n|------|----------|----------|\n| 美股(SPY/QQQ) | ±X% | 高估/合理/低估 |\n| 中港(红利/科技) | ±X% | 资金轮动方向 |\n| 亚太(日本/韩国/越南/印度) | ±X% | 新兴市场资金流向 |\n| 避险(黄金/SGOV) | ±X% | IEF联动 |\n\n## 🌍 地缘窗口\n| 节点 | 状态 | 倒计时 |\n|------|------|--------|\n| 4.21通牒 | 待定 | X天 |\n| 4.22奇点 | 待定 | X天 |\n| 欧洲航油储备 | 约6周 | X周 |\n\n## ⚡ 今日执行建议\n[综合IEF + 地缘 + 技术面，给出1-3条明确建议]\n\n---\n报告由联邦投顾系统自动生成 | V14.0 | 19大核心池完整版",
-        "receiver": "o9cq80_OOEMojbKLhvyz8rrGItxk@im.wechat",
-        "receiver_name": "o9cq80_OOEMojbKLhvyz8rrGItxk@im.wechat",
-        "is_group": false,
-        "channel_type": "weixin"
-      },
-      "next_run_at": "2026-08-07T08:00:00",
-      "last_run_at": "2026-08-06T08:00:28.816175"
-    },
     "ed3fb6c0": {
       "id": "ed3fb6c0",
       "name": "回测L2-月度Optuna优化",
@@ -91,7 +49,7 @@
       "name": "510500止损盯盘提醒",
       "enabled": true,
       "created_at": "2026-07-13T20:15:53.858673",
-      "updated_at": "2026-08-06T09:35:19.644154",
+      "updated_at": "2026-08-07T09:35:25.389074",
       "schedule": {
         "type": "cron",
         "expression": "25 9 * * 1-5"
@@ -105,7 +63,7 @@
         "channel_type": "weixin",
         "notify_session_id": "session__status_95149"
       },
-      "next_run_at": "2026-08-07T09:25:00"
+      "next_run_at": "2026-08-10T09:25:00"
     },
     "bd40ee3c": {
       "id": "bd40ee3c",
