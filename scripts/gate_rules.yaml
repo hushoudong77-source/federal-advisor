@@ -1,0 +1,103 @@
+# output_gate 校验规则配置
+# 修改此文件即可调整校验行为，无需改 Python 代码
+
+consistency:
+  tolerance_pct: 0.5        # 数字一致性容差（%）
+  max_mismatches_report: 20 # 最大报告数量
+  
+  # 哪些字段视为「价格类」（需要精确到 0.5% 容差）
+  price_fields:
+    - price
+    - close
+    - open
+    - high
+    - low
+    - cost
+    - c4
+    - buy_zone
+    - stop_loss
+    - take_profit
+    - ma5
+    - ma20
+    - ma40
+    - ma60
+    - ma120
+    - ma250
+  
+  # 哪些字段视为「百分比类」
+  pct_fields:
+    - change_pct
+    - dev_ma60
+    - dev_ma40
+    - dev_ma20
+    - pnl_pct
+    - gap_pct
+    - drawdown_20d
+    - atr_pct
+  
+  # 哪些字段视为「整数类」
+  int_fields:
+    - shares
+    - cooldown_days
+
+routing:
+  # 路由标注关键词映射（JSON route → LLM 输出中的可能表述）
+  route_labels:
+    offense: ["🟢进攻", "进攻"]
+    cn_offense: ["🟢A股进攻", "A股进攻"]
+    counterpunch: ["🟡反击", "反击"]
+    idle: ["⚪闲置", "闲置"]
+    independent: ["⚪独立", "独立动量"]
+    shield: ["⚪金盾", "金盾豁免"]
+    fixed: ["⚪固定层", "固定层"]
+    deprived: ["⛔剥夺", "禁购"]
+    unclassified: ["⚪待分类", "待分类"]
+    cane: ["⚪独立", "厄尔尼诺"]
+  
+  # 持仓状态关键词映射
+  position_labels:
+    holding: ["持有", "持仓"]
+    cleared: ["已清仓", "无持仓"]
+    never_held: ["从未持有", "无持仓"]
+  
+  # 上下文窗口大小（标的附近多少字符内搜索标注）
+  context_window: 200
+
+realtime:
+  # 盘中时段判定（UTC+8）
+  a_stock_open: "09:30"
+  a_stock_close: "15:00"
+  us_stock_open: "21:30"
+  us_stock_close: "04:00"
+
+backtest:
+  # 回测推断拦截关键词
+  trigger_keywords:
+    - "累计收益"
+    - "累计+"
+    - "止损笔数"
+    - "胜率"
+    - "平均盈亏"
+    - "止损均亏"
+    - "Buy&Hold"
+    - "空仓天数"
+    - "回测结论"
+    - "回测发现"
+    - "回测显示"
+    - "全量回测"
+    - "Sharpe"
+    - "盈亏比"
+    - "最大连亏"
+    - "最大回撤"
+  
+  # 需要在这些关键词出现时检查是否有脚本调用记录
+  require_script_call: true
+
+memory:
+  # 记忆污染检测
+  forbidden_patterns:
+    - "已清仓.*\\d+股"
+    - "已买入.*\\d+股"
+    - "已执行止损"
+    - "已执行止盈"
+  # 这些模式在 MEMORY.md 中出现时触发污染告警

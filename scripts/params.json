@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": "V5.8.2r33.68",
+    "version": "V5.8.2r33.83",
     "created": "2026-07-17",
     "description": "全池24标统一参数真源。所有脚本和LLM输出读取此文件，禁止在其他文件中硬编码参数。",
     "sources_consolidated": [
@@ -10,137 +10,465 @@
       "scripts/optuna_k_optimizer.py（TICKER_CONFIG）"
     ]
   },
-
   "pool": {
-    "us_equity": ["VTI", "VEA", "QQQ", "IVV", "IAU", "BBJP", "MUFG", "EWY", "VNM", "FLIN", "SMIN", "BOTZ"],
-    "cn_equity": ["588000", "513180", "513910", "510500", "518880", "512100", "510880", "159530", "510300", "159915", "513770", "159545"],
-    "independent": ["CANE"],
+    "us_equity": [
+      "VTI",
+      "VEA",
+      "QQQ",
+      "IVV",
+      "IAU",
+      "BBJP",
+      "MUFG",
+      "EWY",
+      "VNM",
+      "FLIN",
+      "SMIN",
+      "BOTZ"
+    ],
+    "cn_equity": [
+      "588000",
+      "513180",
+      "513910",
+      "510500",
+      "518880",
+      "512100",
+      "510880",
+      "159530",
+      "510300",
+      "159915",
+      "513770",
+      "159545"
+    ],
+    "independent": [
+      "CANE"
+    ],
     "tushare_codes": {
-      "VTI": {"code": "VTI", "type": "us_daily"},
-      "VEA": {"code": "VEA", "type": "us_daily"},
-      "QQQ": {"code": "QQQ", "type": "us_daily"},
-      "IVV": {"code": "IVV", "type": "us_daily"},
-      "IAU": {"code": "IAU", "type": "us_daily"},
-      "BBJP": {"code": "BBJP", "type": "us_daily"},
-      "MUFG": {"code": "MUFG", "type": "us_daily"},
-      "EWY": {"code": "EWY", "type": "us_daily"},
-      "VNM": {"code": "VNM", "type": "us_daily"},
-      "FLIN": {"code": "FLIN", "type": "us_daily"},
-      "SMIN": {"code": "SMIN", "type": "us_daily"},
-      "BOTZ": {"code": "BOTZ", "type": "us_daily"},
-      "CANE": {"code": "CANE", "type": "us_daily"},
-      "588000": {"code": "588000.SH", "type": "fund_daily"},
-      "513180": {"code": "513180.SH", "type": "fund_daily"},
-      "513910": {"code": "513910.SH", "type": "fund_daily"},
-      "510500": {"code": "510500.SH", "type": "fund_daily"},
-      "518880": {"code": "518880.SH", "type": "fund_daily"},
-      "512100": {"code": "512100.SH", "type": "fund_daily"},
-      "510880": {"code": "510880.SH", "type": "fund_daily"},
-      "159530": {"code": "159530.SZ", "type": "fund_daily"},
-      "510300": {"code": "510300.SH", "type": "fund_daily"},
-      "159915": {"code": "159915.SZ", "type": "fund_daily"},
-      "513770": {"code": "513770.SH", "type": "fund_daily"},
-      "159545": {"code": "159545.SZ", "type": "fund_daily"}
+      "VTI": {
+        "code": "VTI",
+        "type": "us_daily"
+      },
+      "VEA": {
+        "code": "VEA",
+        "type": "us_daily"
+      },
+      "QQQ": {
+        "code": "QQQ",
+        "type": "us_daily"
+      },
+      "IVV": {
+        "code": "IVV",
+        "type": "us_daily"
+      },
+      "IAU": {
+        "code": "IAU",
+        "type": "us_daily"
+      },
+      "BBJP": {
+        "code": "BBJP",
+        "type": "us_daily"
+      },
+      "MUFG": {
+        "code": "MUFG",
+        "type": "us_daily"
+      },
+      "EWY": {
+        "code": "EWY",
+        "type": "us_daily"
+      },
+      "VNM": {
+        "code": "VNM",
+        "type": "us_daily"
+      },
+      "FLIN": {
+        "code": "FLIN",
+        "type": "us_daily"
+      },
+      "SMIN": {
+        "code": "SMIN",
+        "type": "us_daily"
+      },
+      "BOTZ": {
+        "code": "BOTZ",
+        "type": "us_daily"
+      },
+      "CANE": {
+        "code": "CANE",
+        "type": "us_daily"
+      },
+      "588000": {
+        "code": "588000.SH",
+        "type": "fund_daily"
+      },
+      "513180": {
+        "code": "513180.SH",
+        "type": "fund_daily"
+      },
+      "513910": {
+        "code": "513910.SH",
+        "type": "fund_daily"
+      },
+      "510500": {
+        "code": "510500.SH",
+        "type": "fund_daily"
+      },
+      "518880": {
+        "code": "518880.SH",
+        "type": "fund_daily"
+      },
+      "512100": {
+        "code": "512100.SH",
+        "type": "fund_daily"
+      },
+      "510880": {
+        "code": "510880.SH",
+        "type": "fund_daily"
+      },
+      "159530": {
+        "code": "159530.SZ",
+        "type": "fund_daily"
+      },
+      "510300": {
+        "code": "510300.SH",
+        "type": "fund_daily"
+      },
+      "159915": {
+        "code": "159915.SZ",
+        "type": "fund_daily"
+      },
+      "513770": {
+        "code": "513770.SH",
+        "type": "fund_daily"
+      },
+      "159545": {
+        "code": "159545.SZ",
+        "type": "fund_daily"
+      }
     }
   },
-
   "routing": {
-    "QQQ": {"route": "us_offensive", "routing_rule": "C1-C4 AND"},
-    "IVV": {"route": "us_offensive", "routing_rule": "C1-C4 AND"},
-    "MUFG": {"route": "us_offensive", "routing_rule": "C1-C4 AND"},
-    "BOTZ": {"route": "us_offensive", "routing_rule": "C1-C4 AND"},
-    "512100": {"route": "a_share_offensive", "routing_rule": "MA5回踩（仅牛市）", "sub_route": "MA50回踩三指标框架（仅牛市）"},
-    "513180": {"route": "a_share_offensive", "routing_rule": "MA5回踩（仅牛市）"},
-    "588000": {"route": "a_share_offensive", "routing_rule": "MA5回踩（仅牛市）"},
-    "510500": {"route": "a_share_offensive", "routing_rule": "MA5回踩（仅牛市）"},
-    "513910": {"route": "counterpunch", "routing_rule": "R0-R2 AND"},
-    "510880": {"route": "counterpunch", "routing_rule": "R0-R2 AND（豁免R0.5）"},
-    "159530": {"route": "counterpunch", "routing_rule": "R0-R2 AND"},
-    "510300": {"route": "counterpunch", "routing_rule": "R0-R2 AND"},
-    "159915": {"route": "counterpunch", "routing_rule": "R0-R2 AND"},
-    "BBJP": {"route": "counterpunch", "routing_rule": "R0-R2 AND"},
-    "VNM": {"route": "counterpunch", "routing_rule": "R0-R2 AND"},
-    "VTI": {"route": "fixed_layer", "routing_rule": "宪法级永不离场"},
-    "VEA": {"route": "fixed_layer", "routing_rule": "宪法级永不离场"},
-    "IAU": {"route": "gold_shield", "routing_rule": "金盾V1.4四条件"},
-    "518880": {"route": "gold_shield", "routing_rule": "金盾V1.4四条件"},
-    "FLIN": {"route": "momentum", "routing_rule": "MACD金叉+价<MA20（轨道一）"},
-    "SMIN": {"route": "momentum", "routing_rule": "MACD金叉+价<MA20（轨道一）/ 20日回撤<−15%（轨道二）"},
-    "EWY": {"route": "momentum", "routing_rule": "MACD金叉+价<MA20（轨道一）/ 20日回撤<−20%（轨道二）"},
-    "513770": {"route": "unclassified", "routing_rule": "反击框架不成立，维持⚪待分类"},
-    "159545": {"route": "unclassified", "routing_rule": "反击框架不成立，维持⚪待分类"},
-    "CANE": {"route": "independent", "routing_rule": "厄尔尼诺左侧分批框架"}
+    "QQQ": {
+      "route": "us_offensive",
+      "routing_rule": "C1-C4 AND"
+    },
+    "IVV": {
+      "route": "us_offensive",
+      "routing_rule": "C1-C4 AND"
+    },
+    "MUFG": {
+      "route": "us_offensive",
+      "routing_rule": "C1-C4 AND"
+    },
+    "BOTZ": {
+      "route": "us_offensive",
+      "routing_rule": "C1-C4 AND"
+    },
+    "512100": {
+      "route": "a_share_offensive",
+      "routing_rule": "MA5回踩（仅牛市）",
+      "sub_route": "MA50回踩三指标框架（仅牛市）"
+    },
+    "513180": {
+      "route": "a_share_offensive",
+      "routing_rule": "MA5回踩（仅牛市）"
+    },
+    "588000": {
+      "route": "a_share_offensive",
+      "routing_rule": "MA5回踩（仅牛市）"
+    },
+    "510500": {
+      "route": "a_share_offensive",
+      "routing_rule": "MA5回踩（仅牛市）"
+    },
+    "513910": {
+      "route": "counterpunch",
+      "routing_rule": "R0-R2 AND"
+    },
+    "510880": {
+      "route": "counterpunch",
+      "routing_rule": "R0-R2 AND（豁免R0.5）"
+    },
+    "159530": {
+      "route": "counterpunch",
+      "routing_rule": "R0-R2 AND"
+    },
+    "510300": {
+      "route": "counterpunch",
+      "routing_rule": "R0-R2 AND"
+    },
+    "159915": {
+      "route": "counterpunch",
+      "routing_rule": "R0-R2 AND"
+    },
+    "BBJP": {
+      "route": "counterpunch",
+      "routing_rule": "R0-R2 AND"
+    },
+    "VNM": {
+      "route": "counterpunch",
+      "routing_rule": "R0-R2 AND"
+    },
+    "VTI": {
+      "route": "fixed_layer",
+      "routing_rule": "宪法级永不离场"
+    },
+    "VEA": {
+      "route": "fixed_layer",
+      "routing_rule": "宪法级永不离场"
+    },
+    "IAU": {
+      "route": "gold_shield",
+      "routing_rule": "金盾V1.4四条件"
+    },
+    "518880": {
+      "route": "gold_shield",
+      "routing_rule": "金盾V1.4四条件"
+    },
+    "FLIN": {
+      "route": "momentum",
+      "routing_rule": "MACD金叉+价<MA20（轨道一）"
+    },
+    "SMIN": {
+      "route": "momentum",
+      "routing_rule": "MACD金叉+价<MA20（轨道一）/ 20日回撤<−15%（轨道二）"
+    },
+    "EWY": {
+      "route": "momentum",
+      "routing_rule": "MACD金叉+价<MA20（轨道一）/ 20日回撤<−20%（轨道二）"
+    },
+    "513770": {
+      "route": "unclassified",
+      "routing_rule": "反击框架不成立，维持⚪待分类"
+    },
+    "159545": {
+      "route": "unclassified",
+      "routing_rule": "反击框架不成立，维持⚪待分类"
+    },
+    "CANE": {
+      "route": "independent",
+      "routing_rule": "厄尔尼诺左侧分批框架"
+    }
   },
-
   "counterpunch": {
-    "_meta": {"anchor": "MA40", "build_method": "正金字塔两层（30%+70%）", "src_hard_stop": "-15%", "cooling_abolished": true, "overheat_rule": "30天内加仓≥3次→暂停"},
-    "513910": {"name": "港股通央企红利ETF", "k": 2.7, "stop_mult": 3.5, "cooldown": 16, "hold_days": 20, "r05_exempt": true, "note": "r33.31 Optuna三参数联合优化"},
-    "512100": {"name": "中证1000ETF", "k": 2.0, "stop_mult": 3.0, "cooldown": 15, "hold_days": 15, "r05_exempt": true, "note": "r33.41全量止损遍历修正：3.0×最优"},
-    "510500": {"name": "中证500ETF", "k": 2.8, "stop_mult": 2.5, "cooldown": 60, "hold_days": 15, "r05_exempt": true, "bear_market_suspended": true, "note": "r33.60熊市暂停规则焊入"},
-    "588000": {"name": "科创50ETF", "k": 4.7, "stop_mult": 3.0, "cooldown": 15, "hold_days": 15, "r05_exempt": true, "note": "r33.41全量止损遍历修正"},
-    "510880": {"name": "红利ETF易方达", "k": 2.0, "stop_mult": 3.0, "cooldown": 30, "hold_days": 20, "r05_exempt": true, "fixed_tp": "+10%", "note": "r33.39固定止盈TP+10% / r33.41止损修正"},
-    "159530": {"name": "中证红利ETF", "k": 1.5, "stop_mult": 4.0, "cooldown": 30, "hold_days": 20, "r05_exempt": false, "note": "r33.41全量止损遍历修正"},
-    "BBJP": {"name": "日股ETF", "k": 4.3, "stop_mult": 2.0, "cooldown": 14, "hold_days": 15, "r05_exempt": true, "note": "r33.31 Optuna三参数联合优化"},
-    "VNM": {"name": "越南ETF", "k": 5.0, "stop_mult": 1.5, "cooldown": 9, "hold_days": 10, "r05_exempt": true, "note": "r33.47全量135组回测修正"},
-    "510300": {"name": "沪深300ETF", "k": 2.0, "stop_mult": 4.0, "cooldown": 45, "hold_days": 20, "r05_exempt": false, "note": "r33.62全量回测确权"},
-    "159915": {"name": "创业板ETF", "k": 2.0, "stop_mult": 4.0, "cooldown": 10, "hold_days": 20, "r05_exempt": false, "note": "r33.62全量回测确权"}
+    "_meta": {
+      "anchor": "MA40",
+      "build_method": "正金字塔两层（30%+70%）",
+      "src_hard_stop": "-15%",
+      "cooling_abolished": true,
+      "overheat_rule": "30天内加仓≥3次→暂停"
+    },
+    "513910": {
+      "name": "港股通央企红利ETF",
+      "k": 2.7,
+      "stop_mult": 3.5,
+      "cooldown": 16,
+      "hold_days": 20,
+      "r05_exempt": true,
+      "note": "r33.31 Optuna三参数联合优化"
+    },
+    "512100": {
+      "name": "中证1000ETF",
+      "k": 2.0,
+      "stop_mult": 3.0,
+      "cooldown": 15,
+      "hold_days": 15,
+      "r05_exempt": true,
+      "note": "止损守东直接指定：减仓¥2.78/清仓¥2.67，不经过ATR公式。stop_mult=3.0仅用于回测参考"
+    },
+    "510500": {
+      "name": "中证500ETF",
+      "k": 2.8,
+      "cooldown": 60,
+      "hold_days": 15,
+      "r05_exempt": true,
+      "bear_market_suspended": true,
+      "note": "r33.83 止损¥7.479守东直接指定，不经过ATR公式"
+    },
+    "588000": {
+      "name": "科创50ETF",
+      "k": 4.7,
+      "stop_mult": 3.0,
+      "cooldown": 15,
+      "hold_days": 15,
+      "r05_exempt": true,
+      "note": "r33.41全量止损遍历修正"
+    },
+    "510880": {
+      "name": "红利ETF易方达",
+      "k": 2.0,
+      "stop_mult": 3.0,
+      "cooldown": 30,
+      "hold_days": 20,
+      "r05_exempt": true,
+      "fixed_tp": "+10%",
+      "note": "r33.39固定止盈TP+10% / r33.41止损修正"
+    },
+    "159530": {
+      "name": "中证红利ETF",
+      "k": 1.4,
+      "stop_mult": 4.0,
+      "cooldown": 30,
+      "hold_days": 20,
+      "r05_exempt": true,
+      "note": "r33.41止损遍历修正 | k=1.4守东2026-08-10确权 | R0.5豁免守东确权"
+    },
+    "BBJP": {
+      "name": "日股ETF",
+      "k": 4.3,
+      "stop_mult": 2.0,
+      "cooldown": 14,
+      "hold_days": 15,
+      "r05_exempt": true,
+      "note": "r33.31 Optuna三参数联合优化"
+    },
+    "VNM": {
+      "name": "越南ETF",
+      "k": 5.0,
+      "stop_mult": 1.5,
+      "cooldown": 9,
+      "hold_days": 10,
+      "r05_exempt": true,
+      "note": "r33.47全量135组回测修正"
+    },
+    "510300": {
+      "name": "沪深300ETF",
+      "k": 2.0,
+      "stop_mult": 4.0,
+      "cooldown": 45,
+      "hold_days": 20,
+      "r05_exempt": false,
+      "note": "r33.62全量回测确权"
+    },
+    "159915": {
+      "name": "创业板ETF",
+      "k": 2.0,
+      "stop_mult": 3.0,
+      "cooldown": 10,
+      "hold_days": 20,
+      "r05_exempt": false,
+      "note": "r33.83 全量止损遍历回测修正：4.0×→3.0×，12年仅2笔止损"
+    }
   },
-
   "us_offensive": {
-    "_meta": {"entry_formula": "C4=H20×0.98", "position_size": "单笔10%", "cooling_abolished": true, "overheat_rule": "30天内加仓≥3次→暂停"},
+    "_meta": {
+      "entry_formula": "C4=H20×0.98",
+      "position_size": "单笔10%",
+      "cooling_abolished": true,
+      "overheat_rule": "30天内加仓≥3次→暂停"
+    },
     "QQQ": {
       "name": "纳指100ETF",
       "stop_mult": 8.0,
-      "take_profit": {"type": "dynamic_drawdown", "activation": "+20%", "drawdown_mult": 2.5, "extreme_crowding": {"activation": "+15%", "drawdown_mult": 2.0}},
+      "take_profit": {
+        "type": "dynamic_drawdown",
+        "activation": "+20%",
+        "drawdown_mult": 2.5,
+        "extreme_crowding": {
+          "activation": "+15%",
+          "drawdown_mult": 2.0
+        }
+      },
       "note": "r33.46全量止盈回测：动态回撤最优"
     },
     "IVV": {
       "name": "标普500ETF",
       "stop_mult": 2.0,
-      "take_profit": {"type": "stop_only", "note": "所有止盈方案差异<2pp，复杂度零收益"},
+      "take_profit": {
+        "type": "stop_only",
+        "note": "所有止盈方案差异<2pp，复杂度零收益"
+      },
       "note": "r33.46全量止盈回测：仅止损最优"
     },
     "MUFG": {
       "name": "三菱日联金融",
       "stop_mult": 7.0,
-      "take_profit": {"type": "fixed", "threshold": "+50%", "note": "r33.46全量止盈回测 + 2026-07-15守东指令上调（霍尔木兹）"},
+      "take_profit": {
+        "type": "fixed",
+        "threshold": "+50%",
+        "note": "r33.46全量止盈回测 + 2026-07-15守东指令上调（霍尔木兹）"
+      },
       "note": "霍尔木兹油价跳升利好日本银行贸易融资"
     },
     "BOTZ": {
       "name": "机器人AI ETF",
       "stop_mult": 2.0,
-      "take_profit": {"type": "stop_only", "note": "趋势跟随，复杂止盈无增量收益"},
+      "take_profit": {
+        "type": "stop_only",
+        "note": "趋势跟随，复杂止盈无增量收益"
+      },
       "note": "r33.46全量止盈回测"
     }
   },
-
   "a_share_offensive": {
-    "_meta": {"condition": "仅牛市执行（MA60↑+价>MA60）", "position_size": "单笔5%", "cooling_abolished": true, "overheat_rule": "30天内加仓≥3次→暂停"},
+    "_meta": {
+      "condition": "仅牛市执行（MA60↑+价>MA60）",
+      "position_size": "单笔5%",
+      "cooling_abolished": true,
+      "overheat_rule": "30天内加仓≥3次→暂停"
+    },
     "512100": {
       "name": "中证1000ETF",
-      "ma5_pullback": {"ma": 5, "tolerance": "±0.5%", "stop_mult": 3.0, "take_profit": "+20%全仓", "cooldown": 20},
-      "ma50_pullback": {"ma": 50, "tolerance": "±2%", "volume_threshold": "<0.8×VOL_MA20", "macd_window": 5, "stop_hard": "-5%", "stop_atr": 2.0, "take_profit": "+30%", "max_hold": 50, "cooldown": 30},
+      "ma5_pullback": {
+        "ma": 5,
+        "tolerance": "±0.5%",
+        "stop_mult": 3.0,
+        "take_profit": "+20%全仓",
+        "cooldown": 20
+      },
+      "ma50_pullback": {
+        "ma": 50,
+        "tolerance": "±2%",
+        "volume_threshold": "<0.8×VOL_MA20",
+        "macd_window": 5,
+        "stop_hard": "-5%",
+        "stop_atr": 2.0,
+        "take_profit": "+30%",
+        "max_hold": 50,
+        "cooldown": 30
+      },
       "note": "MA5+MA50双轨互斥 / r33.52三指标框架焊入"
     },
     "513180": {
       "name": "恒生科技ETF",
-      "ma5_pullback": {"ma": 5, "tolerance": "±0.5%", "stop_mult": 2.0, "take_profit": "MA20", "cooldown": 10},
+      "ma5_pullback": {
+        "ma": 5,
+        "tolerance": "±0.5%",
+        "stop_mult": 2.0,
+        "take_profit": "MA20",
+        "cooldown": 10
+      },
       "note": "MA5纯回踩，MA20止盈"
     },
     "588000": {
       "name": "科创50ETF",
-      "ma5_pullback": {"ma": 5, "tolerance": "±0.5%", "stop_mult": 4.0, "take_profit": "30/30/40分批→+20%/+35%/+50%", "cooldown": 10},
+      "ma5_pullback": {
+        "ma": 5,
+        "tolerance": "±0.5%",
+        "stop_mult": 4.0,
+        "take_profit": "30/30/40分批→+20%/+35%/+50%",
+        "cooldown": 10
+      },
       "note": "r33.38分批止盈焊入 / r33.41止损修正"
     },
     "510500": {
       "name": "中证500ETF",
-      "ma5_pullback": {"ma": 5, "tolerance": "±0.5%", "stop_mult": 2.0, "take_profit": "50/50分批→+15%/+25%", "cooldown": 10},
+      "ma5_pullback": {
+        "ma": 5,
+        "tolerance": "±0.5%",
+        "stop_mult": 2.0,
+        "take_profit": "50/50分批→+15%/+25%",
+        "cooldown": 10
+      },
       "note": "r33.38分批止盈焊入"
     }
   },
-
   "momentum": {
-    "_meta": {"entry": "MACD金叉+价<MA20（轨道一）", "exit": "两阶段动态回撤止盈", "position_size": "单笔5%", "cooling": 30, "hard_stop_events": "VIX>35 / FOMC+非农+CPI前72h"},
+    "_meta": {
+      "entry": "MACD金叉+价<MA20（轨道一）",
+      "exit": "两阶段动态回撤止盈",
+      "position_size": "单笔5%",
+      "cooling": 30,
+      "hard_stop_events": "VIX>35 / FOMC+非农+CPI前72h"
+    },
     "FLIN": {
       "name": "印度ETF",
       "stop_mult": 5.5,
@@ -150,48 +478,125 @@
     "SMIN": {
       "name": "印度小盘ETF",
       "stop_mult": 9.0,
-      "track_two": {"trigger": "20日回撤<−15%", "build": "正金字塔(3/7)", "stop": "−15%", "take_profit": "动态回撤3.5×ATR", "cooldown": 10},
+      "track_two": {
+        "trigger": "20日回撤<−15%",
+        "build": "正金字塔(3/7)",
+        "stop": "−15%",
+        "take_profit": "动态回撤3.5×ATR",
+        "cooldown": 10
+      },
       "note": "r33.63轨道二焊入 / r33.41止损修正"
     },
     "EWY": {
       "name": "韩国ETF",
       "stop_mult": 10.0,
-      "track_two": {"trigger": "20日回撤<−20%", "build": "正金字塔(3/7)", "stop": "−15%", "take_profit": "动态回撤3.5×ATR", "cooldown": 10},
+      "track_two": {
+        "trigger": "20日回撤<−20%",
+        "build": "正金字塔(3/7)",
+        "stop": "−15%",
+        "take_profit": "动态回撤3.5×ATR",
+        "cooldown": 10
+      },
       "note": "r33.65轨道二焊入 / r33.41止损修正"
     },
     "VNM": {
       "name": "越南ETF",
       "stop_mult": 1.5,
-      "track_two": {"trigger": "20日回撤<−20%", "build": "全仓", "stop": "−15%", "take_profit": "动态回撤3.5×ATR", "cooldown": 10},
+      "track_two": {
+        "trigger": "20日回撤<−20%",
+        "build": "全仓",
+        "stop": "−15%",
+        "take_profit": "动态回撤3.5×ATR",
+        "cooldown": 10
+      },
       "note": "r33.64轨道二焊入（全仓裁决：正金字塔无增量）"
     }
   },
-
   "fixed_layer": {
-    "_meta": {"constitutional": "永不离场", "position_size": "单笔10%", "cooling_abolished": true, "overheat_rule": "30天内加仓≥3次→暂停"},
-    "VTI": {"name": "美股全市场ETF", "anchor": "MA60", "k": 4.5, "buy_zone": "[MA60−4.5×ATR, MA60+2×ATR)", "note": "r33.22 k=4.0→4.5"},
-    "VEA": {"name": "发达市场ETF", "anchor": "MA60", "k": 4.0, "buy_zone": "[MA60−4×ATR, MA60+2×ATR)", "note": ""}
+    "_meta": {
+      "constitutional": "永不离场",
+      "position_size": "单笔10%",
+      "cooling_abolished": true,
+      "overheat_rule": "30天内加仓≥3次→暂停"
+    },
+    "VTI": {
+      "name": "美股全市场ETF",
+      "anchor": "MA60",
+      "k": 4.5,
+      "buy_zone": "[MA60−4.5×ATR, MA60+2×ATR)",
+      "note": "r33.22 k=4.0→4.5"
+    },
+    "VEA": {
+      "name": "发达市场ETF",
+      "anchor": "MA60",
+      "k": 4.0,
+      "buy_zone": "[MA60−4×ATR, MA60+2×ATR)",
+      "note": ""
+    }
   },
-
   "gold_shield": {
-    "_meta": {"protocol": "金盾V1.4", "tactical_vanguard": true, "stop_system": "S4(MA60)/S5(−3.5%)/S6(−13%)/S7(−19%)"},
-    "IAU": {"name": "黄金ETF", "note": "VIX 35-50可买入但不追高 / MELTDOWN(>50)禁止"},
-    "518880": {"name": "黄金ETF(人民币)", "note": "同上"}
+    "_meta": {
+      "protocol": "金盾V1.4",
+      "tactical_vanguard": true,
+      "stop_system": "S4(MA60)/S5(−3.5%)/S6(−13%)/S7(−19%)"
+    },
+    "IAU": {
+      "name": "黄金ETF",
+      "note": "VIX 35-50可买入但不追高 / MELTDOWN(>50)禁止"
+    },
+    "518880": {
+      "name": "黄金ETF(人民币)",
+      "note": "同上"
+    }
   },
-
   "independent_cane": {
-    "_meta": {"framework": "厄尔尼诺左侧分批", "trigger": "NOAA CPC概率>90%", "batches": 5, "batch_size": "20%", "drawdown_trigger": "−5%", "batch_interval": 30, "hard_stop": "−25%", "resonance_interval": 14},
-    "resonance_acceleration": {"conditions": ["厄尔尼诺>90%", "布油>+5%或ICE>+3%", "制糖比≤40%", "距上批≥14天"], "action": "不等−8%回撤，现价加仓"},
-    "stop_system": {"S6": "成本−13%（减仓50%）", "S7": "成本−19%（清仓）", "atr_cross_check": "ATR14×3.5 < S7→以ATR为临时硬止损"}
+    "_meta": {
+      "framework": "厄尔尼诺左侧分批",
+      "trigger": "NOAA CPC概率>90%",
+      "batches": 5,
+      "batch_size": "20%",
+      "drawdown_trigger": "−5%",
+      "batch_interval": 30,
+      "hard_stop": "−25%",
+      "resonance_interval": 14
+    },
+    "resonance_acceleration": {
+      "conditions": [
+        "厄尔尼诺>90%",
+        "布油>+5%或ICE>+3%",
+        "制糖比≤40%",
+        "距上批≥14天"
+      ],
+      "action": "不等−8%回撤，现价加仓"
+    },
+    "stop_system": {
+      "S6": "成本−13%（减仓50%）",
+      "S7": "成本−19%（清仓）",
+      "atr_cross_check": "ATR14×3.5 < S7→以ATR为临时硬止损"
+    }
   },
-
   "macro_thresholds": {
-    "vix": {"normal": "≤20", "alert": "20-35", "crisis": "35-50", "meltdown": ">50"},
-    "us10y": {"opportunity": "≥4.50%（进攻不减仓）", "observe": "≥4.75%（仅提醒不调仓）", "meltdown": "≥5.00%（全局暂停进攻）"},
-    "dxy": {"tailwind": "MA20↓", "headwind": "MA20↑"},
-    "china": {"dr007_tight": "连续5日>2.10%", "leverage_crowded": "≥90%分位", "cnh_cny_spread": ">150bp且持续≥3日"}
+    "vix": {
+      "normal": "≤20",
+      "alert": "20-35",
+      "crisis": "35-50",
+      "meltdown": ">50"
+    },
+    "us10y": {
+      "opportunity": "≥4.50%（进攻不减仓）",
+      "observe": "≥4.75%（仅提醒不调仓）",
+      "meltdown": "≥5.00%（全局暂停进攻）"
+    },
+    "dxy": {
+      "tailwind": "MA20↓",
+      "headwind": "MA20↑"
+    },
+    "china": {
+      "dr007_tight": "连续5日>2.10%",
+      "leverage_crowded": "≥90%分位",
+      "cnh_cny_spread": ">150bp且持续≥3日"
+    }
   },
-
   "risk_controls": {
     "single_ticker_max": "≤20%",
     "gold_combined_max": "≤25%",
@@ -204,7 +609,6 @@
       "systemic_collapse": 0
     }
   },
-
   "deprecated": {
     "_note": "以下参数已废除但保留记录",
     "cooling_periods": "开仓冷却期已全部废除（r33.68），仅保留加仓过热约束",

@@ -21,6 +21,7 @@
   python3 output_gate.py --check cost MUFG    # 单标成本校验
   python3 output_gate.py --check execution    # 执行事实校验（扫MEMORY/决策日志）
   python3 output_gate.py --check backtest     # 回测推断拦截（防LLM编造回测数字）
+  python3 output_gate.py --check routing /tmp/llm.json  # 路由/持仓文本一致性校验
   python3 output_gate.py --check all          # 全量校验（/扫描 /开火 前）
   python3 output_gate.py --check realtime     # 盘中实时数据强制拉取
 
@@ -45,6 +46,69 @@ POSITIONS_JSON = WORKSPACE / "scripts" / "positions.json"
 PARAMS_JSON = WORKSPACE / "scripts" / "params.json"
 DECISION_LOG_DIR = WORKSPACE / "knowledge" / "analysis" / "decision-log"
 SCRIPTS_DIR = WORKSPACE / "scripts"
+GATE_RULES_YAML = SCRIPTS_DIR / "gate_rules.yaml"
+
+# ── 加载 gate 配置 ────────────────────────────────────────────
+def _load_gate_rules():
+    """加载 gate_rules.yaml，解析为 dict。无 YAML 依赖，手写简单解析器。"""
+    rules = {}
+    if not GATE_RULES_YAML.exists():
+        return rules
+    
+    current_section = None
+    current_key = None
+    current_list = None
+    
+    with open(GATE_RULES_YAML) as f:
+        for line in f:
+            stripped = line.rstrip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            
+            # 顶级 section
+            if not stripped.startswith(" "):
+                current_section = stripped.rstrip(":")
+                rules[current_section] = {}
+                current_key = None
+                current_list = None
+                continue
+            
+            # 缩进 2 空格 = section 下的 key
+            if stripped.startswith("  ") and not stripped.startswith("    "):
+                inner = stripped.strip()
+                if inner.endswith(":"):
+                    # 嵌套 key
+                    current_key = inner.rstrip(":")
+                    rules[current_section][current_key] = {}
+                    current_list = None
+                else:
+                    # key: value
+                    parts = inner.split(":", 1)
+                    if len(parts) == 2:
+                        key, val = parts
+                        key = key.strip()
+                        val = val.strip()
+                        # 尝试类型转换
+                        if val.replace(".", "").isdigit():
+                            val = float(val) if "." in val else int(val)
+                        elif val in ("true", "false"):
+                            val = val == "true"
+                        rules[current_section][key] = val
+                continue
+            
+            # 缩进 4 空格 = 嵌套 key 下的 list item
+            if stripped.startswith("    - "):
+                item = stripped.strip()[2:]  # 去掉 "  - "
+                if current_key and isinstance(rules[current_section].get(current_key), dict):
+                    rules[current_section][current_key].setdefault("items", []).append(item)
+                elif current_list is not None:
+                    rules[current_section][current_list].append(item)
+    
+    return rules
+
+
+# 加载配置（模块级）
+GATE_RULES = _load_gate_rules()
 
 # ── 工具函数 ──────────────────────────────────────────────────
 def now_iso():
@@ -560,19 +624,100 @@ def check_backtest_inference(target_text=None):
     return result
 
 
+def check_positions_integrity():
+    """
+    positions.json 防篡改完整性校验（硬锁零.九 代码化）
+    
+    检测 LLM 是否用 write/edit 工具绕过了 input_parser.py 的 /输入 闸门，
+    直接修改了 positions.json。
+    
+    原理：positions.json 的 _meta.checksum 是上次通过 input_parser.py
+    合法写入时计算的 SHA256。如果 LLM 用 write/edit 直接改了文件内容，
+    checksum 会对不上。
+    """
+    result = {
+        "check": "positions.json防篡改校验",
+        "status": "PENDING",
+        "stored_checksum": None,
+        "computed_checksum": None,
+        "tampered": False,
+        "error": None
+    }
+    
+    import hashlib
+    
+    if not POSITIONS_JSON.exists():
+        result["status"] = "BLOCK"
+        result["error"] = "positions.json 不存在"
+        return result
+    
+    try:
+        with open(POSITIONS_JSON) as f:
+            raw = f.read()
+        data = json.loads(raw)
+    except Exception as e:
+        result["status"] = "BLOCK"
+        result["error"] = f"positions.json 解析失败: {e}"
+        return result
+    
+    stored_checksum = data.get("_meta", {}).get("checksum")
+    result["stored_checksum"] = stored_checksum
+    
+    if not stored_checksum:
+        # 没有校验和——可能是旧版本文件，仅警告不阻断
+        result["status"] = "PASS"
+        result["note"] = "positions.json 无校验和（旧版本文件），无法验证完整性。建议通过 /输入 重新确权以添加校验和。"
+        return result
+    
+    # 计算当前内容的校验和（排除 _meta.checksum 自身）
+    meta = data.get("_meta", {})
+    meta.pop("checksum", None)
+    meta.pop("checksum_algo", None)
+    meta.pop("checksum_updated", None)
+    canonical = json.dumps(data, sort_keys=True, ensure_ascii=False)
+    computed = hashlib.sha256(canonical.encode()).hexdigest()[:16]
+    result["computed_checksum"] = computed
+    
+    if stored_checksum != computed:
+        result["status"] = "BLOCK"
+        result["tampered"] = True
+        result["error"] = (
+            f"🔴 positions.json 校验和不匹配！\n"
+            f"   存储校验和: {stored_checksum}\n"
+            f"   计算校验和: {computed}\n"
+            f"   这意味着文件被 write/edit 工具直接修改，绕过了 /输入 闸门。\n"
+            f"   唯一合法修改路径: python3 scripts/input_parser.py \"/输入 ...\"\n"
+            f"   操作: ① 回滚到最近 git 版本 ② 守东通过 /输入 重新确权"
+        )
+    else:
+        result["status"] = "PASS"
+    
+    return result
+
+
 def check_memory_contamination():
     """
-    记忆污染自检（硬锁零.七）
-    检查 MEMORY.md 持仓确权段 vs positions.json 是否一致
+    记忆污染自检（硬锁零.七 + 防篡改）
+    1. 检查 positions.json 完整性（防LLM绕过/输入闸门）
+    2. 检查 MEMORY.md 持仓确权段 vs positions.json 是否一致
     """
     result = {
         "check": "记忆污染自检",
         "status": "PENDING",
+        "integrity": None,
         "inconsistencies": [],
         "error": None
     }
     
-    # 读取两个源
+    # ── 第一道：positions.json 完整性校验 ──
+    integrity = check_positions_integrity()
+    result["integrity"] = integrity
+    if integrity["status"] == "BLOCK":
+        result["status"] = "BLOCK"
+        result["error"] = integrity["error"]
+        return result
+    
+    # ── 第二道：MEMORY.md vs positions.json 对账 ──
     memory_text = read_file(MEMORY_MD)
     positions_data = read_json(POSITIONS_JSON)
     
@@ -590,10 +735,11 @@ def check_memory_contamination():
     json_holdings = {}
     for acc in ["A", "B"]:
         for ticker, h in positions_data.get("accounts", {}).get(acc, {}).get("holdings", {}).items():
+            if not isinstance(h, dict):
+                continue
             json_holdings[ticker] = {"shares": h.get("shares"), "account": acc}
     
-    # 从 MEMORY.md 提取持仓（简单模式匹配）
-    # A账户
+    # 从 MEMORY.md 提取持仓
     a_pattern = re.findall(
         r'(\d{6}\.?\w*)\s+([\d,]+)股\s*\([¥$]([\d.]+)\)',
         memory_text
@@ -618,6 +764,320 @@ def check_memory_contamination():
     return result
 
 
+def check_routing_consistency(json_path):
+    """
+    文本字段校验：LLM输出中的路由标注 vs JSON数据源
+    覆盖：路由判定（🟢进攻 / 🟡反击 / ⚪闲置 等）、持仓状态、操作建议
+    
+    输入格式同 check_consistency。
+    校验规则：
+    - 从 data_source JSON 中提取每个标的的路由/持仓/动作
+    - 在 llm_text 中搜索对应标的，检查路由标注是否一致
+    - 发现不一致 → BLOCK
+    """
+    result = {
+        "check": "路由文本一致性校验",
+        "status": "PENDING",
+        "mismatches": [],
+        "summary": ""
+    }
+    
+    try:
+        if json_path == "-":
+            data = json.load(sys.stdin)
+        else:
+            data = read_json(json_path)
+        
+        llm_text = data.get("llm_text", "")
+        data_source = data.get("data_source", {})
+        
+        if not llm_text:
+            result["status"] = "PASS"
+            result["summary"] = "无LLM文本待校验"
+            return result
+        
+        if not data_source:
+            result["status"] = "BLOCK"
+            result["summary"] = "缺少 data_source 字段"
+            return result
+        
+        mismatches = []
+        
+        # 路由标注映射
+        ROUTE_PATTERNS = {
+            "offense": ["🟢进攻", "进攻"],
+            "cn_offense": ["🟢A股进攻", "A股进攻"],
+            "counterpunch": ["🟡反击", "反击"],
+            "idle": ["⚪闲置", "闲置"],
+            "independent": ["⚪独立", "独立动量"],
+            "shield": ["⚪金盾", "金盾豁免"],
+            "fixed": ["⚪固定层", "固定层"],
+            "deprived": ["⛔剥夺", "禁购"],
+            "unclassified": ["⚪待分类", "待分类"],
+            "cane": ["⚪独立", "厄尔尼诺"],
+        }
+        
+        # 持仓状态映射
+        POSITION_PATTERNS = {
+            "holding": ["持有", "持仓"],
+            "cleared": ["已清仓", "无持仓"],
+            "never_held": ["从未持有", "无持仓"],
+        }
+        
+        for ticker, d in data_source.items():
+            if not isinstance(d, dict):
+                continue
+            
+            # 检查路由标注
+            route = d.get("route")
+            if route and route in ROUTE_PATTERNS:
+                # 在 LLM 文本中搜索该标的附近的路由标注
+                ticker_pattern = re.escape(ticker)
+                ticker_matches = list(re.finditer(ticker_pattern, llm_text))
+                
+                for match in ticker_matches:
+                    # 取该标的出现位置附近 200 字符
+                    start = max(0, match.start() - 50)
+                    end = min(len(llm_text), match.end() + 150)
+                    context = llm_text[start:end]
+                    
+                    expected_patterns = ROUTE_PATTERNS[route]
+                    found_route = any(p in context for p in expected_patterns)
+                    
+                    if not found_route:
+                        # 检查是否出现了错误的路由标注
+                        all_route_labels = []
+                        for r, patterns in ROUTE_PATTERNS.items():
+                            for p in patterns:
+                                if p in context:
+                                    all_route_labels.append((r, p))
+                        
+                        if all_route_labels:
+                            # LLM 标注了路由但与 JSON 不一致
+                            mismatches.append({
+                                "type": "route",
+                                "ticker": ticker,
+                                "expected": route,
+                                "found": all_route_labels[0][0],
+                                "context": context[:100] + "..."
+                            })
+            
+            # 检查持仓状态
+            position = d.get("position")
+            if position and position in POSITION_PATTERNS:
+                ticker_pattern = re.escape(ticker)
+                ticker_matches = list(re.finditer(ticker_pattern, llm_text))
+                
+                for match in ticker_matches:
+                    start = max(0, match.start() - 50)
+                    end = min(len(llm_text), match.end() + 150)
+                    context = llm_text[start:end]
+                    
+                    expected_patterns = POSITION_PATTERNS[position]
+                    found_pos = any(p in context for p in expected_patterns)
+                    
+                    if not found_pos:
+                        # 检查是否出现了错误的持仓标注
+                        for pos, patterns in POSITION_PATTERNS.items():
+                            if pos == position:
+                                continue
+                            for p in patterns:
+                                if p in context:
+                                    mismatches.append({
+                                        "type": "position",
+                                        "ticker": ticker,
+                                        "expected": position,
+                                        "found": pos,
+                                        "context": context[:100] + "..."
+                                    })
+        
+        if mismatches:
+            result["status"] = "BLOCK"
+            result["mismatches"] = mismatches[:20]
+            result["summary"] = f"发现 {len(mismatches)} 处路由/持仓标注不一致"
+        else:
+            result["status"] = "PASS"
+            result["summary"] = "所有路由和持仓标注与数据源一致"
+    
+    except Exception as e:
+        result["status"] = "ERROR"
+        result["summary"] = str(e)
+    
+    return result
+
+
+def check_consistency(json_path):
+    """
+    数字一致性校验：LLM输出中的数字 vs JSON数据源
+    
+    输入: JSON文件路径，格式要求:
+    {
+        "llm_text": "LLM即将输出的文本",
+        "data_source": "scan_data.json 或 fire_data.json 或 market_data.json"
+    }
+    或者直接用管道传入: echo '{"llm_text":"...", "data_source":"..."}' | python3 output_gate.py --check consistency -
+    
+    校验规则:
+    - 从 data_source JSON 中提取所有数值字段
+    - 在 llm_text 中搜索这些数值
+    - 发现不一致 → BLOCK
+    """
+    result = {
+        "check": "数字一致性校验",
+        "status": "PENDING",
+        "mismatches": [],
+        "summary": ""
+    }
+    
+    try:
+        if json_path == "-":
+            data = json.load(sys.stdin)
+        else:
+            data = read_json(json_path)
+        
+        llm_text = data.get("llm_text", "")
+        data_source = data.get("data_source", {})
+        
+        if not llm_text:
+            result["status"] = "PASS"
+            result["summary"] = "无LLM文本待校验"
+            return result
+        
+        if not data_source:
+            result["status"] = "BLOCK"
+            result["summary"] = "缺少 data_source 字段"
+            return result
+        
+        # 从 data_source 中提取关键数值字段
+        key_numeric_fields = [
+            "price", "close", "open", "high", "low", "cost", "shares",
+            "ma5", "ma20", "ma40", "ma60", "ma120", "ma250",
+            "atr14", "rsi14", "adx14", "dev_ma60", "dev_ma40",
+            "change_pct", "vol_ratio", "atr_pct",
+            "c4", "buy_zone", "stop_loss", "take_profit",
+            "gap_pct", "pnl_pct", "drawdown_20d",
+        ]
+        
+        mismatches = []
+        
+        # 遍历 data_source 中的标的
+        for ticker, d in data_source.items():
+            if not isinstance(d, dict):
+                continue
+            
+            for field in key_numeric_fields:
+                val = d.get(field)
+                if val is None:
+                    continue
+                
+                # 格式化数值为显示字符串（与LLM输出中的常见格式匹配）
+                if isinstance(val, float):
+                    # 价格类: 保留2-3位小数
+                    if field in ("price", "close", "open", "high", "low", "cost", "c4", "buy_zone", "stop_loss", "take_profit"):
+                        formats = [f"{val:.2f}", f"{val:.3f}", f"${val:.2f}", f"¥{val:.2f}",
+                                   f"${val:.3f}", f"¥{val:.3f}"]
+                    elif field in ("shares",):
+                        formats = [str(int(val)), f"{int(val):,}"]
+                    elif field in ("change_pct", "dev_ma60", "dev_ma40", "pnl_pct", "gap_pct", "drawdown_20d", "atr_pct"):
+                        formats = [f"{val:.1f}%", f"{val:.2f}%", f"{val:+.1f}%", f"{val:+.2f}%"]
+                    else:
+                        formats = [f"{val:.2f}", f"{val:.3f}", f"{val:.4f}"]
+                elif isinstance(val, int):
+                    formats = [str(val), f"{val:,}"]
+                else:
+                    continue
+                
+                # 特殊处理：股数可能以逗号分隔
+                if field == "shares":
+                    formats.append(f"{val:,}")
+                
+                # 检查是否有任何格式在LLM文本中出现
+                found = any(fmt in llm_text for fmt in formats)
+                
+                if not found:
+                    # 不是所有字段都必须出现——只在数值被引用了但值不对时才报
+                    # 这里记录的是一致性检查中「数据源有但LLM文本中没有」的情况
+                    # 如果LLM文本中出现了同类数字（如价格附近有不同数字），则标记
+                    pass
+                
+                # 反向检查：在LLM文本中搜索同标的同字段可能被篡改的数字
+                # 核心逻辑：如果LLM提到了这个标的，检查附近的价格/数量是否与JSON一致
+        
+        # 简化版：提取LLM中所有数值，与JSON中的关键数值对撞
+        # 提取LLM中的货币数值
+        money_pattern = re.findall(r'[¥$](\d{1,3}(?:,\d{3})*(?:\.\d+)?)', llm_text)
+        pct_pattern = re.findall(r'([+-]?\d+\.?\d*)%', llm_text)
+        share_pattern = re.findall(r'(\d{1,3}(?:,\d{3})*)\s*(?:股|shares)', llm_text)
+        
+        # 从JSON中收集所有"真值"
+        truth_values = set()
+        truth_pcts = set()
+        truth_shares = set()
+        
+        for ticker, d in data_source.items():
+            if not isinstance(d, dict):
+                continue
+            # 价格
+            for f in ("price", "close", "cost", "c4", "buy_zone", "stop_loss", "take_profit"):
+                v = d.get(f)
+                if v and isinstance(v, (int, float)):
+                    truth_values.add(round(v, 3))
+            # 百分比
+            for f in ("change_pct", "dev_ma60", "dev_ma40", "pnl_pct", "gap_pct", "drawdown_20d"):
+                v = d.get(f)
+                if v and isinstance(v, (int, float)):
+                    truth_pcts.add(round(v, 2))
+            # 股数
+            v = d.get("shares")
+            if v and isinstance(v, (int, float)):
+                truth_shares.add(int(v))
+        
+        # 对撞
+        tolerance = GATE_RULES.get("consistency", {}).get("tolerance_pct", 0.5) / 100
+        for m in money_pattern:
+            try:
+                val = float(m.replace(",", ""))
+                val_rounded = round(val, 3)
+                # 检查是否接近任何真值（容差0.5%）
+                near_truth = any(abs(val_rounded - t) / max(t, 0.01) < tolerance for t in truth_values if t > 0)
+                if not near_truth and truth_values:
+                    mismatches.append({
+                        "type": "price",
+                        "llm_value": val,
+                        "nearest_truth": min(truth_values, key=lambda t: abs(val_rounded - t)),
+                        "diff": round(val_rounded - min(truth_values, key=lambda t: abs(val_rounded - t)), 3)
+                    })
+            except:
+                pass
+        
+        for m in share_pattern:
+            try:
+                val = int(m.replace(",", ""))
+                if val not in truth_shares and truth_shares:
+                    mismatches.append({
+                        "type": "shares",
+                        "llm_value": val,
+                        "nearest_truth": min(truth_shares, key=lambda t: abs(val - t)),
+                        "diff": val - min(truth_shares, key=lambda t: abs(val - t))
+                    })
+            except:
+                pass
+        
+        if mismatches:
+            result["status"] = "BLOCK"
+            result["mismatches"] = mismatches[:20]  # 截断
+            result["summary"] = f"发现 {len(mismatches)} 处数字不一致"
+        else:
+            result["status"] = "PASS"
+            result["summary"] = "所有数值与数据源一致"
+    
+    except Exception as e:
+        result["status"] = "ERROR"
+        result["summary"] = str(e)
+    
+    return result
+
+
 # ══════════════════════════════════════════════════════════════
 # 主入口
 # ══════════════════════════════════════════════════════════════
@@ -628,7 +1088,7 @@ def main():
     if not args:
         print(json.dumps({
             "gate": "ERROR",
-            "error": "缺少 --check 参数。用法: output_gate.py --check <vix|macro|position|cost|execution|realtime|all>",
+            "error": "缺少 --check 参数。用法: output_gate.py --check <vix|macro|position|cost|execution|realtime|consistency|routing|backtest|all>",
             "timestamp": now_iso()
         }, indent=2, ensure_ascii=False))
         sys.exit(1)
@@ -694,6 +1154,27 @@ def main():
         results.append(rt)
         if rt["status"] == "BLOCK":
             all_pass = False
+    
+    if check_type in ("consistency", "all"):
+        # 数字一致性校验：LLM输出中的数字 vs JSON数据源
+        json_arg = args[idx + 2] if idx + 2 < len(args) and not args[idx + 2].startswith("--") else None
+        if json_arg:
+            cons = check_consistency(json_arg)
+            results.append(cons)
+            if cons["status"] == "BLOCK":
+                all_pass = False
+        elif check_type != "all":
+            print(json.dumps({"gate": "ERROR", "error": "consistency校验需要JSON文件路径: --check consistency /tmp/llm_output.json"}, indent=2, ensure_ascii=False))
+            sys.exit(1)
+    
+    if check_type in ("routing", "all"):
+        # 路由/持仓文本一致性校验
+        json_arg = args[idx + 2] if idx + 2 < len(args) and not args[idx + 2].startswith("--") else None
+        if json_arg:
+            rout = check_routing_consistency(json_arg)
+            results.append(rout)
+            if rout["status"] == "BLOCK":
+                all_pass = False
     
     if check_type in ("backtest", "all"):
         # 回测推断拦截 + 记忆污染自检

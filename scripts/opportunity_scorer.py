@@ -99,6 +99,24 @@ STRATEGY_POOLS = {
                 "cooldown_days": 9,
                 "route": "反击",
                 "note": "L2新兴层"
+            },
+            "510300": {
+                "name": "沪深300ETF",
+                "anchor": "MA40",
+                "k": 2.0,
+                "stop_mult": 4.0,
+                "cooldown_days": 45,
+                "route": "反击",
+                "note": "r33.62入池/守东回测确权"
+            },
+            "159915": {
+                "name": "创业板ETF",
+                "anchor": "MA40",
+                "k": 2.0,
+                "stop_mult": 4.0,
+                "cooldown_days": 10,
+                "route": "反击",
+                "note": "r33.62入池/守东回测确权"
             }
         },
         "weights": {
@@ -127,6 +145,12 @@ STRATEGY_POOLS = {
             },
             "MUFG": {
                 "name": "三菱日联金融",
+                "anchor": "C4=H20×0.98",
+                "cooldown_days": 30,
+                "route": "进攻"
+            },
+            "BOTZ": {
+                "name": "机器人AI ETF",
                 "anchor": "C4=H20×0.98",
                 "cooldown_days": 30,
                 "route": "进攻"

@@ -1,173 +1,127 @@
 #!/usr/bin/env python3
 """
-🔬 Optuna 三参数联合优化引擎 V2.0 — 反击策略 k × 止损ATR × 冷却期
+🔬 Optuna 三参数联合优化引擎 — TickFlow 版
 签发：守东（资产规划部首席审计官）
-生效日期：2026-07-04 | V2.0: 2026-08-11 TickFlow 迁移
+生效日期：2026-08-10
 
-V2.0 变更：数据源从 Tushare → TickFlow（batch() 一次拉取全池日线，不复权）
-搜索空间：k∈[0.5, 5.0] × stop∈[1.0, 4.0] × cooldown∈[5, 60]
+从 Tushare 版本迁移至 TickFlow SDK。核心逻辑不变，仅数据源替换。
 目标函数：综合得分 = 胜率×0.30 + 期望值×0.30 + PF×0.20 + HR×0.15 − 连续亏损×0.05
 """
 
-import os
-import sys
-import warnings
-import argparse
-import time as time_mod
-from datetime import datetime, timedelta
-
-import numpy as np
 import pandas as pd
+import numpy as np
 import optuna
-
+import sys
+import os
+from datetime import datetime, timedelta
+from tickflow import TickFlow
+import warnings
 warnings.filterwarnings('ignore')
 
 # ============================================================
-# TickFlow 配置
+# 标的配置
 # ============================================================
 
-TICKFLOW_API_KEY = os.environ.get("TICKFLOW_API_KEY", "")
-TICKFLOW_KLINES_LIMIT = 2500  # batch 单次上限 10000，2500 绰绰有余覆盖 MA250
-
-# ============================================================
-# 标的配置（反击策略池 8 标）
-# ============================================================
-
-COUNTERPUNCH_TICKERS = {
+TICKER_CONFIG = {
     '513910': {
-        'name': '港股通央企红利ETF', 'k': 2.7, 'stop_mult': 2.8, 'cooldown': 16,
+        'name': '港股通央企红利ETF', 'k': 2.7, 'stop_mult': 3.5, 'cooldown': 16,
         'anchor': 40, 'hold_days': 20,
-        'tf_symbol': '513910.SH',
+        'tickflow_code': '513910.SH',
     },
     '512100': {
         'name': '中证1000ETF', 'k': 2.0, 'stop_mult': 3.0, 'cooldown': 15,
         'anchor': 40, 'hold_days': 15,
-        'tf_symbol': '512100.SH',
+        'tickflow_code': '512100.SH',
     },
     '510500': {
-        'name': '中证500ETF', 'k': 2.5, 'stop_mult': 2.5, 'cooldown': 60,
+        'name': '中证500ETF', 'k': 4.9, 'stop_mult': 2.5, 'cooldown': 60,
         'anchor': 40, 'hold_days': 15,
-        'tf_symbol': '510500.SH',
+        'tickflow_code': '510500.SH',
     },
     '588000': {
         'name': '科创50ETF', 'k': 4.7, 'stop_mult': 3.0, 'cooldown': 15,
         'anchor': 40, 'hold_days': 15,
-        'tf_symbol': '588000.SH',
+        'tickflow_code': '588000.SH',
     },
     '510880': {
         'name': '红利ETF易方达', 'k': 2.0, 'stop_mult': 3.0, 'cooldown': 30,
         'anchor': 40, 'hold_days': 20,
-        'tf_symbol': '510880.SH',
-    },
-    'BBJP': {
-        'name': '日股ETF', 'k': 4.3, 'stop_mult': 3.5, 'cooldown': 14,
-        'anchor': 40, 'hold_days': 15,
-        'tf_symbol': 'BBJP.US',
-    },
-    'VNM': {
-        'name': '越南ETF', 'k': 5.0, 'stop_mult': 1.5, 'cooldown': 9,
-        'anchor': 40, 'hold_days': 10,
-        'tf_symbol': 'VNM.US',
+        'tickflow_code': '510880.SH',
     },
     '159530': {
         'name': '机器人ETF', 'k': 1.5, 'stop_mult': 4.0, 'cooldown': 30,
         'anchor': 40, 'hold_days': 15,
-        'tf_symbol': '159530.SZ',
+        'tickflow_code': '159530.SZ',
     },
     '510300': {
         'name': '沪深300ETF', 'k': 2.0, 'stop_mult': 4.0, 'cooldown': 45,
         'anchor': 40, 'hold_days': 15,
-        'tf_symbol': '510300.SH',
+        'tickflow_code': '510300.SH',
     },
     '159915': {
         'name': '创业板ETF', 'k': 2.0, 'stop_mult': 4.0, 'cooldown': 10,
         'anchor': 40, 'hold_days': 15,
-        'tf_symbol': '159915.SZ',
+        'tickflow_code': '159915.SZ',
     },
 }
 
-# 全池标的代码列表（用于 batch 拉取）
-ALL_CODES = sorted(set(cfg['tf_symbol'] for cfg in COUNTERPUNCH_TICKERS.values()))
+# 全量参数（从 params.json 读取备用）
+try:
+    import json
+    with open('scripts/params.json', 'r') as f:
+        PARAMS_JSON = json.load(f)
+    # 用 params.json 中的实际参数覆写默认值
+    for t in TICKER_CONFIG:
+        if t in PARAMS_JSON:
+            p = PARAMS_JSON[t]
+            if 'k' in p: TICKER_CONFIG[t]['k'] = p['k']
+            if 'stop_mult' in p: TICKER_CONFIG[t]['stop_mult'] = p['stop_mult']
+            if 'cooldown' in p: TICKER_CONFIG[t]['cooldown'] = p['cooldown']
+except:
+    pass
 
 # ============================================================
-# TickFlow 批量数据获取（V2.0 核心：一次 batch 拉取全池）
+# 数据获取（TickFlow 版）
 # ============================================================
 
-def fetch_all_tickflow():
-    """TickFlow batch() 一次拉取全池 10 标日线，返回 {fed_code: DataFrame}"""
-    if not TICKFLOW_API_KEY:
-        print("❌ TICKFLOW_API_KEY 未设置，无法获取数据")
-        return {}
-
+def fetch_data_tf(ticker, cfg, count=2000):
+    """从 TickFlow SDK 获取日线数据"""
+    tf = TickFlow()
     try:
-        from tickflow import TickFlow
-    except ImportError:
-        print("❌ tickflow 未安装，请先 pip install tickflow")
-        return {}
-
-    tf = TickFlow(TICKFLOW_API_KEY)
-
-    try:
-        batch_results = tf.klines.batch(
-            ALL_CODES, period="1d",
-            count=TICKFLOW_KLINES_LIMIT,
-            adjust="none",  # 不复权 = 真实成交价
-            as_dataframe=True,
-        )
-    except Exception as e:
-        print(f"❌ TickFlow batch() 失败: {e}")
-        return {}
-
-    # tf_symbol → fed_code 反向映射
-    symbol_to_fed = {cfg['tf_symbol']: fed for fed, cfg in COUNTERPUNCH_TICKERS.items()}
-
-    results = {}
-    for tf_symbol, df in batch_results.items():
-        fed = symbol_to_fed.get(tf_symbol)
-        if not fed:
-            continue
-        if df is None or len(df) == 0:
-            print(f"  ⚠️ {fed} ({tf_symbol}): 返回空数据")
-            continue
-
-        # 标准化列名
-        df = df.rename(columns={
-            'trade_date': 'Date', 'open': 'Open', 'high': 'High',
-            'low': 'Low', 'close': 'Close', 'volume': 'Volume',
+        result = tf.klines.get(cfg['tickflow_code'], period='1d', count=count)
+        if not result or len(result.get('close', [])) == 0:
+            return None
+        
+        df = pd.DataFrame({
+            'Date': pd.to_datetime(result['timestamp'], unit='ms'),
+            'Open': result['open'],
+            'High': result['high'],
+            'Low': result['low'],
+            'Close': result['close'],
+            'Volume': result['volume'],
         })
-        # TickFlow trade_date 已是 'YYYY-MM-DD' 字符串格式
-        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-        df = df.dropna(subset=['Date']).sort_values('Date').reset_index(drop=True)
-        results[fed] = df
+        df = df.sort_values('Date').reset_index(drop=True)
+        return df
+    except Exception as e:
+        print(f"  ⚠️ {ticker} TickFlow 获取失败: {e}")
+        return None
 
-    return results
-
-
-# ============================================================
-# 技术指标计算
-# ============================================================
 
 def calc_technical_indicators(df, anchor_period):
     """计算 MA、ATR14"""
     df = df.copy()
     df['MA'] = df['Close'].rolling(window=anchor_period).mean()
-
+    
     df['prev_close'] = df['Close'].shift(1)
     df['TR'] = df.apply(
-        lambda r: max(
-            r['High'] - r['Low'],
-            abs(r['High'] - r['prev_close']) if pd.notna(r['prev_close']) else 0,
-            abs(r['Low'] - r['prev_close']) if pd.notna(r['prev_close']) else 0,
-        ),
+        lambda r: max(r['High'] - r['Low'],
+                      abs(r['High'] - r['prev_close']) if pd.notna(r['prev_close']) else 0,
+                      abs(r['Low'] - r['prev_close']) if pd.notna(r['prev_close']) else 0),
         axis=1
     )
     df['ATR14'] = df['TR'].rolling(window=14).mean()
     return df
 
-
-# ============================================================
-# 信号识别与回测
-# ============================================================
 
 def identify_signals(df, anchor_period, k, hold_days, cooldown, stop_mult):
     """独立信号识别"""
@@ -175,29 +129,29 @@ def identify_signals(df, anchor_period, k, hold_days, cooldown, stop_mult):
     n = len(df)
     cooling_end_idx = -1
     in_zone = False
-
+    
     for i in range(n):
         if i < anchor_period + 14:
             continue
-
+        
         ma_val = df.loc[i, 'MA']
         atr_val = df.loc[i, 'ATR14']
         price = df.loc[i, 'Close']
-
+        
         if pd.isna(ma_val) or pd.isna(atr_val) or atr_val <= 0:
             continue
-
+        
         zone_lower = ma_val - k * atr_val
         zone_upper = ma_val
-
+        
         is_in_zone = (zone_lower <= price <= zone_upper)
-
+        
         if cooling_end_idx > 0 and i <= cooling_end_idx:
             is_in_zone = False
-
+        
         if is_in_zone and not in_zone:
             stop_price = zone_lower - stop_mult * atr_val
-
+            
             signal = {
                 'trigger_idx': i,
                 'trigger_date': df.loc[i, 'Date'],
@@ -211,7 +165,7 @@ def identify_signals(df, anchor_period, k, hold_days, cooldown, stop_mult):
             in_zone = True
         elif not is_in_zone:
             in_zone = False
-
+    
     return signals
 
 
@@ -222,33 +176,33 @@ def calc_signal_results(signals, df):
         p_entry = sig['entry_price']
         p_stop = sig['stop_price']
         h = sig['hold_days']
-
+        
         sig['result'] = None
         sig['exit_price'] = None
         sig['return_pct'] = None
-
+        
         for d in range(1, h + 1):
             idx_current = idx_entry + d
             if idx_current >= len(df):
                 sig['result'] = 'DATA_INSUFFICIENT'
-                sig['exit_price'] = df.loc[len(df) - 1, 'Close']
+                sig['exit_price'] = df.loc[len(df)-1, 'Close']
                 break
-
+            
             p_low = df.loc[idx_current, 'Low']
             p_close = df.loc[idx_current, 'Close']
-
+            
             if p_low <= p_stop:
                 sig['result'] = 'STOP'
                 sig['exit_price'] = p_stop
                 break
-
+            
             if d == h:
                 sig['result'] = 'WIN' if p_close > p_entry else 'LOSS'
                 sig['exit_price'] = p_close
-
+        
         if sig['exit_price'] is not None:
             sig['return_pct'] = (sig['exit_price'] - p_entry) / p_entry * 100
-
+    
     return signals
 
 
@@ -256,67 +210,67 @@ def calc_signal_results(signals, df):
 # Optuna 目标函数
 # ============================================================
 
-def create_objective(ticker, cfg, df_raw, n_trials_hint=200):
-    """创建 Optuna 目标函数。数据已从 TickFlow 拉取好，传入 df_raw"""
-
-    df_raw = calc_technical_indicators(df_raw, cfg['anchor'])
-    df_raw = df_raw.dropna(subset=['MA', 'ATR14']).reset_index(drop=True)
-
-    if len(df_raw) < 200:
-        print(f"  ❌ {ticker} 有效数据不足 {len(df_raw)} 行，无法优化")
-        return None
-
+def create_objective(ticker, cfg, n_trials_hint=200):
+    """创建 Optuna 目标函数"""
     print(f"\n{'='*60}")
     print(f"  🔬 Optuna 优化: {ticker} {cfg['name']}")
     print(f"     搜索空间: k∈[0.5, 5.0] | stop∈[1.0, 4.0] | cool∈[5, 60]")
-    print(f"     数据: {df_raw.iloc[0]['Date'].strftime('%Y-%m-%d')} ~ "
-          f"{df_raw.iloc[-1]['Date'].strftime('%Y-%m-%d')} "
-          f"({len(df_raw)} 交易日)")
-    print(f"     算法: TPE sampler | 目标: {n_trials_hint} trials")
+    print(f"     数据源: TickFlow | 算法: TPE sampler | 目标: {n_trials_hint} trials")
     print(f"{'='*60}\n")
-
-    cache = {}  # k × stop × cooldown → 得分
-
+    
+    df_raw = fetch_data_tf(ticker, cfg, count=2000)
+    if df_raw is None or len(df_raw) < 200:
+        print(f"  ❌ 数据不足，无法优化")
+        return None
+    
+    df_raw = calc_technical_indicators(df_raw, cfg['anchor'])
+    df_raw = df_raw.dropna(subset=['MA', 'ATR14']).reset_index(drop=True)
+    
+    print(f"  📊 数据: {df_raw.iloc[0]['Date'].strftime('%Y-%m-%d')} ~ "
+          f"{df_raw.iloc[-1]['Date'].strftime('%Y-%m-%d')} "
+          f"({len(df_raw)} 交易日)\n")
+    
+    cache = {}
+    
     def objective(trial):
         k = trial.suggest_float('k', 0.5, 5.0)
         stop_mult = trial.suggest_float('stop_mult', 1.0, 4.0)
         cooldown = trial.suggest_int('cooldown', 5, 60)
-
+        
         cache_key = (round(k, 2), round(stop_mult, 2), cooldown)
         if cache_key in cache:
             return cache[cache_key]
-
+        
         signals = identify_signals(
             df_raw, cfg['anchor'], k, cfg['hold_days'], cooldown, stop_mult
         )
         signals = calc_signal_results(signals, df_raw)
-
+        
         valid = [s for s in signals if s['result'] in ('WIN', 'LOSS', 'STOP')]
         n = len(valid)
-
+        
         if n == 0:
             cache[cache_key] = -999.0
             return -999.0
-
+        
         wins = [s for s in valid if s['result'] == 'WIN']
         losses = [s for s in valid if s['result'] in ('LOSS', 'STOP')]
-
+        
         n_win = len(wins)
         n_loss = len(losses)
         win_rate = n_win / n if n > 0 else 0
-
+        
         avg_win = np.mean([s['return_pct'] for s in wins]) if n_win > 0 else 0.0
         avg_loss = abs(np.mean([s['return_pct'] for s in losses])) if n_loss > 0 else 0.0
-
+        
         expectancy = (win_rate * avg_win) - ((1 - win_rate) * avg_loss)
         expectancy_clipped = np.clip(expectancy, -5.0, 10.0)
-
+        
         total_win = sum([s['return_pct'] for s in wins])
         total_loss = abs(sum([s['return_pct'] for s in losses]))
         pf = total_win / total_loss if total_loss > 0 else (5.0 if total_win > 0 else 0.0)
         pf_clipped = min(pf, 5.0)
-
-        # 命中率 HR
+        
         n_rows = len(df_raw)
         zone_days = 0
         for i in range(cfg['anchor'] + 14, n_rows):
@@ -330,8 +284,7 @@ def create_objective(ticker, cfg, df_raw, n_trials_hint=200):
                 zone_days += 1
         total_days = n_rows - (cfg['anchor'] + 14)
         hr = zone_days / total_days if total_days > 0 else 0.0
-
-        # 最大连续亏损
+        
         max_consec = 0
         cur = 0
         for s in valid:
@@ -340,7 +293,7 @@ def create_objective(ticker, cfg, df_raw, n_trials_hint=200):
                 max_consec = max(max_consec, cur)
             else:
                 cur = 0
-
+        
         score = (
             win_rate * 0.30 +
             expectancy_clipped * 0.30 +
@@ -348,7 +301,7 @@ def create_objective(ticker, cfg, df_raw, n_trials_hint=200):
             hr * 0.15 -
             max_consec * 0.05
         )
-
+        
         trial.set_user_attr('n_signals', n)
         trial.set_user_attr('win_rate', win_rate)
         trial.set_user_attr('expectancy', expectancy)
@@ -357,11 +310,11 @@ def create_objective(ticker, cfg, df_raw, n_trials_hint=200):
         trial.set_user_attr('max_consec', max_consec)
         trial.set_user_attr('avg_win', avg_win)
         trial.set_user_attr('avg_loss', avg_loss)
-
+        
         cache[cache_key] = score
         return score
-
-    return objective
+    
+    return objective, df_raw
 
 
 # ============================================================
@@ -371,7 +324,7 @@ def create_objective(ticker, cfg, df_raw, n_trials_hint=200):
 def print_results(study, ticker, cfg):
     """打印优化结果"""
     best = study.best_trial
-
+    
     print(f"\n{'='*60}")
     print(f"  ✅ 优化完成: {ticker} {cfg['name']}")
     print(f"{'='*60}")
@@ -392,58 +345,60 @@ def print_results(study, ticker, cfg):
     print(f"    最大连亏:   {best.user_attrs['max_consec']} 笔")
     print(f"")
     print(f"  搜索统计:")
-    completed = len([t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE])
-    pruned = len([t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED])
     print(f"    总 trials:  {len(study.trials)}")
-    print(f"    完成:       {completed}")
-    print(f"    剪枝:       {pruned}")
-
+    print(f"    完成:       {len([t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE])}")
+    
     # 对比当前参数
     current_k = cfg.get('k', 2.0)
     current_stop = cfg.get('stop_mult', 2.0)
     current_cool = cfg.get('cooldown', 30)
-
+    
     print(f"\n  📊 当前参数 vs 最优参数:")
     print(f"    {'参数':<15} {'当前':>8} {'最优':>8} {'变化':>8}")
     print(f"    {'-'*15} {'-'*8} {'-'*8} {'-'*8}")
     print(f"    {'k':<15} {current_k:>8.2f} {best.params['k']:>8.2f} {best.params['k']-current_k:>+8.2f}")
     print(f"    {'stop_mult':<15} {current_stop:>8.2f} {best.params['stop_mult']:>8.2f} {best.params['stop_mult']-current_stop:>+8.2f}")
     print(f"    {'cooldown':<15} {current_cool:>8} {best.params['cooldown']:>8} {best.params['cooldown']-current_cool:>+8}")
-
-    # 建议
+    
     k_diff = abs(best.params['k'] - current_k)
     stop_diff = abs(best.params['stop_mult'] - current_stop)
     cool_diff = abs(best.params['cooldown'] - current_cool)
-
+    
     if k_diff < 0.3 and stop_diff < 0.3 and cool_diff < 5:
         print(f"\n  🟢 裁决: 参数稳定，维持当前不变")
     elif best.value > 0 and k_diff > 1.0:
         print(f"\n  🔴 建议: k 参数差距显著，建议修正 → k={best.params['k']:.1f}")
     else:
-        print(f"\n  🟡 裁决: 观察，与全量遍历对撞后再决定")
-
+        print(f"\n  🟡 裁决: 观察，与手动遍历对撞后再决定")
+    
     return best
 
 
-def run_single(ticker, df_raw, n_trials=200, seed=42):
+def run_optuna_optimization(ticker, n_trials=200, seed=42):
     """运行单标 Optuna 优化"""
-    cfg = COUNTERPUNCH_TICKERS[ticker].copy()
-
-    obj_fn = create_objective(ticker, cfg, df_raw, n_trials)
-    if obj_fn is None:
+    if ticker not in TICKER_CONFIG:
+        print(f"❌ 标的不在配置表中: {ticker}")
         return None
-
+    
+    cfg = TICKER_CONFIG[ticker].copy()
+    
+    obj_and_df = create_objective(ticker, cfg, n_trials)
+    if obj_and_df is None:
+        return None
+    
+    objective, df_raw = obj_and_df
+    
     sampler = optuna.samplers.TPESampler(seed=seed)
     study = optuna.create_study(
         direction='maximize',
         sampler=sampler,
-        study_name=f'{ticker}_tf_v2',
+        study_name=f'{ticker}_optuna_tf',
     )
-
-    optuna.logging.set_verbosity(optuna.logging.WARNING)  # 减少噪音
-    study.optimize(obj_fn, n_trials=n_trials, show_progress_bar=True)
-
+    
+    study.optimize(objective, n_trials=n_trials, show_progress_bar=True)
+    
     best = print_results(study, ticker, cfg)
+    
     return study, best
 
 
@@ -452,57 +407,27 @@ def run_single(ticker, df_raw, n_trials=200, seed=42):
 # ============================================================
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Optuna 三参数联合优化 V2.0 (TickFlow)')
-    parser.add_argument('ticker', nargs='?', default='',
-                        help='标的代码 (留空跑全部)')
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Optuna 三参数联合优化 (TickFlow版)')
+    parser.add_argument('ticker', nargs='?', default='513910',
+                        help='标的代码 (默认: 513910)')
     parser.add_argument('--trials', type=int, default=200,
                         help='Optuna trials 数 (默认: 200)')
     parser.add_argument('--seed', type=int, default=42,
                         help='随机种子 (默认: 42)')
-
+    parser.add_argument('--all', action='store_true',
+                        help='优化所有 A 股反击标的')
+    
     args = parser.parse_args()
-
-    # Step 1: TickFlow 批量拉取全池日线
-    print("=" * 60)
-    print("  📡  TickFlow batch() 拉取全池日线...")
-    print("=" * 60)
-    t0 = time_mod.time()
-    all_data = fetch_all_tickflow()
-    elapsed = time_mod.time() - t0
-
-    if not all_data:
-        print("❌ 无法获取任何数据，退出")
-        sys.exit(1)
-
-    fetched = list(all_data.keys())
-    missing = [t for t in COUNTERPUNCH_TICKERS if t not in fetched]
-    print(f"  ✅ 拉取完成: {len(fetched)}/{len(COUNTERPUNCH_TICKERS)} 标 | "
-          f"耗时 {elapsed:.1f}s")
-    if missing:
-        print(f"  ⚠️ 缺失: {missing}")
-
-    print(f"  数据范围:")
-    for fed, df in all_data.items():
-        d0 = df['Date'].dropna().iloc[0] if len(df['Date'].dropna()) > 0 else 'N/A'
-        d1 = df['Date'].dropna().iloc[-1] if len(df['Date'].dropna()) > 0 else 'N/A'
-        if hasattr(d0, 'strftime'):
-            d0 = d0.strftime('%Y-%m-%d')
-            d1 = d1.strftime('%Y-%m-%d')
-        print(f"    {fed:8s}  {d0} ~ {d1}  ({len(df)} 行)")
-
-    # Step 2: 逐标 Optuna 优化
-    target_tickers = [args.ticker] if args.ticker else sorted(all_data.keys())
-
-    for ticker in target_tickers:
-        if ticker not in all_data:
-            print(f"\n❌ {ticker}: 无数据，跳过")
-            continue
-
-        print(f"\n{'#'*60}")
-        print(f"#  {ticker} {COUNTERPUNCH_TICKERS[ticker]['name']}")
-        print(f"{'#'*60}")
-        run_single(ticker, all_data[ticker], n_trials=args.trials, seed=args.seed)
-
-    print(f"\n{'='*60}")
-    print(f"  🏁 全池 Optuna 优化完成")
-    print(f"{'='*60}")
+    
+    if args.all:
+        results = {}
+        for ticker in TICKER_CONFIG:
+            print(f"\n{'#'*60}")
+            print(f"#  {ticker}")
+            print(f"{'#'*60}")
+            result = run_optuna_optimization(ticker, n_trials=args.trials, seed=args.seed)
+            results[ticker] = result
+    else:
+        run_optuna_optimization(args.ticker, n_trials=args.trials, seed=args.seed)

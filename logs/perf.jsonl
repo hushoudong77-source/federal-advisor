@@ -1,0 +1,2 @@
+{"log_id": "20260812_074225_scan", "command": "scan", "scope": "all", "timestamp": "2026-08-12 07:42:25", "elapsed_ms": 45491.67323112488, "gate_passed": null}
+{"log_id": "20260812_074740_premarket", "command": "premarket", "scope": {"scope": "macro"}, "timestamp": "2026-08-12 07:47:40", "elapsed_ms": true, "gate_passed": null}

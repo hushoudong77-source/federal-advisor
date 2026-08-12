@@ -117,7 +117,7 @@ def compute_counterpunch(sym, info, ind, params):
     return {
         "strategy": "counterpunch",
         "anchor": {"key": anchor_key, "value": anchor_val, "direction": anchor_dir},
-        "params": {"k": k, "stop_atr": params["stop_atr"], "cooldown": params["cooldown"]},
+        "params": {"k": k, "stop_atr": params["stop_atr"]},
         "buy_zone": {"upper": buy_zone_upper, "lower": buy_zone_lower},
         "stop_loss": stop_loss,
         "hard_stop": params["hard_stop"],
@@ -126,7 +126,7 @@ def compute_counterpunch(sym, info, ind, params):
         "triggered": all_met,
         "r2_triggered": conditions["R2_tiered_entry"]["met"],
         "entry_type": "正金字塔两层(30%+70%)" if conditions["R2_tiered_entry"]["met"] else "单层建仓(30%)",
-        "cooldown_days": params["cooldown"],
+        "cooldown_days": 0,  # 冷却期已废除 r33.68
         "force_exit_days": params["force_exit"]
     }
 
@@ -180,7 +180,7 @@ def compute_offense_us(sym, info, ind, params):
         "gap_pct": gap_pct,
         "conditions": conditions,
         "triggered": all_met,
-        "cooldown_days": params["cooldown"],
+        "cooldown_disabled": True,
         "position_pct": params["position"]
     }
 
@@ -234,7 +234,7 @@ def compute_offense_cn_ma5(sym, info, ind, params):
         "gap_to_ma5": gap_to_ma5,
         "conditions": conditions,
         "triggered": triggered,
-        "cooldown_days": params["cooldown"],
+        "cooldown_disabled": True,
         "position_pct": params["position"]
     }
 
@@ -310,7 +310,7 @@ def compute_offense_cn_ma60(sym, info, ind, params):
         "gap_pct": gap_pct,
         "conditions": conditions,
         "triggered": triggered,
-        "cooldown_days": params["cooldown"],
+        "cooldown_disabled": True,
         "position_pct": params["position"]
     }
 
@@ -343,26 +343,36 @@ def compute_fixed_layer(sym, info, ind, params):
         "stop_loss": stop_loss,
         "gap_pct": gap_pct,
         "triggered": in_zone,
-        "cooldown_days": params["cooldown"],
+        "cooldown_disabled": True,
         "position_pct": params["position"]
     }
 
 
+def _get_macd_bar(ind):
+    """兼容大小写字段：MACD 结构可能是 {bar, bar_prev} 或 {BAR, cross}"""
+    macd = ind.get("MACD", {})
+    if not isinstance(macd, dict):
+        return None, None
+    bar = macd.get("bar", macd.get("BAR"))
+    bar_prev = macd.get("bar_prev", macd.get("BAR_PREV", 0))
+    return bar, bar_prev
+
+
 def compute_momentum(sym, info, ind, params):
     """
-    独立动量跟随策略 (FLIN/SMIN/EWY)
+    独立动量跟随策略 (FLIN/SMIN/EWY/VNM)
     入场: MACD金叉(BAR>0且前日BAR≤0) + 现价<MA20
     """
     ma20 = get_ind(ind, "MA20")
-    macd_bar = get_ind(ind, "MACD", "BAR")
-    macd_cross = get_ind(ind, "MACD", "cross")
+    macd_bar, macd_bar_prev = _get_macd_bar(ind)
     atr = get_ind(ind, "ATR14")
     price = info.get("price_realtime") or info.get("close_tushare")
     
     if ma20 is None or macd_bar is None or price is None:
         return {"error": "指标缺失"}
     
-    macd_golden = macd_cross == "金叉🟢"
+    # 金叉判定：BAR>0 且 前日BAR≤0（确定性计算，不依赖 cross 字段）
+    macd_golden = macd_bar > 0 and (macd_bar_prev or 0) <= 0
     below_ma20 = price < ma20
     
     stop_loss = round(price - params["stop_atr"] * atr, 4) if atr else None
@@ -371,8 +381,8 @@ def compute_momentum(sym, info, ind, params):
     conditions = {}
     conditions["MACD_golden_cross"] = {
         "met": macd_golden,
-        "value": f"MACD BAR={macd_bar}, cross={macd_cross}",
-        "detail": {"macd_bar": macd_bar, "cross": macd_cross}
+        "value": f"MACD BAR={macd_bar}, BAR_prev={macd_bar_prev}",
+        "detail": {"macd_bar": macd_bar, "bar_prev": macd_bar_prev}
     }
     conditions["price_below_MA20"] = {
         "met": below_ma20,
@@ -388,7 +398,7 @@ def compute_momentum(sym, info, ind, params):
         "conditions": conditions,
         "triggered": triggered,
         "entry_phase": "待入场" if triggered else "等待MACD金叉+价<MA20",
-        "cooldown_days": params["cooldown"],
+        "cooldown_disabled": True,
         "position_pct": params["position"]
     }
 
@@ -518,6 +528,18 @@ def compute_all_signals(indicators_json):
 
 def _dispatch_route(sym, info, ind, route):
     """根据路由分发到对应策略计算函数"""
+    # ── 路由别名标准化（route_engine 输出 → fire_signal 内部名）──
+    ROUTE_ALIAS = {
+        "us_offensive":         "offense",
+        "offensive_candidate":  "offense",
+        "counterpunch":         "counter",
+        "fixed_layer":          "fixed",
+        "gold_shield":          "goldshield",
+        "momentum":             "momentum",
+        "offense_cn":           "offense_cn",
+    }
+    route = ROUTE_ALIAS.get(route, route)
+    
     if route == "counter":
         params = CONFIG["counterpunch"].get(sym)
         if params:
@@ -536,9 +558,9 @@ def _dispatch_route(sym, info, ind, route):
             params_ma5 = CONFIG["offense_cn_ma5"].get(sym)
             if params_ma5:
                 result_cn["tracks"]["ma5"] = compute_offense_cn_ma5(sym, info, ind, params_ma5)
-            params_ma60 = CONFIG["offense_cn_ma60"].get(sym)
-            if params_ma60:
-                result_cn["tracks"]["ma60"] = compute_offense_cn_ma60(sym, info, ind, params_ma60)
+            params_ma50 = CONFIG.get("offense_cn_ma50", {}).get(sym)
+            if params_ma50:
+                result_cn["tracks"]["ma50"] = compute_offense_cn_ma60(sym, info, ind, params_ma50)
             result_cn["triggered"] = any(
                 t.get("triggered") for t in result_cn["tracks"].values()
             )
@@ -566,13 +588,22 @@ def _dispatch_route(sym, info, ind, route):
         params_ma5 = CONFIG["offense_cn_ma5"].get(sym)
         if params_ma5:
             result_cn["tracks"]["ma5"] = compute_offense_cn_ma5(sym, info, ind, params_ma5)
-        params_ma60 = CONFIG["offense_cn_ma60"].get(sym)
-        if params_ma60:
-            result_cn["tracks"]["ma60"] = compute_offense_cn_ma60(sym, info, ind, params_ma60)
+        params_ma50 = CONFIG.get("offense_cn_ma50", {}).get(sym)
+        if params_ma50:
+            result_cn["tracks"]["ma50"] = compute_offense_cn_ma60(sym, info, ind, params_ma50)
         result_cn["triggered"] = any(
             t.get("triggered") for t in result_cn["tracks"].values()
         )
         return result_cn
+    
+    elif route in ("independent", "idle", "unclassified"):
+        # 不参与开火的标的（CANE独立标的/闲置/待分类）→ 返回占位结果，非错误
+        return {
+            "strategy": route,
+            "triggered": False,
+            "note": "不参与六类开火信号判定",
+            "cooldown_disabled": True,
+        }
     
     return {"error": f"未知路由: {route}"}
 

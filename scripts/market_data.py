@@ -206,12 +206,73 @@ def _calc_adx(high, low, close, period=14):
     except:
         return None
 
+def _calc_kdj(high, low, close, n=9, m1=3, m2=3):
+    """KDJ(9,3,3) — 返回 K, D, J, 金叉/死叉, 超买超卖"""
+    if len(close) < n + 2: return None
+    try:
+        low_n = low.rolling(window=n).min()
+        high_n = high.rolling(window=n).max()
+        rsv = (close - low_n) / (high_n - low_n + 1e-9) * 100
+        k = rsv.ewm(com=m1-1, adjust=False).mean()
+        d = k.ewm(com=m2-1, adjust=False).mean()
+        j = 3 * k - 2 * d
+
+        # 金叉/死叉
+        cross = 0
+        if k.iloc[-1] > d.iloc[-1] and k.iloc[-2] <= d.iloc[-2]:
+            cross = 1  # 金叉
+        elif k.iloc[-1] < d.iloc[-1] and k.iloc[-2] >= d.iloc[-2]:
+            cross = -1  # 死叉
+
+        return {
+            "k": round(float(k.iloc[-1]), 2),
+            "d": round(float(d.iloc[-1]), 2),
+            "j": round(float(j.iloc[-1]), 2),
+            "cross": cross,
+            "oversold": float(j.iloc[-1]) < 20,
+            "overbought": float(j.iloc[-1]) > 80,
+        }
+    except:
+        return None
+
+def _calc_obv(close, volume):
+    """OBV — 返回最新OBV, OBV_MA20, 是否在MA20上方, 20日新高/新低, 背离"""
+    if len(close) < 25: return None
+    try:
+        price_dir = np.sign(close.diff().fillna(0))
+        obv = (volume * price_dir).cumsum()
+        obv_ma20 = obv.rolling(20).mean()
+        obv_20high = obv.rolling(20).max()
+        obv_20low = obv.rolling(20).min()
+        price_20high = close.rolling(20).max()
+        price_20low = close.rolling(20).min()
+
+        return {
+            "obv": round(float(obv.iloc[-1]), 0),
+            "obv_ma20": round(float(obv_ma20.iloc[-1]), 0),
+            "obv_above_ma20": bool(obv.iloc[-1] > obv_ma20.iloc[-1]),
+            "obv_new_high": bool(obv.iloc[-1] >= obv_20high.iloc[-1]),
+            "obv_new_low": bool(obv.iloc[-1] <= obv_20low.iloc[-1]),
+            "bearish_div": bool(close.iloc[-1] >= price_20high.iloc[-1] and obv.iloc[-1] < obv_20high.iloc[-1]),
+            "bullish_div": bool(close.iloc[-1] <= price_20low.iloc[-1] and obv.iloc[-1] > obv_20low.iloc[-1]),
+        }
+    except:
+        return None
+
 def fetch_tickflow_all():
     """TickFlow批量拉取全池25标日线 + 自算全部技术指标。
     batch() 一次调用完成，~0.6秒。
     V5.1: adjust="backward"（后复权），消除分红除权对均线/H20的失真。
     美股T+1滞后（最新=前一交易日收盘），A股当日15:00后入库。
     """
+    # 依赖自愈：会话环境不持久，tickflow 可能丢失 → 自动补装
+    import sys as _sys, os as _os
+    _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+    try:
+        from self_heal import ensure_tickflow
+        ensure_tickflow()
+    except Exception:
+        pass
     from tickflow import TickFlow
     tf = TickFlow(TICKFLOW_API_KEY)
 
@@ -288,6 +349,13 @@ def fetch_tickflow_all():
             if ma60_20d_ago and ma60_20d_ago > 0:
                 ma60_dir = "up" if ma60 > ma60_20d_ago else "down"
 
+        # MA40 方向（20日变化，金盾V1.6用）
+        ma40_dir = None
+        if ma40 and len(close) >= 20:
+            ma40_20d_ago = _calc_ma(close.iloc[:-20], 40)
+            if ma40_20d_ago and ma40_20d_ago > 0:
+                ma40_dir = "up" if ma40 > ma40_20d_ago else "down"
+
         # ATR / RSI / MACD / H20
         atr14 = _calc_atr(high, low, close)
         atr_pct = round(atr14 / close.iloc[-1] * 100, 2) if atr14 and close.iloc[-1] > 0 else None
@@ -300,6 +368,12 @@ def fetch_tickflow_all():
         # ADX14
         adx_val = _calc_adx(high, low, close)
 
+        # KDJ (9,3,3)
+        kdj = _calc_kdj(high, low, close)
+
+        # OBV
+        obv = _calc_obv(close, volume)
+
         # 20日回撤（轨道二用）
         drawdown_20d = round((close.iloc[-1] / close.iloc[-20] - 1) * 100, 2) if len(close) >= 20 else None
 
@@ -307,6 +381,7 @@ def fetch_tickflow_all():
             "latest_date": latest_date,
             "rows": len(close),
             "close": round(float(close.iloc[-1]), 4),
+            "open": round(float(df["open"].iloc[-1]), 4),  # 最新开盘价
             # MA
             "ma5": ma5, "ma20": ma20, "ma40": ma40,
             "ma60": ma60, "ma120": ma120, "ma150": ma150, "ma250": ma250,
@@ -316,7 +391,7 @@ def fetch_tickflow_all():
             "dev_ma20": dev_ma20, "dev_ma40": dev_ma40,
             "dev_ma60": dev_ma60, "dev_ma150": dev_ma150,
             # 方向
-            "ma60_dir": ma60_dir,
+            "ma60_dir": ma60_dir, "ma40_dir": ma40_dir,
             # 波动率
             "atr14": atr14, "atr_pct": atr_pct,
             # 动量
@@ -328,6 +403,10 @@ def fetch_tickflow_all():
             "vol_ma20": vol_ma20, "vol_ratio": vol_ratio,
             # ADX
             "adx14": adx_val,
+            # KDJ
+            "kdj": kdj,
+            # OBV
+            "obv": obv,
             # 轨道二
             "drawdown_20d": drawdown_20d,
             # 数据源
@@ -369,8 +448,13 @@ def fetch_all():
 
         ind = result["indicators"].get(ticker, {})
         if "error" not in ind:
+            # TickFlow 日线 OHLCV → 透传（close/open/high/low 以 TickFlow 日线为准）
+            for key in ("close", "open", "high", "low"):
+                if key in ind:
+                    entry[key] = ind[key]
+            # 其他技术指标全部透传
             entry.update({k: v for k, v in ind.items()
-                         if k not in ("close", "_log", "_call_count")})
+                         if k not in ("close", "open", "high", "low", "_log", "_call_count")})
 
         entry["type"] = info["type"]
         merged[ticker] = entry

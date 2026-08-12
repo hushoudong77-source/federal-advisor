@@ -22,38 +22,101 @@ import re
 
 
 # ============================================================
-# 第一层：US10Y — Tushare us_tycr
+# 宏观锚点 TTL 缓存（V1.0 — 2026-08-13 焊入，解决 /开火 反应慢）
+# 根因：US10Y/VIX/DXY/CNN情绪这些宏观锚点一天内变化极小，
+#       但每次 /开火 都串行拉 AnySearch（每次2-5秒），导致25秒延迟。
+# 方案：文件缓存 + TTL，命中缓存时跳过网络请求。
+# ============================================================
+CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tmp", "macro_cache")
+CACHE_TTL_SECONDS = 1800  # 30分钟TTL，宏观锚点30分钟内复用
+
+def _cache_path(key):
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    return os.path.join(CACHE_DIR, f"{key}.json")
+
+def _cache_read(key):
+    """读缓存，命中且未过期返回 (True, data)，否则 (False, None)"""
+    try:
+        p = _cache_path(key)
+        if not os.path.exists(p):
+            return False, None
+        with open(p, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        # TTL 检查
+        ts = data.get("_cached_ts", 0)
+        if time.time() - ts > CACHE_TTL_SECONDS:
+            return False, None
+        return True, data
+    except Exception:
+        return False, None
+
+def _cache_write(key, data):
+    """写缓存（附带时间戳）"""
+    try:
+        data = dict(data)
+        data["_cached_ts"] = time.time()
+        data["_cached"] = True
+        with open(_cache_path(key), "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False)
+    except Exception:
+        pass
+
+import time
+
+# ============================================================
+# AnySearch CLI 调用辅助（统一入口，避免重复代码）
+# ============================================================
+def _anysearch_extract(url):
+    """用 AnySearch extract 抓取页面文本。失败返回空串。"""
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        anysearch_cli = os.path.join(script_dir, "..", "skills", "anysearch", "scripts", "anysearch_cli.py")
+        import subprocess
+        result = subprocess.run(
+            ["python3", anysearch_cli, "extract", url],
+            capture_output=True, text=True, timeout=20
+        )
+        return result.stdout if result.returncode == 0 else ""
+    except Exception:
+        return ""
+
+
+# ============================================================
+# 第一层：US10Y — CNBC extract（Tushare 已退役，2026-08-13 切换）
 # ============================================================
 def fetch_us10y():
-    """拉取最新US10Y收益率"""
-    try:
-        import tushare as ts
-        pro = ts.pro_api()
-        end = date.today().strftime("%Y%m%d")
-        start = (date.today() - timedelta(days=10)).strftime("%Y%m%d")
-        df = pro.us_tycr(start_date=start, end_date=end)
-        if df is None or len(df) == 0:
-            return {"value": None, "source": "tushare_empty", "error": "无数据"}
+    """拉取最新US10Y收益率（带30分钟TTL缓存）。
+    数据源：CNBC US10Y 页面 extract，抓 "Yield | ... 4.678%" 行。
+    """
+    hit, cached = _cache_read("us10y")
+    if hit:
+        return cached
 
-        # us_tycr返回收益率曲线面板：列=y10=US10Y
-        df_sorted = df.sort_values("date", ascending=False)
-        latest = df_sorted.iloc[0]
-        value = float(latest["y10"])
+    text = _anysearch_extract("https://www.cnbc.com/quotes/US10Y")
+    value = None
+    prev_value = None
+    if text:
+        # 抓 "Yield | HH:MM" 后的收益率值（CNBC 页面格式：Yield | 12:56 PM EDT\n\n4.678%-0.006）
+        yield_match = re.search(r'Yield\s*\|\s*[^\n]*\n+\s*(\d\.\d{3})\s*%', text)
+        if yield_match:
+            value = float(yield_match.group(1))
+        # Prev Close
+        prev_match = re.search(r'Yield\s*Prev\s*Close\s*(\d\.\d{3})\s*%', text)
+        if prev_match:
+            prev_value = float(prev_match.group(1))
 
-        prev_value = None
-        if len(df_sorted) >= 2:
-            prev_value = float(df_sorted.iloc[1]["y10"])
-
-        return {
+    if value is not None:
+        r = {
             "value": round(value, 4),
-            "date": str(latest["date"]),
+            "date": date.today().strftime("%Y-%m-%d"),
             "prev_value": round(prev_value, 4) if prev_value else None,
             "change_bp": round((value - prev_value) * 100, 1) if prev_value else None,
-            "source": "tushare_us_tycr"
+            "source": "cnbc_extract"
         }
+        _cache_write("us10y", r)
+        return r
 
-    except Exception as e:
-        return {"value": None, "source": "tushare_error", "error": str(e)[:100]}
+    return {"value": None, "source": "unavailable", "error": "US10Y不可用"}
 
 
 def classify_us10y(us10y_value):
@@ -70,41 +133,113 @@ def classify_us10y(us10y_value):
 
 
 # ============================================================
-# 第二层：VIX — web_search（P4兜底）
+# 第二层：VIX — CNBC extract（2026-08-13 切换）
 # ============================================================
 def fetch_vix():
-    """拉取VIX实时值"""
-    try:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        anysearch_cli = os.path.join(script_dir, "..", "skills", "anysearch", "scripts", "anysearch_cli.py")
-        import subprocess
-        result = subprocess.run(
-            ["python3", anysearch_cli, "search", "CBOE VIX index real-time", "--max_results", "3", "--freshness", "day"],
-            capture_output=True, text=True, timeout=15
-        )
-        if result.returncode == 0 and result.stdout:
-            matches = re.findall(r'VIX[:\s]*(\d{1,2}\.\d{1,2})', result.stdout, re.IGNORECASE)
-            if matches:
-                value = float(matches[0])
-                if 5 < value < 100:
-                    return {"value": value, "source": "anysearch"}
-    except Exception:
-        pass
+    """拉取VIX实时值（带30分钟TTL缓存）。
+    数据源：CNBC .VIX 页面 extract，抓 "Last | ... 14.67" 行。
+    """
+    hit, cached = _cache_read("vix")
+    if hit:
+        return cached
+
+    text = _anysearch_extract("https://www.cnbc.com/quotes/.VIX")
+    value = None
+    prev_value = None
+    if text:
+        # CNBC 格式：Last | 12:56 PM EDT\n\n14.67-0.61(-3.99%)
+        last_match = re.search(r'Last\s*\|\s*[^\n]*\n+\s*(\d{1,2}\.\d{1,2})', text)
+        if last_match:
+            value = float(last_match.group(1))
+        prev_match = re.search(r'Prev\s*Close\s*(\d{1,2}\.\d{2})', text)
+        if prev_match:
+            prev_value = float(prev_match.group(1))
+
+    if value is not None and 5 < value < 100:
+        r = {
+            "value": round(value, 2),
+            "prev_value": round(prev_value, 2) if prev_value else None,
+            "source": "cnbc_extract"
+        }
+        _cache_write("vix", r)
+        return r
 
     return {"value": None, "source": "unavailable", "error": "VIX不可用"}
 
 
+# ============================================================
+# 第二层.五：DXY — CNBC extract（2026-08-13 切换）
+# ============================================================
+def fetch_dxy():
+    """拉取DXY美元指数（带30分钟TTL缓存）。
+    数据源：CNBC .DXY 页面 extract，抓 "Last | ... 99.949" 行。
+    """
+    hit, cached = _cache_read("dxy")
+    if hit:
+        return cached
+
+    text = _anysearch_extract("https://www.cnbc.com/quotes/.DXY")
+    value = None
+    prev_value = None
+    if text:
+        # CNBC 格式：Last | 12:57 PM EDT\n\n99.949+0.121(+0.12%)
+        last_match = re.search(r'Last\s*\|\s*[^\n]*\n+\s*(\d{2,3}\.\d{2,3})', text)
+        if last_match:
+            value = float(last_match.group(1))
+        prev_match = re.search(r'Prev\s*Close\s*(\d{2,3}\.\d{2,3})', text)
+        if prev_match:
+            prev_value = float(prev_match.group(1))
+
+    if value is not None and 80 < value < 120:
+        # 方向判定：当前值 vs Prev Close
+        direction = "→"
+        if prev_value is not None:
+            if value > prev_value + 0.05:
+                direction = "↑"
+            elif value < prev_value - 0.05:
+                direction = "↓"
+        r = {"value": round(value, 3), "source": "cnbc_extract", "direction": direction}
+        _cache_write("dxy", r)
+        return r
+
+    return {"value": None, "source": "unavailable", "error": "DXY不可用"}
+
+
+def classify_dxy(dxy):
+    """DXY MA20方向分类
+    r33.29：DXY MA20↓=🟢弱美元利好 / 走平=🟡 / DXY MA20↑=🔴强美元利空
+    """
+    dxy_value = dxy.get("value") if isinstance(dxy, dict) else dxy
+    direction = dxy.get("direction", "—") if isinstance(dxy, dict) else "—"
+    
+    if dxy_value is None:
+        return {"level": "unknown", "label": "数据缺失", "direction": "—"}
+    
+    if direction == "↓":
+        return {"level": "bullish", "label": "🟢弱美元利好", "direction": "↓"}
+    elif direction == "↑":
+        return {"level": "bearish", "label": "🔴强美元利空", "direction": "↑"}
+    else:
+        return {"level": "neutral", "label": "🟡走平", "direction": "→"}
+
+
 def classify_vix(vix_value):
-    """VIX四档危机状态机"""
+    """VIX分类 — r33.29 方向翻转：恐慌=机会，低VIX=自满风险
+    
+    回测铁证（2018-2026 Tushare全量）：
+      VIX>35 → 20D IVV +2.09% 胜率72% → 🟢最佳买入窗口
+      VIX≤20 → 20D IVV +0.99% 胜率75% → 🟡自满风险，尾部最大
+      VIX 20-35 → 20D IVV +0.31% 胜率60% → 🔴方向不明，最差收益
+    """
     if vix_value is None:
         return {"level": "unknown", "label": "数据缺失", "action": "⚠️保守处理"}
     if vix_value > 50:
         return {"level": "meltdown", "label": "🔴🔴崩溃", "action": "全局熔断。黄金禁止买入。"}
     if vix_value > 35:
-        return {"level": "crisis", "label": "🔴危机", "action": "暂停进攻/反击开火。黄金可买不追高。"}
+        return {"level": "crisis", "label": "🟢机会", "action": "恐慌=机会。危机状态机接管路由，二维评估🟢"}
     if vix_value > 20:
-        return {"level": "alert", "label": "🟡警戒", "action": "进攻仓位减半。反击正常。"}
-    return {"level": "normal", "label": "🟢正常", "action": "全策略正常"}
+        return {"level": "alert", "label": "🔴方向不明", "action": "VIX中位，方向不明。暂停进攻，仅反击/固定层"}
+    return {"level": "normal", "label": "🟡自满风险", "action": "VIX极低=自满+黑天鹅未定价。进攻正常但警惕尾部"}
 
 
 # ============================================================
@@ -194,12 +329,23 @@ def apply_c31_layered(events_in_silence):
 # 综合输出
 # ============================================================
 def assess_all():
-    """一键获取所有宏观闸状态"""
-    us10y = fetch_us10y()
-    us10y_class = classify_us10y(us10y.get("value"))
+    """一键获取所有宏观闸状态。
+    2026-08-13 优化：US10Y/VIX/DXY 三个独立网络请求并行执行（ThreadPoolExecutor），
+    冷启动时从 ~8秒串行 降到 ~4秒并行。
+    """
+    # 并行拉取三个宏观锚点（各自有 30 分钟 TTL 缓存，命中缓存时瞬时返回）
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        fut_us10y = pool.submit(fetch_us10y)
+        fut_vix = pool.submit(fetch_vix)
+        fut_dxy = pool.submit(fetch_dxy)
+        us10y = fut_us10y.result()
+        vix = fut_vix.result()
+        dxy = fut_dxy.result()
 
-    vix = fetch_vix()
+    us10y_class = classify_us10y(us10y.get("value"))
     vix_class = classify_vix(vix.get("value"))
+    dxy_class = classify_dxy(dxy)
 
     events = check_event_silence()
     layered = apply_c31_layered(events.get("events", []))
@@ -227,6 +373,11 @@ def assess_all():
             "value": vix.get("value"),
             "source": vix.get("source"),
             **vix_class,
+        },
+        "dxy": {
+            "value": dxy.get("value"),
+            "source": dxy.get("source"),
+            **dxy_class,
         },
         "c31_events": events,
         "c31_layered": layered,

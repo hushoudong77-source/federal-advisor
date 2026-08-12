@@ -1,0 +1,12 @@
+{
+  "log_id": "20260812_074740_premarket",
+  "command": "premarket",
+  "scope": {
+    "scope": "macro"
+  },
+  "timestamp": "2026-08-12 07:47:40",
+  "success": true,
+  "elapsed_ms": true,
+  "gate_result": null,
+  "data": 34.08527398109436
+}

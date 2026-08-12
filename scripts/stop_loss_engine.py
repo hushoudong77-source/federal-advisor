@@ -322,9 +322,24 @@ def compute_stop_loss(ticker, indicators):
         params = COUNTER_STOP_PARAMS[ticker]
         ma40 = indicators["ma40"]
         entry_zone = ma40 - params["k"] * atr14
-        stop_price = entry_zone - params["stop_mult"] * atr14
-        if stop_price < 0:
-            stop_price = entry_zone * 0.85
+        
+        # 🔴 守东直接指定止损（不经过ATR公式）
+        MANUAL_STOP = {
+            "510500": 7.479,
+            "512100": {"reduce": 2.78, "clear": 2.67},
+        }
+        if ticker in MANUAL_STOP:
+            manual = MANUAL_STOP[ticker]
+            if isinstance(manual, dict):
+                stop_price = manual["clear"]  # 引擎用清仓价
+                result["stop_note"] = f"守东直接指定：减仓¥{manual['reduce']}/清仓¥{manual['clear']}，不经过ATR公式"
+            else:
+                stop_price = manual
+                result["stop_note"] = f"守东直接指定：¥{manual}，不经过ATR公式"
+        else:
+            stop_price = entry_zone - params["stop_mult"] * atr14
+            if stop_price < 0:
+                stop_price = entry_zone * 0.85
         
         result["ma40"] = round(ma40, 4)
         result["entry_zone"] = round(entry_zone, 4)

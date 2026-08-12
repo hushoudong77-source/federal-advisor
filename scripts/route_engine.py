@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-联邦投顾 — 路由判定引擎 V1.0
+联邦投顾 — 路由判定引擎 V2.0（r33.92 理想架构重构）
 输入: market_data.py 的 JSON 输出（24标现价+全部技术指标）
 输出: 每标的路由分类 + 信号触发状态 + 买入区间/止损位
 
@@ -504,7 +504,21 @@ def get_macro_gate():
 # 主路由入口
 # ============================================================
 def route_single(ticker, data, macro=None):
-    """单标路由判定"""
+    """
+    单标路由判定（r33.92 理想架构）
+
+    总路由设计:
+      标的进入 → 豁免前置 → 确定策略归属 → 各策略独立判定
+      EMA三态分流仅作为「美股进攻」的内部漏斗，不再作为全局闸门。
+
+    策略归属层级（从上到下，命中即返回）：
+      L-1: 豁免前置（金盾/固定层/独立标的/待分类/独立动量）
+      L0:  永久剥夺检查
+      L1:  美股进攻（US_OFFENSIVE_TICKERS，内部用 EMA+C3/C4 判定）
+      L2:  A股进攻（A_OFFENSIVE_TICKERS，内部用牛市+MA5回踩判定）
+      L3:  反击（COUNTERPUNCH_TICKERS，内部用R0-R2判定）
+      L4:  兜底闲置
+    """
     data = adapt_fields(data)  # 字段适配
     result = {
         "ticker": ticker,
@@ -512,14 +526,15 @@ def route_single(ticker, data, macro=None):
         "change_pct": safe_float(data, "change_pct"),
     }
 
-    # 步骤-1: 豁免前置
+    # ═══════════════════════════════════════════════════════════
+    # L-1: 豁免前置 — 不参与任何路由判定
+    # ═══════════════════════════════════════════════════════════
     exempt = judge_exemption(ticker, data)
     if exempt:
         result["route"] = exempt["route"]
         result["status"] = exempt["status"]
         result["reason"] = exempt["reason"]
 
-        # 豁免标的的专项判定
         if exempt["route"] == "gold_shield":
             result["gold_shield"] = judge_gold_shield(ticker, data)
         elif exempt["route"] == "fixed_layer":
@@ -528,31 +543,36 @@ def route_single(ticker, data, macro=None):
             result["momentum"] = judge_momentum(ticker, data)
         return result
 
-    # 步骤0: 特殊处理
+    # ═══════════════════════════════════════════════════════════
+    # L0: 总路由 — 确定标的的策略归属
+    # ═══════════════════════════════════════════════════════════
     special = judge_special(ticker, data)
     result["special"] = special
 
-    # 步骤0.5: 极端乖离拦截
+    # 极端乖离拦截（所有策略池共享）
     gap = judge_extreme_gap(ticker, data)
     result["extreme_gap"] = gap
 
-    # EMA三态分流
+    # EMA判定（仅用于美股进攻内部漏斗，不在此层做分流）
     ema = judge_ema_diversion(ticker, data)
     result["ema"] = ema
 
-    if ema["diversion"] == "data_missing":
-        result["route"] = "data_missing"
-        result["status"] = "unknown"
-        return result
+    # ─── 总路由：按策略归属分发 ───
+    in_us_offensive = ticker in US_OFFENSIVE_TICKERS and not special.get("deprived_offensive")
+    in_a_offensive = ticker in A_OFFENSIVE_TICKERS
+    in_counterpunch = ticker in COUNTERPUNCH_TICKERS and not special.get("deprived_counterpunch")
 
-    if ema["diversion"] == "idle":
-        result["route"] = "idle"
-        result["status"] = "观望（双False）"
-        return result
+    # ═══════════════════════════════════════════════════════════
+    # L1: 美股进攻判定
+    # ── EMA三态分流在此层内部做漏斗，不管其他策略池的事 ──
+    # ═══════════════════════════════════════════════════════════
+    if in_us_offensive:
+        if ema["diversion"] == "data_missing":
+            result["route"] = "data_missing"
+            result["status"] = "EMA数据缺失"
+            return result
 
-    # 美股进攻判定（仅进攻候选池 + 美股进攻标的）
-    if ema["diversion"] == "offensive" and ticker in US_OFFENSIVE_TICKERS:
-        if not special.get("deprived_offensive"):
+        if ema["diversion"] == "offensive":
             offensive = judge_offensive_c3_c4(ticker, data)
             result["offensive"] = offensive
             if offensive["c3"] and offensive["c4"]:
@@ -564,33 +584,40 @@ def route_single(ticker, data, macro=None):
             else:
                 result["route"] = "offensive_candidate"
                 result["status"] = "进攻候选（C3/C4未全满足）"
-            return result
-
-    # A股进攻判定（A股进攻标的，仅牛市）
-    if ticker in A_OFFENSIVE_TICKERS:
-        a_off = judge_a_share_offensive(ticker, data)
-        result["a_offensive"] = a_off
-        if a_off["bull_market"] and (a_off["ma5_pullback"] or a_off.get("ma50_pullback")):
-            result["route"] = "a_share_offensive"
-            result["status"] = "🟢A股进攻触发"
-            return result
-        elif a_off["bull_market"]:
-            result["route"] = "a_share_offensive"
-            result["status"] = "🟡牛市已确认，等待MA5回踩"
-            return result
-        elif not a_off["bull_market"]:
-            # 非牛市 → 进入反击判定
-            pass
-
-    # 美股进攻标的：即使EMA分流到counterpunch，也保持进攻候选状态
-    # （等C1/C2恢复后重新进入进攻判定，而非被丢到反击池）
-    if ticker in US_OFFENSIVE_TICKERS and not special.get("deprived_offensive"):
-        result["route"] = "offensive_candidate"
-        result["status"] = "进攻候选（EMA未全多头，等待C1∧C2恢复）"
+        else:
+            # EMA未形成多头 → 进攻候选，等待C1∧C2恢复
+            result["route"] = "offensive_candidate"
+            result["status"] = "进攻候选（EMA未全多头，等待C1∧C2恢复）"
         return result
 
-    # 反击判定（反击候选池）
-    if ticker in COUNTERPUNCH_TICKERS:
+    # ═══════════════════════════════════════════════════════════
+    # L2: A股进攻判定（内部用牛熊+MA5回踩做漏斗）
+    # ═══════════════════════════════════════════════════════════
+    if in_a_offensive:
+        a_off = judge_a_share_offensive(ticker, data)
+        result["a_offensive"] = a_off
+
+        if a_off["bull_market"]:
+            if a_off["ma5_pullback"] or a_off.get("ma50_pullback"):
+                result["route"] = "a_share_offensive"
+                result["status"] = "🟢A股进攻触发"
+            else:
+                result["route"] = "a_share_offensive"
+                result["status"] = "🟡牛市已确认，等待MA5回踩"
+            return result
+
+        # 非牛市：A股进攻不适用 → 如果同时是反击候选，跌入L3反击判定
+        # 如果不在反击池 → 兜底闲置
+        if not in_counterpunch:
+            result["route"] = "idle"
+            result["status"] = "熊市/过渡期（A股进攻冻结）"
+            return result
+        # in_counterpunch → 继续往下走入L3
+
+    # ═══════════════════════════════════════════════════════════
+    # L3: 反击判定（独立漏斗，不经过EMA三态前置）
+    # ═══════════════════════════════════════════════════════════
+    if in_counterpunch:
         cr = judge_counterpunch_r0_r2(ticker, data, special)
         result["counterpunch"] = cr
 
@@ -599,7 +626,7 @@ def route_single(ticker, data, macro=None):
             result["status"] = "🔴反击永久剥夺"
         elif cr.get("status") == "data_missing":
             result["route"] = "data_missing"
-            result["status"] = "数据缺失"
+            result["status"] = "反击数据缺失"
         elif cr.get("triggered"):
             result["route"] = "counterpunch"
             result["status"] = "🟡反击触发"
@@ -608,7 +635,9 @@ def route_single(ticker, data, macro=None):
             result["status"] = "反击候选（未达买入区间）"
         return result
 
-    # 兜底
+    # ═══════════════════════════════════════════════════════════
+    # L4: 兜底 — 不在任何候选池
+    # ═══════════════════════════════════════════════════════════
     result["route"] = "idle"
     result["status"] = "⚪闲置"
     return result
@@ -698,12 +727,23 @@ if __name__ == "__main__":
     parser.add_argument("--json", action="store_true", help="JSON格式输出（默认）")
     args = parser.parse_args()
 
-    # 获取market_data
+    # 获取market_data（优先级：--input > stdin > 调用market_data.py）
     if args.input:
         with open(args.input, "r") as f:
             market_data = json.load(f)
+    elif not sys.stdin.isatty():
+        # 从标准输入读取（fire_report.py 流水线传入 bridged 数据）
+        try:
+            raw = sys.stdin.read()
+            if raw.strip():
+                market_data = json.loads(raw)
+            else:
+                raise ValueError("stdin为空")
+        except (json.JSONDecodeError, ValueError):
+            print("❌ stdin 数据解析失败", file=sys.stderr)
+            sys.exit(1)
     else:
-        # 从标准输入读取或调用market_data.py
+        # 回退：调用market_data.py
         import subprocess
         script_dir = os.path.dirname(os.path.abspath(__file__))
         md_script = os.path.join(script_dir, "market_data.py")
