@@ -12,7 +12,7 @@
 - [V5.8.2r29 §1+§4+§5](analysis/v56/v56-macros.md) — 数据输入+波动率状态机+执行闭环。r29新增§4.7宏观事件日历前置检查（四层宏观防御体系全景）。2026-06-06签发。
 - [V5.8.2r33.0 开火档案](fire-archive-v582.md) — 执行级快速参考。r33.0新增§九独立动量跟随策略参数矩阵（FLIN/SMIN/EWY V1.1动态回撤止盈）。2026-06-22签发。
 - [金盾总纲 V1.6](concepts/gold-shield-protocol-v1.md) — IAU/518880黄金专属操作协议。V1.5 S1/S2/S4废除（二级卖点S3+S6）。**V1.6 C2 MA60→MA40 + MA40走平过渡态（518880 12年回测裁决，MA40 Sharpe 0.81 vs MA60 0.76）**。独立于通用法典。2026-08-06更新。
-- [金盾战术前置方案](concepts/gold-shield-tactical-vanguard-v1.md) — ⭐2026-06-16焊入AGENT.md。金盾正统四条件的战术级前置补充。C1双顺风+MACD金叉+FOMC落地→三分之一仓位先行入场。剩余⅔等正统四条件全绿。仅适用于宏观拐点过渡窗口，非体系永久降级。
+- [金盾战术前置方案](concepts/gold-shield-tactical-vanguard-v1.md) — ⭐2026-06-16焊入AGENT.md（⚠️本文件为V1.0旧版，已被AGENT.md V1.6取代）。金盾正统四条件的战术级前置补充。C1双顺风+MACD金叉（FOMC仅会议前2交易日静默，非硬前置，2026-08-14修正）→三分之一仓位先行入场。剩余⅔等正统四条件全绿。仅适用于宏观拐点过渡窗口，非体系永久降级。
 - [宏观危机状态机 V1.0](analysis/macro-crisis-state-machine-v1.md) — ⭐2026-06-03焊入AGENT.md模块十二。§4.4 VIX四档阈值（NORMAL≤20/ALERT 20-35/CRISIS 35-50/MELTDOWN>50）+ §6三阶段框架（崩盘确认期→政策干预期→复苏早期）。与US10Y形成双熔断互补，覆盖2020年3月式流动性危机（US10Y低但VIX飙升）。全池17标逐标三阶段处置矩阵。基于2000/2008/2020三次危机历史回测。
 - [V5.6 审计合并版 V2.0 [已归档]](analysis/v56/v56-audit-merged.md) — 第四轮KIMI黑帽审计。2026-05-11。
 
@@ -87,6 +87,7 @@
 - [K线形态 + MACD 动能审计附录 V1.1](concepts/kline-macd-audit-appendix-v1.md) — 12种K线形态识别 + MACD动能审计 + 多维裁决协议
 - [技术指标自主计算集成协议 V1.3](concepts/technical-indicators-integration-protocol-v1.md) — MACD/ATR/RSI/TD9全策略嵌入+确认条件硬化。V1.3新增低位9转/高位9转命名纠正、三确认条件AND（缩量<0.8+小实体<0.3×ATR）、五策略嵌入位置、calc_td9.py计算引擎。2026-06-22焊入。
 - [黄金分析记忆关联协议 V2.0](concepts/gold-analysis-memory-protocol.md) — 五维对撞体系
+- [开火信号与持仓状态无关性 V1.0](concepts/fire-signal-position-independence-v1.md) — ⭐2026-08-13守东纠错固化。fire_report.py开火判定只依赖「现价是否回到买入区间」，不读取持仓状态；已持仓标的照样出加仓信号，未触发唯一原因是「现价高于区间上沿」。禁止把「未触发」归因到「已持仓」。
 - [妙想 Skill 使用指南 V1.0](concepts/mx-skills-usage-guide-v1.md) — 五大Skill实测覆盖度与限制
 - [GEMINI V20.34.5 数据供弹协议](concepts/gemini-v20.34.5-data-supply-protocol.md)
 - [GEMINI 进阶分析框架 V1.0](concepts/gemini-advanced-framework-v1.md)

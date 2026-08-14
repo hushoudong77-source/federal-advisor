@@ -202,11 +202,20 @@ def run_pipeline(scope="all"):
     }
 
 
+def _normalize_dir(d):
+    """方向值统一规范化为箭头：market_data 产英文 up/down/flat → fire_signal 期望 ↑/↓/→"""
+    if d is None:
+        return None
+    if d in ("↑", "↓", "→"):
+        return d
+    return {"up": "↑", "down": "↓", "flat": "→"}.get(d, d)
+
+
 def bridge_format(market_data):
     """
     将 market_data.py 的扁平输出转为 fire_signal.py 期望的嵌套格式。
     
-    market_data 输出: {"QQQ": {"price": 722.20, "ma40": 720.0, "ma60_dir": "↑", ...}}
+    market_data 输出: {"QQQ": {"price": 722.20, "ma40": 720.0, "ma40_dir": "up", ...}}
     fire_signal 期望: {"indicators": {"QQQ": {"indicators": {"MA40": {"value": 720.0, "direction": "↑"}, ...}}}}
     """
     indicators = {}
@@ -226,9 +235,9 @@ def bridge_format(market_data):
             if dir_key in data and data[dir_key] is not None:
                 ma_key = f"MA{ma}"
                 if ma_key in ind:
-                    ind[ma_key]["direction"] = data[dir_key]
+                    ind[ma_key]["direction"] = _normalize_dir(data[dir_key])
                 else:
-                    ind[ma_key] = {"value": data.get(f"ma{ma}"), "direction": data[dir_key]}
+                    ind[ma_key] = {"value": data.get(f"ma{ma}"), "direction": _normalize_dir(data[dir_key])}
         # EMA
         for ema in [50, 150]:
             key = f"ema{ema}"
@@ -264,6 +273,9 @@ def bridge_format(market_data):
             dev_key = f"dev_ma{ma}"
             if dev_key in data and data[dev_key] is not None:
                 ind[f"DEV_MA{ma}"] = {"value": data[dev_key]}
+        # MA40 5日变化率（金盾V1.6走平过渡态判定）
+        if "ma40_5d_chg" in data and data["ma40_5d_chg"] is not None:
+            ind["MA40_5D_CHG"] = {"value": data["ma40_5d_chg"]}
         
         # 市场分类
         market = "us" if ticker not in ["588000","513180","513910","510500","518880","512100","510880","159530","510300","159915","513770","159545"] else "cn"
@@ -855,17 +867,20 @@ def _render_golden_shield(signals, mkt, macro):
             rsi = ind.get("rsi14", "—")
         
         orthodox = sig.get("orthodox_triggered", False)
-        tactical = sig.get("tactical_possible", False)
+        transitional = sig.get("transitional_triggered", False)
         fire = "—"
         if orthodox:
             fire = "🟢满仓"
-        elif tactical:
-            fire = "🟡战术前置⅓"
+        elif transitional:
+            fire = "🟡走平过渡⅓"
         else:
-            # 检查C2
-            c2 = sig.get("conditions", {}).get("C1_MA60_up", {})
+            # 检查C2（MA40方向）与C1（双顺风）
+            c1 = sig.get("conditions", {}).get("C1_dual_tailwind", {})
+            c2 = sig.get("conditions", {}).get("C2_MA40_up", {})
             if not c2.get("met", True):
-                fire = "⛔ C2不满足"
+                fire = "⛔ C2 MA40未翻多"
+            elif not c1.get("met", True):
+                fire = "⛔ C1双顺风未满足"
         
         kind = "us" if ticker == "IAU" else "cn"
         price_s = _fmt_price(price, ticker, kind)

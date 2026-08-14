@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-12T09:35:02.962139",
+  "updated_at": "2026-08-14T21:59:56.035889",
   "tasks": {
     "ed3fb6c0": {
       "id": "ed3fb6c0",
@@ -49,7 +49,7 @@
       "name": "510500止损盯盘提醒",
       "enabled": true,
       "created_at": "2026-07-13T20:15:53.858673",
-      "updated_at": "2026-08-12T09:35:02.949114",
+      "updated_at": "2026-08-14T09:35:06.601189",
       "schedule": {
         "type": "cron",
         "expression": "25 9 * * 1-5"
@@ -63,14 +63,14 @@
         "channel_type": "weixin",
         "notify_session_id": "session__status_95149"
       },
-      "next_run_at": "2026-08-13T09:25:00"
+      "next_run_at": "2026-08-17T09:25:00"
     },
     "bd40ee3c": {
       "id": "bd40ee3c",
       "name": "经济日历自动抓取",
       "enabled": true,
       "created_at": "2026-08-06T16:13:11.950328",
-      "updated_at": "2026-08-10T06:10:12.969325",
+      "updated_at": "2026-08-13T06:10:13.684469",
       "schedule": {
         "type": "cron",
         "expression": "0 6 * * 1,4"
@@ -85,7 +85,49 @@
         "notify_session_id": "session_page-mpnba6fv-nbge_95149",
         "silent": true
       },
-      "next_run_at": "2026-08-13T06:00:00"
+      "next_run_at": "2026-08-17T06:00:00"
+    },
+    "c4679a8b": {
+      "id": "c4679a8b",
+      "name": "行情数据每日增量备份",
+      "enabled": true,
+      "created_at": "2026-08-14T21:59:56.003442",
+      "updated_at": "2026-08-14T21:59:56.003454",
+      "schedule": {
+        "type": "cron",
+        "expression": "30 15 * * 1-5"
+      },
+      "action": {
+        "type": "agent_task",
+        "task_description": "执行行情数据每日增量备份：运行 `python3 /home/agent/cow/scripts/backup_data.py --daily` 抓取 TickFlow 新增日线，再运行 `python3 /home/agent/cow/scripts/backup_data.py --tencent` 落盘腾讯现价。静默执行，无需向用户报告，除非出现抓取失败。",
+        "receiver": "session_page-mpnba6fv-nbge_95149",
+        "receiver_name": "未知",
+        "is_group": false,
+        "channel_type": "weixin",
+        "notify_session_id": "session_page-mpnba6fv-nbge_95149"
+      },
+      "next_run_at": "2026-08-17T15:30:00"
+    },
+    "a0544832": {
+      "id": "a0544832",
+      "name": "美股行情每日增量备份",
+      "enabled": true,
+      "created_at": "2026-08-14T21:59:56.024499",
+      "updated_at": "2026-08-14T21:59:56.024505",
+      "schedule": {
+        "type": "cron",
+        "expression": "30 6 * * 1-5"
+      },
+      "action": {
+        "type": "agent_task",
+        "task_description": "执行美股行情数据每日增量备份：运行 `python3 /home/agent/cow/scripts/backup_data.py --daily` 抓取 TickFlow 美股标的（QQQ/VTI/VEA/IVV/IAU/BBJP/MUFG/EWY/VNM/FLIN/SMIN/BOTZ/CANE）新增日线，再运行 `python3 /home/agent/cow/scripts/backup_data.py --tencent` 落盘腾讯现价。静默执行，无需向用户报告，除非出现抓取失败。",
+        "receiver": "session_page-mpnba6fv-nbge_95149",
+        "receiver_name": "未知",
+        "is_group": false,
+        "channel_type": "weixin",
+        "notify_session_id": "session_page-mpnba6fv-nbge_95149"
+      },
+      "next_run_at": "2026-08-17T06:30:00"
     }
   }
 }

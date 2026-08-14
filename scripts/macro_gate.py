@@ -315,7 +315,7 @@ def apply_c31_layered(events_in_silence):
         }
 
     return {
-        "us_offensive": "⛔暂停（前2后1共4日）",
+        "us_offensive": "⛔暂停（仅公布前2日，公布后静默已废除）",
         "hk_counterpunch": "🟡降级（建仓推迟72h）",
         "a_offensive": "✅豁免（中国区三锚独立驱动）",
         "a_counterpunch": "✅豁免（CPI低开=加速触达）",

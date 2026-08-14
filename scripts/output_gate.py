@@ -21,6 +21,7 @@
   python3 output_gate.py --check cost MUFG    # 单标成本校验
   python3 output_gate.py --check execution    # 执行事实校验（扫MEMORY/决策日志）
   python3 output_gate.py --check backtest     # 回测推断拦截（防LLM编造回测数字）
+  python3 output_gate.py --check fire-invoked # 🔴 脚本强制调用自证（/开火前，防跳脚本凭记忆输出）
   python3 output_gate.py --check routing /tmp/llm.json  # 路由/持仓文本一致性校验
   python3 output_gate.py --check all          # 全量校验（/扫描 /开火 前）
   python3 output_gate.py --check realtime     # 盘中实时数据强制拉取
@@ -34,6 +35,7 @@ import json
 import sys
 import os
 import re
+import time
 import urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -1079,6 +1081,83 @@ def check_consistency(json_path):
 
 
 # ══════════════════════════════════════════════════════════════
+# 🔴 fire-invoked 校验 — 脚本强制调用自证（2026-08-13 焊入）
+# 根因：/开火 已代码化，但 LLM 可跳过脚本凭记忆硬编报告（518880 现价 ¥8.502 事故）。
+#       代码化 = 能力存在；本校验 = 能力必须被真实调用。
+# 逻辑：market_data.py 每次 fetch_all() 会落盘 .cache/market_data.json（含时间戳+pid）。
+#       本校验读取该缓存，判定「脚本在本次会话内是否真实运行过且数据新鲜」。
+#       返回调用指纹（invoked_at + epoch + pid），LLM 输出 /开火 报告时必须在开头引用。
+# ══════════════════════════════════════════════════════════════
+def check_fire_invoked(max_age_seconds=None):
+    """
+    校验「脚本是否真实运行过」——不校验数字对不对，只校验脚本跑没跑。
+
+    判定标准：
+    ├── 缓存文件不存在 → BLOCK（从未调用脚本，禁止输出 /开火 报告）
+    ├── 缓存时间戳距今超过 max_age_seconds → BLOCK（数据过期，需重拉）
+    └── 缓存新鲜 → PASS，返回调用指纹
+
+    调用指纹格式（LLM 必须在报告开头逐字引用）：
+    「🔒 脚本调用自证: market_data.py invoked_at=YYYY-MM-DD HH:MM:SS epoch=XXXXXXXXXX pid=NNNN」
+    """
+    age_limit = max_age_seconds or int(GATE_RULES.get("fire_invoked", {}).get("max_age_seconds", 1800))
+
+    result = {
+        "check": "脚本强制调用自证(fire-invoked)",
+        "status": "PENDING",
+        "fingerprint": None,
+        "cache_age_seconds": None,
+        "summary": ""
+    }
+
+    cache_path = SCRIPTS_DIR / ".cache" / "market_data.json"
+
+    try:
+        if not cache_path.exists():
+            result["status"] = "BLOCK"
+            result["summary"] = (
+                "未检测到 market_data.py 运行痕迹（.cache/market_data.json 不存在）。"
+                "禁止凭记忆输出 /开火 报告——先执行 python3 scripts/fire_report.py --json 或 market_data.py。"
+            )
+            return result
+
+        payload = read_json(cache_path)
+        invoked_at = payload.get("_invoked_at", "")
+        invoked_epoch = payload.get("_invoked_epoch")
+        pid = payload.get("_pid")
+
+        if not invoked_epoch:
+            result["status"] = "BLOCK"
+            result["summary"] = "缓存文件存在但缺少 _invoked_epoch 字段，缓存损坏，需重拉脚本。"
+            return result
+
+        age = time.time() - float(invoked_epoch)
+        result["cache_age_seconds"] = round(age, 1)
+
+        if age > age_limit:
+            result["status"] = "BLOCK"
+            result["summary"] = (
+                f"market_data.py 上次运行于 {invoked_at}（{round(age)} 秒前），"
+                f"超过新鲜度上限 {age_limit} 秒。禁止复用旧数据，需重拉脚本。"
+            )
+            return result
+
+        fingerprint = f"invoked_at={invoked_at} epoch={int(invoked_epoch)} pid={pid}"
+        result["status"] = "PASS"
+        result["fingerprint"] = fingerprint
+        result["summary"] = (
+            f"market_data.py 已真实运行（{invoked_at}，{round(age)} 秒前），"
+            f"调用指纹: {fingerprint}。报告开头必须引用此指纹。"
+        )
+
+    except Exception as e:
+        result["status"] = "ERROR"
+        result["summary"] = str(e)
+
+    return result
+
+
+# ══════════════════════════════════════════════════════════════
 # 主入口
 # ══════════════════════════════════════════════════════════════
 
@@ -1088,7 +1167,7 @@ def main():
     if not args:
         print(json.dumps({
             "gate": "ERROR",
-            "error": "缺少 --check 参数。用法: output_gate.py --check <vix|macro|position|cost|execution|realtime|consistency|routing|backtest|all>",
+            "error": "缺少 --check 参数。用法: output_gate.py --check <vix|macro|position|cost|execution|realtime|consistency|routing|backtest|fire-invoked|all>",
             "timestamp": now_iso()
         }, indent=2, ensure_ascii=False))
         sys.exit(1)
@@ -1181,6 +1260,13 @@ def main():
         bt = check_backtest_inference()
         results.append(bt)
         if bt["status"] == "BLOCK":
+            all_pass = False
+
+    if check_type in ("fire-invoked", "all"):
+        # 🔴 脚本强制调用自证：/开火 等指令输出前，校验 market_data.py 是否真实运行过
+        fi = check_fire_invoked()
+        results.append(fi)
+        if fi["status"] == "BLOCK":
             all_pass = False
     
     if check_type == "all":

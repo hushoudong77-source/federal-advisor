@@ -573,7 +573,69 @@
       "S6": "成本−13%（减仓50%）",
       "S7": "成本−19%（清仓）",
       "atr_cross_check": "ATR14×3.5 < S7→以ATR为临时硬止损"
+    },
+    "runtime_state": {
+      "_meta": "运行时状态单一真源。峰值/批次/锚定日期等易变字段只在这里维护，禁止散落在MEMORY.md或对话缓存",
+      "rolling_peak": 11.11,
+      "peak_date": "2026-08-13",
+      "peak_source": "守东锚定(8/13盘中新高)",
+      "batch_progress": 2,
+      "batch_total": 5,
+      "last_batch_date": "2026-07-09",
+      "next_batch_trigger": 10.5545,
+      "resonance_sugar_ratio": 42.5,
+      "resonance_sugar_ratio_threshold": 40,
+      "updated_at": "2026-08-14"
     }
+  },
+  "runtime_state": {
+    "_meta": "各标的易变运行时状态单一真源。峰值/批次/锚定日期/守东指定止损/目标区间等易变字段只在这里维护，禁止散落在MEMORY.md或对话缓存。守东说「锚定/改为/冷却到/止损定」→立即写这里。输出前必读，凭印象复述=违规。updated_at记录最后变更。",
+    "512100": {
+      "name": "中证1000ETF",
+      "ma60_p0": 2.834,
+      "ma60_source": "P0交易软件真值",
+      "stop_reduce": 2.78,
+      "stop_clear": 2.67,
+      "stop_source": "守东直接指定(减仓/清仓)",
+      "take_profit_rule": "MA60不破永不动，破则全仓清仓",
+      "note": "止盈规则V7最终版"
+    },
+    "510500": {
+      "name": "中证500ETF",
+      "stop_price": 7.479,
+      "stop_source": "守东直接指定",
+      "bear_suspended": true
+    },
+    "510880": {
+      "name": "红利ETF易方达",
+      "re_entry": true,
+      "note": "复持标的——曾清仓止盈+97%，守东重新买入"
+    },
+    "159530": {
+      "name": "机器人ETF",
+      "r2_buy_zone_upper": 1.4024
+    },
+    "EWY": {
+      "name": "韩国ETF",
+      "target_zone": [160, 165],
+      "target_source": "守东裁决「等回调再进」"
+    },
+    "IAU": {
+      "name": "黄金信托",
+      "ma40_p0": 77.52,
+      "gold_shield_c2_anchor": "MA40",
+      "ma40_direction": "待翻多",
+      "note": "金盾C2锚线=MA40非MA60"
+    },
+    "518880": {
+      "name": "黄金ETF(人民币)",
+      "dca_plan_monthly": 8000,
+      "dca_plan_total": 200000,
+      "dca_plan_months": 25,
+      "dca_execute_day": "每月第一个交易日",
+      "note": "24个月定投，与金盾策略分开管理"
+    },
+    "updated_at": "2026-08-14"
   },
   "macro_thresholds": {
     "vix": {

@@ -433,21 +433,39 @@ def judge_momentum(ticker, data):
 
 
 def judge_gold_shield(ticker, data):
-    """金盾V1.4四条件判定"""
+    """金盾V1.6四条件判定（MA40锚线 + 走平过渡态）
+
+    V1.6 变更（2026-08-06 回测裁决）:
+      - C1 锚线 MA60 → MA40（12年回测：MA40 Sharpe 0.81 > MA60 0.76）
+      - 新增 MA40 走平过渡态：MA40 5日变化 ≤0.1% → ⅓ 先行入场信号
+      - 二级卖点体系 S3+S6（S1/S2/S4 废除）
+
+    返回字段:
+      c1 (MA40方向↑), c2 (MACD金叉BAR>0), c3 (RSI<70), c4 (波动率正常)
+      all_green (四条件全绿→满仓)
+      flat_transition (MA40走平过渡态→⅓仓位)
+      flat_chg_pct (MA40 5日变化率，走平判定用)
+    """
     close = safe_float(data, "close")
-    ma60 = safe_float(data, "ma60")
+    ma40 = safe_float(data, "ma40")
     macd_bar = safe_float(data, "macd_bar")
     rsi = safe_float(data, "rsi14")
     atr14 = safe_float(data, "atr14")
 
-    result = {"c1": False, "c2": False, "c3": False, "c4": False}
+    result = {
+        "c1": False, "c2": False, "c3": False, "c4": False,
+        "all_green": False, "flat_transition": False, "flat_chg_pct": None,
+    }
 
     if close is None:
         return result
 
-    # C1: MA60方向↑
-    ma60_dir = safe_float(data, "ma60_dir")
-    result["c1"] = ma60_dir is not None and ma60_dir > 0
+    # C1: MA40方向↑（V1.6 锚线从 MA60 改为 MA40）
+    ma40_dir = safe_float(data, "ma40_dir") if data.get("ma40_dir") not in (None, "N/A") else None
+    if isinstance(data.get("ma40_dir"), str):
+        result["c1"] = data.get("ma40_dir") == "up"
+    else:
+        result["c1"] = ma40_dir is not None and ma40_dir > 0
 
     # C2: MACD金叉（BAR > 0）
     result["c2"] = macd_bar is not None and macd_bar > 0
@@ -461,7 +479,17 @@ def judge_gold_shield(ticker, data):
     else:
         result["c4"] = True
 
+    # 四条件全绿 → 满仓
     result["all_green"] = all([result["c1"], result["c2"], result["c3"], result["c4"]])
+
+    # MA40 走平过渡态（V1.6 新增）：5日 MA40 变化 ≤0.1% → ⅓ 先行入场
+    flat_chg = safe_float(data, "ma40_5d_chg")
+    result["flat_chg_pct"] = flat_chg
+    if flat_chg is not None:
+        # 走平 = MA40 5日变化绝对值 ≤0.1%（约1‰级别，消除微小漂移）
+        # 走平过渡态需同时满足 C1 双顺风(DXY MA20↓) 与 MACD金叉 → 由上层组合判定
+        result["flat_transition"] = abs(flat_chg) <= 0.1
+
     return result
 
 

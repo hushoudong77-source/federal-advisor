@@ -18,9 +18,14 @@ import json
 import sys
 import os
 import time
+import hashlib
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
+
+# ── 落盘缓存路径（供 output_gate.py --check fire-invoked 校验「脚本是否真实运行过」）──
+CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".cache")
+CACHE_FILE = os.path.join(CACHE_DIR, "market_data.json")
 
 # ============================================================
 # V5.2 更新：adjust="none"（不复权），V5.1 backward在部分标的上反向复权已修复
@@ -356,6 +361,13 @@ def fetch_tickflow_all():
             if ma40_20d_ago and ma40_20d_ago > 0:
                 ma40_dir = "up" if ma40 > ma40_20d_ago else "down"
 
+        # MA40 5日变化率（金盾V1.6走平过渡态判定用）
+        ma40_5d_chg = None
+        if ma40 and len(close) >= 5:
+            ma40_5d_ago = _calc_ma(close.iloc[:-5], 40)
+            if ma40_5d_ago and ma40_5d_ago > 0:
+                ma40_5d_chg = round((ma40 / ma40_5d_ago - 1) * 100, 4)
+
         # ATR / RSI / MACD / H20
         atr14 = _calc_atr(high, low, close)
         atr_pct = round(atr14 / close.iloc[-1] * 100, 2) if atr14 and close.iloc[-1] > 0 else None
@@ -392,6 +404,7 @@ def fetch_tickflow_all():
             "dev_ma60": dev_ma60, "dev_ma150": dev_ma150,
             # 方向
             "ma60_dir": ma60_dir, "ma40_dir": ma40_dir,
+            "ma40_5d_chg": ma40_5d_chg,
             # 波动率
             "atr14": atr14, "atr_pct": atr_pct,
             # 动量
@@ -463,6 +476,22 @@ def fetch_all():
     merged["_tickflow_log"] = result["indicators"].get("_log", {})
     merged["_tickflow_calls"] = result["indicators"].get("_call_count", 0)
     merged["_tickflow_elapsed"] = result["indicators"].get("_elapsed", 0)
+
+    # ── 落盘缓存 + 调用指纹（供 output_gate --check fire-invoked 强制调用自证）──
+    try:
+        _cache_payload = {
+            "_invoked_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "_invoked_epoch": time.time(),
+            "_pid": os.getpid(),
+            "_realtime_ts": result["timestamp"],
+            "_tickflow_calls": merged.get("_tickflow_calls", 0),
+        }
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        with open(CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(_cache_payload, f, ensure_ascii=False)
+    except Exception:
+        pass  # 落盘失败不影响主流程
+
     return merged
 
 

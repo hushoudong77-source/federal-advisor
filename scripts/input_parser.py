@@ -31,6 +31,13 @@ from typing import Optional
 
 POSITIONS_PATH = os.path.join(os.path.dirname(__file__), "positions.json")
 
+# ── 全池美股 ETF 代码清单（用于自动路由至 B 账户，美元计价）────
+# 与 AGENT.md 模块零「全池标的硬编码白名单」美股段保持一致。
+US_ETF_TICKERS = {
+    "VTI", "VEA", "QQQ", "IVV", "IAU", "BBJP", "MUFG",
+    "EWY", "VNM", "FLIN", "SMIN", "BOTZ", "CANE", "SGOV",
+}
+
 # ── 正则模式 ──────────────────────────────────────────────
 
 # 持仓确权: "518880 7,000股(¥8.646)" 或 "518880 7000股 ¥8.646"
@@ -47,15 +54,20 @@ RE_HOLDING_LOOSE = re.compile(
     r'[¥$]?\s*(?P<cost>[\d.]+)'                   # 成本
 )
 
-# 操作指令: "已清仓 513180" / "已买入 MUFG 500股@$21.50"
+# 操作指令: "已清仓 513180" / "已买入 MUFG 500股@$21.50" / "买入 IAU 100股，成本82.415美元"
 RE_OPERATION = re.compile(
-    r'(?P<action>已清仓|已卖出|已买入|已加仓|已减仓|已建仓)\s+'
+    r'(?P<action>已?清仓|已?卖出|已?买入|已?加仓|已?减仓|已?建仓)\s+'
     r'(?P<ticker>\d{6}|[A-Z]{2,5})'
     r'(?:'
-    r'\s+(?P<shares>[\d,]+)\s*股?'                    # 股数
-    r'(?:\s*@\s*)?'                                   # @ 分隔符
+    r'\s*(?P<shares>[\d,]+)\s*股?'                    # 股数
+    r'(?:'
+    r'\s*@\s*'                                        # @ 分隔符
+    r'|\s*[，,]\s*成本[：:\s]*'                        # 「，成本」分隔符
+    r'|\s+'                                           # 或纯空白
+    r')'
     r'(?:[¥$]\s*)?'                                   # 货币符号
     r'(?P<price>[\d.]+)'                               # 价格
+    r'(?:\s*(?:美元|元|人民币))?'                       # 货币后缀词
     r')?'
 )
 
@@ -84,6 +96,34 @@ def detect_account(text: str) -> Optional[str]:
     m = RE_ACCOUNT_HINT.search(text)
     if m:
         return m.group(1).upper()
+    return None
+
+
+def detect_us_tickers(text: str) -> list[str]:
+    """从 /输入 文本中检测美股 ETF 代码（纯字母，非数字 A 股代码）。"""
+    found = []
+    for ticker in US_ETF_TICKERS:
+        # 用词边界匹配，避免如 "IAU" 误匹配到别的单词
+        if re.search(rf'\b{re.escape(ticker)}\b', text, re.IGNORECASE):
+            found.append(ticker)
+    return found
+
+
+def route_account(text: str, explicit_account: Optional[str]) -> Optional[str]:
+    """
+    账户自动路由逻辑：
+    1. 守东显式指定（--account 或文本内「X账户」）→ 以显式指定为准，绝不覆盖。
+    2. 未显式指定 → 根据标的代码物理属性自动路由：
+       - 含美股 ETF 代码 → B 账户（美元计价）
+       - 仅含 A 股 6 位数字代码 → A 账户（人民币计价）
+       - 两者皆无/混合不清 → None（保持默认 A，交由上层判定）
+    """
+    if explicit_account:
+        return explicit_account
+
+    us = detect_us_tickers(text)
+    if us:
+        return "B"
     return None
 
 
@@ -313,6 +353,7 @@ def main():
     from_file = None
     text_input = None
     account = "A"  # 默认 A 账户
+    account_explicit = False  # 是否为守东显式指定账户
     operation_mode = False
 
     # 解析参数
@@ -323,6 +364,7 @@ def main():
             i += 2
         elif args[i] == "--account" or args[i] == "-a":
             account = args[i + 1].upper()
+            account_explicit = True
             i += 2
         elif args[i] == "--operation" or args[i] == "-o":
             operation_mode = True
@@ -348,9 +390,17 @@ def main():
     detected_account = detect_account(text_input)
     if detected_account:
         account = detected_account
+        account_explicit = True
+
+    # 自动路由：仅当未显式指定账户时，根据标的物理属性路由（美股→B账户）
+    auto_routed = route_account(text_input, detected_account)
+    if auto_routed and not account_explicit:
+        account = auto_routed
 
     print(f"📋 解析 /输入 指令")
     print(f"   账户: {account}")
+    if auto_routed and not account_explicit:
+        print(f"       (自动路由: 检测到美股ETF标的 → B账户)")
     print(f"   模式: {'全量替换' if replace else '增量更新'}")
     print(f"   试运行: {'是' if dry_run else '否'}")
     print()

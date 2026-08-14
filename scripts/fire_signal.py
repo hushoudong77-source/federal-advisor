@@ -403,62 +403,97 @@ def compute_momentum(sym, info, ind, params):
     }
 
 
+def _dir_is_up(d):
+    """方向值双兼容：上游可能传 'up'/'down'（英文）或 '↑'/'↓'（箭头）"""
+    if d is None:
+        return None
+    return d in ("up", "↑")
+
+
 def compute_golden_shield(sym, info, ind, params):
     """
-    金盾策略信号计算 (IAU/518880)
-    四条件: MA60↑ + MACD金叉 + RSI<70 + 波动率正常
-    战术前置: DXY↓ + MACD金叉 + FOMC落地 → ⅓仓位
+    金盾策略信号计算 (IAU/518880) — V1.6
+    正统满仓四条件（AND）:
+      C1 双顺风硬前置: DXY MA20↓ (宏观层供弹) + 美元走弱
+      C2 锚线方向: MA40方向↑ (V1.6: MA60→MA40)
+      C3 MACD金叉
+      C4 RSI<70 且 波动率正常
+    MA40走平过渡态 (V1.6新增):
+      MA40方向↓→走平（5日MA40变化≤0.1%）+ C1双顺风 + C3金叉 → ⅓仓先行
+    卖点体系 (V1.6): S3(双逆风止损) + S6(追踪止盈)，S1/S2/S4已废除
     """
-    ma60_dir = get_ind_dir(ind, "MA60")
-    macd_bar = get_ind(ind, "MACD", "BAR")
-    macd_cross = get_ind(ind, "MACD", "cross")
+    ma40_dir = get_ind_dir(ind, "MA40")
+    ma40_5d_chg = get_ind(ind, "MA40_5D_CHG")
+    macd_bar, macd_bar_prev = _get_macd_bar(ind)
     rsi = get_ind(ind, "RSI14")
     atr = get_ind(ind, "ATR14")
     price = info.get("price_realtime") or info.get("close_tushare")
     ema150 = get_ind(ind, "EMA150")
-    
-    if ma60_dir is None or rsi is None:
-        return {"error": "指标缺失"}
-    
-    # 正统四条件
+
+    # 宏观层数据（DXY方向）由 LLM/宏观层供弹，代码层尝试从 info 读取
+    dxy_dir = info.get("dxy_ma20_dir") or params.get("dxy_ma20_dir")
+
+    if ma40_dir is None or rsi is None:
+        return {"error": "指标缺失", "ma40_dir": ma40_dir, "rsi": rsi}
+
+    ma40_up = _dir_is_up(ma40_dir) is True
+    ma40_down = _dir_is_up(ma40_dir) is False
+
+    # 5日MA40变化率绝对值 ≤ 0.1% → 走平
+    ma40_flat = (ma40_5d_chg is not None and abs(ma40_5d_chg) <= 0.1)
+
+    # C1 双顺风硬前置：DXY MA20↓（宏观层供弹）。数据缺失 → 不满足（保守）
+    c1_dxy_down = _dir_is_up(dxy_dir) is False if dxy_dir is not None else False
+
     conditions = {}
-    conditions["C1_MA60_up"] = {
-        "met": ma60_dir == "↑",
-        "value": f"MA60方向={ma60_dir}"
+    conditions["C1_dual_tailwind"] = {
+        "met": c1_dxy_down,
+        "value": f"DXY MA20方向={dxy_dir if dxy_dir else '缺失(需宏观层供弹)'}"
     }
-    conditions["C2_MACD_golden"] = {
-        "met": macd_cross == "金叉🟢",
-        "value": f"MACD={macd_cross}, BAR={macd_bar}"
+    conditions["C2_MA40_up"] = {
+        "met": ma40_up,
+        "value": f"MA40方向={ma40_dir}"
     }
-    conditions["C3_RSI_below_70"] = {
+    macd_golden = macd_bar is not None and macd_bar > 0 and (macd_bar_prev or 0) <= 0
+    conditions["C3_MACD_golden"] = {
+        "met": macd_golden,
+        "value": f"MACD BAR={macd_bar}, BAR_prev={macd_bar_prev}"
+    }
+    conditions["C4_RSI_vol"] = {
         "met": rsi < 70,
         "value": f"RSI14={rsi}"
     }
-    # C4: 波动率正常 — 简化：ATR14/现价 < 3%
+    # 波动率正常：ATR14/现价 < 3%
     vol_normal = (atr / price) < 0.03 if atr and price else True
-    conditions["C4_vol_normal"] = {
+    conditions["C5_vol_normal"] = {
         "met": vol_normal,
         "value": f"ATR/价格={round(atr/price*100,2)}%" if atr and price else "N/A"
     }
-    
+
+    # 正统满仓：C1∧C2∧C3∧C4∧C5
     orthodox_all = all(c["met"] for c in conditions.values())
-    
-    # 战术前置：DXY↓+MACD金叉+FOMC落地 → LLM层判定DXY和FOMC
-    tactical_possible = conditions["C2_MACD_golden"]["met"]  # 仅判定C2，其余LLM层
-    
+
+    # MA40走平过渡态（⅓仓先行）：走平 + C1双顺风 + C3金叉
+    transitional = ma40_flat and c1_dxy_down and conditions["C3_MACD_golden"]["met"]
+
     # EMA150约束
     ema150_deviation = pct_diff(price, ema150) if ema150 and price else None
     ema150_ok = ema150_deviation is not None and abs(ema150_deviation) <= 2.0
-    
+
     return {
         "strategy": "golden_shield",
+        "version": "V1.6",
         "conditions": conditions,
+        "ma40_flat": ma40_flat,
+        "ma40_5d_chg": ma40_5d_chg,
         "orthodox_triggered": orthodox_all,
-        "tactical_possible": tactical_possible,
+        "transitional_triggered": transitional,
         "ema150_deviation": ema150_deviation,
         "ema150_ok": ema150_ok,
-        "triggered": orthodox_all or tactical_possible,
-        "entry_type": "满仓" if orthodox_all else ("战术前置⅓仓" if tactical_possible else "等待")
+        "triggered": orthodox_all or transitional,
+        "entry_type": ("满仓" if orthodox_all
+                       else ("战术前置⅓仓(MA40走平过渡态)" if transitional
+                             else "等待")),
     }
 
 
@@ -679,7 +714,7 @@ def _summarize_one(summary, sym, sig, strategy):
         summary["golden_shield"].append({
             "symbol": sym,
             "orthodox_triggered": sig.get("orthodox_triggered"),
-            "tactical_possible": sig.get("tactical_possible"),
+            "transitional_triggered": sig.get("transitional_triggered"),
             "ema150_ok": sig.get("ema150_ok"),
             "conditions": {k: v["met"] for k, v in sig.get("conditions", {}).items()}
         })

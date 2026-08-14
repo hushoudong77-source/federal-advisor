@@ -1,172 +1,180 @@
 {
-  "_meta": {
-    "version": "1.0",
-    "created": "2026-07-24",
-    "description": "持仓数据单一真源。LLM需要持仓信息时，必须调用 read_positions.py 读取此文件，禁止凭记忆/推理/缓存生成持仓数据。",
-    "update_rule": "仅守东通过 /输入 指令确权后才可修改此文件。自动脚本不修改。",
-    "checksum": "85ae888baedd6f41",
-    "checksum_algo": "sha256_16",
-    "checksum_updated": "2026-08-11T22:49:42+08:00"
-  },
-  "accounts": {
-    "A": {
-      "currency": "CNY",
-      "holdings": {
-        "518880": {
-          "shares": 7000,
-          "cost": 8.646,
-          "confirmed": "2026-08-11",
-          "note": "黄金ETF华安"
-        },
-        "588000": {
-          "shares": 5900,
-          "cost": 1.698,
-          "confirmed": "2026-08-12",
-          "note": "科创50ETF。⚠️首建：2026-08-12买入5,900股@¥1.698"
-        },
-        "159915": {
-          "shares": 11388,
-          "cost": 3.548,
-          "confirmed": "2026-08-12",
-          "note": "创业板ETF。8/12加仓2,888股@¥3.548，合并11,388股@¥3.548"
-        },
-        "510500": {
-          "shares": 7400,
-          "cost": 7.58,
-          "confirmed": "2026-08-12",
-          "note": "中证500ETF。8/12加仓2,100股@¥7.579，合并7,400股@¥7.580"
-        },
-        "510300": {
-          "shares": 8100,
-          "cost": 4.777,
-          "confirmed": "2026-08-12",
-          "note": "沪深300ETF。8/12加仓2,100股@¥4.759，合并8,100股@¥4.777"
-        },
-        "159530": {
-          "shares": 15300,
-          "cost": 1.306,
-          "confirmed": "2026-08-11",
-          "note": "机器人ETF"
-        },
-        "512100": {
-          "shares": 10400,
-          "cost": 2.901,
-          "confirmed": "2026-08-11",
-          "stop_loss": {
-            "reduce": 2.78,
-            "clear": 2.67
-          },
-          "stop_loss_note": "守东直接指定：跌破¥2.78减半仓，跌破¥2.67全清"
-        },
-        "510880": {
-          "shares": 17000,
-          "cost": 3.043,
-          "confirmed": "2026-08-11",
-          "note": "⚠️复持标的：曾于2026-07-03讨论清仓，守东后续重新买入。红利ETF易方达，全量替换确权。任何涉及该标的持仓的输出前必须先读positions.json，禁止凭历史清仓印象覆盖。"
-        },
-        "511880": {
-          "shares": 3100,
-          "cost": 100.422,
-          "confirmed": "2026-08-11",
-          "note": "银华日利货币ETF，视同现金等价物"
-        }
-      },
-      "cash_approx": 373072,
-      "cleared": [
-        "513910",
-        "513180"
-      ],
-      "never_held": [],
-      "extra_cash": {
-        "cmb": 100000,
-        "note": "招行账户额外现金，2026-08-11 /输入确权"
-      },
-      "gold_extra": {
-        "value": 31474,
-        "note": "守东提及「黄金：31474元」，2026-08-11 /输入确权"
-      },
-      "note": "主账户现金¥373,072 + 招行¥100,000 + 511880 ¥312,182 = 总可调用资金¥785,254。全量替换确权 2026-08-11。"
+  "positions": {
+    "_meta": {
+      "version": "1.0",
+      "created": "2026-07-24",
+      "description": "持仓数据单一真源。LLM需要持仓信息时，必须调用 read_positions.py 读取此文件，禁止凭记忆/推理/缓存生成持仓数据。",
+      "update_rule": "仅守东通过 /输入 指令确权后才可修改此文件。自动脚本不修改。",
+      "checksum": "a6c7190f8c792c5c",
+      "checksum_algo": "sha256_16",
+      "checksum_updated": "2026-08-13T22:52:22+08:00"
     },
-    "B": {
-      "currency": "USD",
-      "holdings": {
-        "VEA": {
-          "shares": 226,
-          "cost": 70.744,
-          "confirmed": "2026-08-12",
-          "note": "8/12加仓10股@$71.53，合并226股@$70.744"
+    "accounts": {
+      "A": {
+        "currency": "CNY",
+        "holdings": {
+          "518880": {
+            "shares": 7000,
+            "cost": 8.646,
+            "confirmed": "2026-08-11",
+            "note": "黄金ETF华安"
+          },
+          "588000": {
+            "shares": 5900,
+            "cost": 1.698,
+            "confirmed": "2026-08-12",
+            "note": "科创50ETF。⚠️首建：2026-08-12买入5,900股@¥1.698"
+          },
+          "159915": {
+            "shares": 11388,
+            "cost": 3.548,
+            "confirmed": "2026-08-12",
+            "note": "创业板ETF"
+          },
+          "510500": {
+            "shares": 7400,
+            "cost": 7.58,
+            "confirmed": "2026-08-12",
+            "note": "中证500ETF"
+          },
+          "510300": {
+            "shares": 8100,
+            "cost": 4.777,
+            "confirmed": "2026-08-12",
+            "note": "沪深300ETF"
+          },
+          "159530": {
+            "shares": 15300,
+            "cost": 1.306,
+            "confirmed": "2026-08-11",
+            "note": "机器人ETF"
+          },
+          "512100": {
+            "shares": 10400,
+            "cost": 2.901,
+            "confirmed": "2026-08-11",
+            "stop_loss": {
+              "reduce": 2.78,
+              "clear": 2.67
+            },
+            "stop_loss_note": "守东直接指定：跌破¥2.78减半仓，跌破¥2.67全清"
+          },
+          "510880": {
+            "shares": 17000,
+            "cost": 3.043,
+            "confirmed": "2026-08-11",
+            "note": "⚠️复持标的：曾于2026-07-03讨论清仓，守东后续重新买入。红利ETF易方达，全量替换确权。任何涉及该标的持仓的输出前必须先读positions.json，禁止凭历史清仓印象覆盖。"
+          },
+          "511880": {
+            "shares": 3100,
+            "cost": 100.422,
+            "confirmed": "2026-08-11",
+            "note": "银华日利货币ETF，视同现金等价物"
+          }
         },
-        "VTI": {
-          "shares": 34,
-          "cost": 369.59,
-          "confirmed": "2026-07-23"
+        "cash_approx": 373072,
+        "cleared": [
+          "513910",
+          "513180"
+        ],
+        "never_held": [],
+        "extra_cash": {
+          "cmb": 100000,
+          "note": "招行账户额外现金，2026-08-11 /输入确权"
         },
-        "QQQ": {
-          "shares": 7,
-          "cost": 711.706,
-          "confirmed": "2026-07-23"
+        "gold_extra": {
+          "value": 31474,
+          "note": "守东提及「黄金：31474元」，2026-08-11 /输入确权"
         },
-        "CANE": {
-          "shares": 3452,
-          "cost": 9.9,
-          "confirmed": "2026-07-23",
-          "note": "均价≈$9.90，第1+2批"
-        },
-        "MUFG": {
-          "shares": 1644,
-          "cost": 19.961,
-          "confirmed": "2026-07-23"
-        },
-        "EWY": {
-          "shares": 96,
-          "cost": 168.75,
-          "confirmed": "2026-08-11",
-          "note": "59股@171.673+37股@164.10, 加权均价$168.75"
-        },
-        "IVV": {
-          "shares": 6,
-          "cost": 744.637,
-          "confirmed": "2026-07-23"
-        },
-        "VNM": {
-          "shares": 800,
-          "cost": 16.51,
-          "confirmed": "2026-07-23",
-          "note": "零止损底仓，等深跌补仓"
-        }
+        "note": "主账户现金¥373,072 + 招行¥100,000 + 511880 ¥312,182 = 总可调用资金¥785,254。全量替换确权 2026-08-11。"
       },
-      "cash_approx": 124000,
-      "cleared": [
-        "SGOV",
-        "BBJP"
+      "B": {
+        "currency": "USD",
+        "holdings": {
+          "VEA": {
+            "shares": 226,
+            "cost": 70.744,
+            "confirmed": "2026-08-12",
+            "note": "VEA 226股@$70.744"
+          },
+          "VTI": {
+            "shares": 34,
+            "cost": 369.59,
+            "confirmed": "2026-07-23"
+          },
+          "QQQ": {
+            "shares": 7,
+            "cost": 711.706,
+            "confirmed": "2026-07-23"
+          },
+          "CANE": {
+            "shares": 3452,
+            "cost": 9.9,
+            "confirmed": "2026-07-23",
+            "note": "均价≈$9.90，第1+2批"
+          },
+          "MUFG": {
+            "shares": 1644,
+            "cost": 19.961,
+            "confirmed": "2026-07-23"
+          },
+          "EWY": {
+            "shares": 96,
+            "cost": 168.75,
+            "confirmed": "2026-08-11",
+            "note": "59股@171.673+37股@164.10, 加权均价$168.75"
+          },
+          "IVV": {
+            "shares": 6,
+            "cost": 744.637,
+            "confirmed": "2026-07-23"
+          },
+          "VNM": {
+            "shares": 800,
+            "cost": 16.51,
+            "confirmed": "2026-07-23",
+            "note": "零止损底仓，等深跌补仓"
+          },
+          "IAU": {
+            "shares": 100,
+            "cost": 82.415,
+            "confirmed": "2026-08-13"
+          }
+        },
+        "cash_approx": 124000,
+        "cleared": [
+          "SGOV",
+          "BBJP"
+        ],
+        "never_held": [
+          "BOTZ"
+        ]
+      }
+    },
+    "summary": {
+      "total_holdings_count": 18,
+      "A_account_tickers": [
+        "159530",
+        "159915",
+        "510300",
+        "510500",
+        "510880",
+        "511880",
+        "512100",
+        "518880",
+        "588000"
       ],
-      "never_held": [
-        "BOTZ"
+      "B_account_tickers": [
+        "CANE",
+        "EWY",
+        "IAU",
+        "IVV",
+        "MUFG",
+        "QQQ",
+        "VEA",
+        "VNM",
+        "VTI"
       ]
     }
-  },
-  "summary": {
-    "total_holdings_count": 17,
-    "A_account_tickers": [
-      "159530",
-      "159915",
-      "510300",
-      "510500",
-      "510880",
-      "511880",
-      "512100",
-      "518880",
-      "588000"
-    ],
-    "B_account_tickers": [
-      "VEA",
-      "VTI",
-      "QQQ",
-      "CANE",
-      "MUFG",
-      "EWY",
-      "IVV",
-      "VNM"
-    ]
   }
 }
