@@ -1,0 +1,227 @@
+{
+  "VTI": {
+    "type": "us",
+    "tickflow": "VTI.US",
+    "rows": 6338,
+    "earliest": "2001-05-31",
+    "latest": "2026-08-13",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:24"
+  },
+  "VEA": {
+    "type": "us",
+    "tickflow": "VEA.US",
+    "rows": 4793,
+    "earliest": "2007-07-26",
+    "latest": "2026-08-13",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:25"
+  },
+  "QQQ": {
+    "type": "us",
+    "tickflow": "QQQ.US",
+    "rows": 6900,
+    "earliest": "1999-03-10",
+    "latest": "2026-08-13",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:26"
+  },
+  "IVV": {
+    "type": "us",
+    "tickflow": "IVV.US",
+    "rows": 6597,
+    "earliest": "2000-05-19",
+    "latest": "2026-08-13",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:26"
+  },
+  "IAU": {
+    "type": "us",
+    "tickflow": "IAU.US",
+    "rows": 5419,
+    "earliest": "2005-01-28",
+    "latest": "2026-08-13",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:27"
+  },
+  "BBJP": {
+    "type": "us",
+    "tickflow": "BBJP.US",
+    "rows": 2042,
+    "earliest": "2018-06-18",
+    "latest": "2026-08-13",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:27"
+  },
+  "MUFG": {
+    "type": "us",
+    "tickflow": "MUFG.US",
+    "rows": 9057,
+    "earliest": "1989-09-19",
+    "latest": "2026-08-13",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:28"
+  },
+  "EWY": {
+    "type": "us",
+    "tickflow": "EWY.US",
+    "rows": 6599,
+    "earliest": "2000-05-12",
+    "latest": "2026-08-13",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:29"
+  },
+  "VNM": {
+    "type": "us",
+    "tickflow": "VNM.US",
+    "rows": 4275,
+    "earliest": "2009-08-14",
+    "latest": "2026-08-13",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:30"
+  },
+  "FLIN": {
+    "type": "us",
+    "tickflow": "FLIN.US",
+    "rows": 2109,
+    "earliest": "2018-02-08",
+    "latest": "2026-08-13",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:30"
+  },
+  "SMIN": {
+    "type": "us",
+    "tickflow": "SMIN.US",
+    "rows": 3536,
+    "earliest": "2012-02-09",
+    "latest": "2026-08-13",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:31"
+  },
+  "BOTZ": {
+    "type": "us",
+    "tickflow": "BOTZ.US",
+    "rows": 2490,
+    "earliest": "2016-09-13",
+    "latest": "2026-08-13",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:31"
+  },
+  "CANE": {
+    "type": "us",
+    "tickflow": "CANE.US",
+    "rows": 3593,
+    "earliest": "2011-09-19",
+    "latest": "2026-08-13",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:32"
+  },
+  "588000": {
+    "type": "a",
+    "tickflow": "588000.SH",
+    "rows": 1395,
+    "earliest": "2020-11-16",
+    "latest": "2026-08-14",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:32"
+  },
+  "513180": {
+    "type": "a",
+    "tickflow": "513180.SH",
+    "rows": 1269,
+    "earliest": "2021-05-25",
+    "latest": "2026-08-14",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:32"
+  },
+  "513910": {
+    "type": "a",
+    "tickflow": "513910.SH",
+    "rows": 596,
+    "earliest": "2024-03-04",
+    "latest": "2026-08-14",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:33"
+  },
+  "510500": {
+    "type": "a",
+    "tickflow": "510500.SH",
+    "rows": 3259,
+    "earliest": "2013-03-15",
+    "latest": "2026-08-14",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:33"
+  },
+  "518880": {
+    "type": "a",
+    "tickflow": "518880.SH",
+    "rows": 3173,
+    "earliest": "2013-07-29",
+    "latest": "2026-08-14",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:34"
+  },
+  "512100": {
+    "type": "a",
+    "tickflow": "512100.SH",
+    "rows": 2375,
+    "earliest": "2016-11-04",
+    "latest": "2026-08-14",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:34"
+  },
+  "510880": {
+    "type": "a",
+    "tickflow": "510880.SH",
+    "rows": 4757,
+    "earliest": "2007-01-18",
+    "latest": "2026-08-14",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:35"
+  },
+  "159530": {
+    "type": "a",
+    "tickflow": "159530.SZ",
+    "rows": 622,
+    "earliest": "2024-01-18",
+    "latest": "2026-08-14",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:35"
+  },
+  "510300": {
+    "type": "a",
+    "tickflow": "510300.SH",
+    "rows": 3456,
+    "earliest": "2012-05-28",
+    "latest": "2026-08-14",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:36"
+  },
+  "159915": {
+    "type": "a",
+    "tickflow": "159915.SZ",
+    "rows": 3564,
+    "earliest": "2011-12-09",
+    "latest": "2026-08-14",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:36"
+  },
+  "513770": {
+    "type": "a",
+    "tickflow": "513770.SH",
+    "rows": 1090,
+    "earliest": "2022-02-18",
+    "latest": "2026-08-14",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:37"
+  },
+  "159545": {
+    "type": "a",
+    "tickflow": "159545.SZ",
+    "rows": 568,
+    "earliest": "2024-04-15",
+    "latest": "2026-08-14",
+    "source": "tickflow",
+    "updated_at": "2026-08-14 21:59:37"
+  }
+}
