@@ -485,6 +485,14 @@ def fetch_all():
             "_pid": os.getpid(),
             "_realtime_ts": result["timestamp"],
             "_tickflow_calls": merged.get("_tickflow_calls", 0),
+            # 🔴 2026-08-17 焊入：落全量现价 + TickFlow 最新日期，
+            # 供 output_gate --check intraday 的 Layer 2 做「现价=日线收盘价」陷阱检测。
+            "_prices": {t: merged[t].get("price") for t in merged
+                        if t not in ("_realtime_ts", "_tickflow_log", "_tickflow_calls", "_tickflow_elapsed")},
+            "_tickflow_latest": {t: merged[t].get("latest_date") for t in merged
+                                 if isinstance(merged.get(t), dict) and merged[t].get("latest_date")},
+            "_close": {t: merged[t].get("close") for t in merged
+                       if isinstance(merged.get(t), dict) and merged[t].get("close") is not None},
         }
         os.makedirs(CACHE_DIR, exist_ok=True)
         with open(CACHE_FILE, "w", encoding="utf-8") as f:

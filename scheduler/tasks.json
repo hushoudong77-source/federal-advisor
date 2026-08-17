@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-14T21:59:56.035889",
+  "updated_at": "2026-08-17T09:35:14.887830",
   "tasks": {
     "ed3fb6c0": {
       "id": "ed3fb6c0",
@@ -49,7 +49,7 @@
       "name": "510500止损盯盘提醒",
       "enabled": true,
       "created_at": "2026-07-13T20:15:53.858673",
-      "updated_at": "2026-08-14T09:35:06.601189",
+      "updated_at": "2026-08-17T09:35:14.878132",
       "schedule": {
         "type": "cron",
         "expression": "25 9 * * 1-5"
@@ -63,14 +63,14 @@
         "channel_type": "weixin",
         "notify_session_id": "session__status_95149"
       },
-      "next_run_at": "2026-08-17T09:25:00"
+      "next_run_at": "2026-08-18T09:25:00"
     },
     "bd40ee3c": {
       "id": "bd40ee3c",
       "name": "经济日历自动抓取",
       "enabled": true,
       "created_at": "2026-08-06T16:13:11.950328",
-      "updated_at": "2026-08-13T06:10:13.684469",
+      "updated_at": "2026-08-17T06:10:04.697696",
       "schedule": {
         "type": "cron",
         "expression": "0 6 * * 1,4"
@@ -85,7 +85,7 @@
         "notify_session_id": "session_page-mpnba6fv-nbge_95149",
         "silent": true
       },
-      "next_run_at": "2026-08-17T06:00:00"
+      "next_run_at": "2026-08-20T06:00:00"
     },
     "c4679a8b": {
       "id": "c4679a8b",
@@ -113,7 +113,7 @@
       "name": "美股行情每日增量备份",
       "enabled": true,
       "created_at": "2026-08-14T21:59:56.024499",
-      "updated_at": "2026-08-14T21:59:56.024505",
+      "updated_at": "2026-08-17T06:40:06.170427",
       "schedule": {
         "type": "cron",
         "expression": "30 6 * * 1-5"
@@ -127,7 +127,7 @@
         "channel_type": "weixin",
         "notify_session_id": "session_page-mpnba6fv-nbge_95149"
       },
-      "next_run_at": "2026-08-17T06:30:00"
+      "next_run_at": "2026-08-18T06:30:00"
     }
   }
 }

@@ -25,6 +25,7 @@
   python3 output_gate.py --check routing /tmp/llm.json  # 路由/持仓文本一致性校验
   python3 output_gate.py --check all          # 全量校验（/扫描 /开火 前）
   python3 output_gate.py --check realtime     # 盘中实时数据强制拉取
+  python3 output_gate.py --check intraday     # 🔴 盘中现价新鲜度闸门（防用日线收盘价冒充现价）
 
 输出：
   JSON: { "gate": "PASS"|"BLOCK", "checks": [...], "data": {...}, "token": "..." }
@@ -113,6 +114,18 @@ def _load_gate_rules():
 GATE_RULES = _load_gate_rules()
 
 # ── 工具函数 ──────────────────────────────────────────────────
+# 全池标的市场类型映射（用于盘中现价闸门的 Layer 2 按市场分流域）
+# 与 market_data.py 的 FULL_POOL 保持一致，避免循环导入。
+_FULL_POOL_TYPES = {
+    "VTI": "us", "VEA": "us", "QQQ": "us", "IVV": "us", "IAU": "us",
+    "BBJP": "us", "MUFG": "us", "EWY": "us", "VNM": "us", "FLIN": "us",
+    "SMIN": "us", "BOTZ": "us", "CANE": "us",
+    "588000": "a", "513180": "a", "513910": "a", "510500": "a",
+    "518880": "a", "512100": "a", "510880": "a", "159530": "a",
+    "510300": "a", "159915": "a", "513770": "a", "159545": "a",
+}
+FULL_POOL = {t: {"type": ty} for t, ty in _FULL_POOL_TYPES.items()}
+
 def now_iso():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -541,6 +554,126 @@ def check_realtime_data(tickers=None):
         result["status"] = "BLOCK"
         result["error"] = f"腾讯API不可用: {e}"
     
+    return result
+
+
+def check_intraday_price(tickers=None):
+    """
+    🔴 盘中现价新鲜度闸门（2026-08-17 焊入 — 512100 ¥2.864 事故根因修复）
+
+    根因：周一 A股盘中（09:30-15:00），/开火 报告拿 TickFlow 日线收盘价
+    （08-14 周四）填了「现价」栏，导致 512100 输出 ¥2.864、实际实时 ¥3.196，
+    偏差 +11.6%。规则 M.4 要求盘中现价必须走腾讯实时，但 check_realtime_data
+    只校验「拉没拉腾讯 API」，不校验「拉出来的现价是否真的实时」——
+    拿日线收盘价照样 PASS。
+
+    本闸门补上这个洞，两层强制校验：
+
+    Layer 1【腾讯实时新鲜度】:
+      盘中时段，.cache/market_data.json 的 _realtime_ts 必须在最近 N 分钟内。
+      超时 → BLOCK，禁止输出「现价」。
+
+    Layer 2【现价=日线收盘价陷阱检测】:
+      盘中时段，若某标的的「现价」恰好等于 TickFlow 日线 close，
+      且 TickFlow latest_date 早于今天 → 说明拿的是过期日线价，不是实时价。
+      → BLOCK。
+
+    两者任一 BLOCK → 现价字段禁止输出，必须重拉 market_data.py。
+    """
+    result = {
+        "check": "盘中现价新鲜度闸门",
+        "status": "PENDING",
+        "market_status": is_market_open(),
+        "realtime_age_seconds": None,
+        "tickflow_latest_date": None,
+        "stale_tickers": [],
+        "summary": ""
+    }
+
+    ms = result["market_status"]
+    intraday = ms["a_stock"] or ms["us_stock"]
+    if not intraday:
+        result["status"] = "PASS"
+        result["summary"] = "非盘中时段，现价新鲜度非强制（可用 TickFlow 收盘价/P0 投喂）。"
+        return result
+
+    # ── Layer 1：腾讯实时新鲜度 ──
+    max_age = int(GATE_RULES.get("intraday_price", {}).get("max_age_seconds", 300))  # 默认5分钟
+    cache_path = SCRIPTS_DIR / ".cache" / "market_data.json"
+    payload = read_json(cache_path)
+    rt_ts = payload.get("_realtime_ts", "") if isinstance(payload, dict) else ""
+
+    if not rt_ts:
+        result["status"] = "BLOCK"
+        result["summary"] = (
+            "盘中时段但 .cache/market_data.json 缺少 _realtime_ts——未检测到腾讯实时拉取。"
+            "禁止输出现价，先执行 python3 scripts/market_data.py。"
+        )
+        return result
+
+    try:
+        rt_dt = datetime.strptime(rt_ts, "%Y-%m-%d %H:%M:%S")
+        age = (datetime.now() - rt_dt).total_seconds()
+        result["realtime_age_seconds"] = round(age, 1)
+        if age > max_age:
+            result["status"] = "BLOCK"
+            result["summary"] = (
+                f"盘中时段但腾讯实时数据已过期 {round(age)} 秒（上限 {max_age} 秒）。"
+                f"禁止复用旧现价，先执行 python3 scripts/market_data.py 重拉。"
+            )
+            return result
+    except Exception as e:
+        result["status"] = "BLOCK"
+        result["summary"] = f"_realtime_ts 解析失败: {e}。禁止输出现价，先重拉脚本。"
+        return result
+
+    # ── Layer 2：现价=日线收盘价 陷阱检测 ──
+    # 今天的事故：A股周一盘中拿 TickFlow 日线 close（08-14）冒充现价。
+    # 检测逻辑：只对「正在交易的市场」检测——
+    #   A股盘中 → 只查 A股标的；美股盘中 → 只查美股标的。
+    # 若某标的「腾讯现价 price」==「TickFlow 日线 close」且 latest_date < 今天
+    # → 说明拿的是过期日线价，不是实时价。
+    today = datetime.now().strftime("%Y-%m-%d")
+    prices = payload.get("_prices", {}) if isinstance(payload, dict) else {}
+    closes = payload.get("_close", {}) if isinstance(payload, dict) else {}
+    latest_by_ticker = payload.get("_tickflow_latest", {}) if isinstance(payload, dict) else {}
+
+    # 仅检测正在交易的市场类型（FULL_POOL 的 type 字段：us/a）
+    active_types = []
+    if ms["a_stock"]:
+        active_types.append("a")
+    if ms["us_stock"]:
+        active_types.append("us")
+
+    for ticker, price in prices.items():
+        # 跳过非活跃市场（如美股休市时市场，其现价=日线close 属正常）
+        t_type = FULL_POOL.get(ticker, {}).get("type")
+        if t_type not in active_types:
+            continue
+        tf_latest = str(latest_by_ticker.get(ticker, ""))
+        close = closes.get(ticker)
+        if price is None or close is None:
+            continue
+        # 价格几乎相等（容差 0.1%），且 TickFlow 最新日早于今天 → 过期日线冒充现价
+        if abs(float(price) - float(close)) / max(float(close), 1e-6) < 0.001 and tf_latest < today:
+            result["stale_tickers"].append(
+                f"{ticker}(现价={price}=日线close, TickFlow最新={tf_latest})"
+            )
+
+    # Layer 2 的完整比对需要全量数据，缓存里没有时降级为「提示」，不误伤
+    if result["stale_tickers"]:
+        result["status"] = "BLOCK"
+        result["summary"] = (
+            f"盘中时段，以下标的现价疑似过期日线价（TickFlow latest 早于今天）: "
+            f"{', '.join(result['stale_tickers'])}。禁止输出现价，先重拉 market_data.py。"
+        )
+        return result
+
+    result["status"] = "PASS"
+    result["summary"] = (
+        f"盘中现价新鲜度通过：腾讯实时 {round(result['realtime_age_seconds'])} 秒前拉取"
+        f"（上限 {max_age} 秒），无过期日线价陷阱。"
+    )
     return result
 
 
@@ -1226,6 +1359,15 @@ def main():
         if exec_result["status"] == "BLOCK":
             all_pass = False
     
+    if check_type in ("intraday", "all"):
+        # 🔴 盘中现价新鲜度闸门（2026-08-17 焊入）
+        ticker_arg = args[idx + 2] if idx + 2 < len(args) and not args[idx + 2].startswith("--") else None
+        tickers = [ticker_arg] if ticker_arg and ticker_arg != "all" else None
+        ip = check_intraday_price(tickers)
+        results.append(ip)
+        if ip["status"] == "BLOCK":
+            all_pass = False
+
     if check_type in ("realtime", "all"):
         ticker_arg = args[idx + 2] if idx + 2 < len(args) and not args[idx + 2].startswith("--") else None
         tickers = [ticker_arg] if ticker_arg and ticker_arg != "all" else None

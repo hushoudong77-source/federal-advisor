@@ -70,6 +70,11 @@ realtime:
   us_stock_open: "21:30"
   us_stock_close: "04:00"
 
+intraday_price:
+  # 🔴 盘中现价新鲜度闸门（2026-08-17 焊入）
+  # 盘中时段输出现价前，腾讯实时拉取时间戳必须在最近 N 秒内
+  max_age_seconds: 300
+
 backtest:
   # 回测推断拦截关键词
   trigger_keywords:
