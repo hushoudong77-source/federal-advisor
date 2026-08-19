@@ -258,10 +258,14 @@ def cmd_premarket(args):
     output = result.stdout.strip()
 
     if use_json:
-        log_pl("premarket", {"scope": "macro"}, elapsed, True, output)
+        try:
+            _data = json.loads(output)
+        except (json.JSONDecodeError, TypeError):
+            _data = {"raw": output}
+        log_pl("premarket", {"scope": "macro"}, _data, elapsed_ms=elapsed)
         print(output)
     else:
-        log_pl("premarket", {"scope": "macro"}, elapsed, True)
+        log_pl("premarket", {"scope": "macro"}, {"raw": output}, elapsed_ms=elapsed)
         print(output)
 
 

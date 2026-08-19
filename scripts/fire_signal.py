@@ -133,16 +133,17 @@ def compute_counterpunch(sym, info, ind, params):
 
 def compute_offense_us(sym, info, ind, params):
     """
-    美股进攻策略信号计算 (QQQ/IVV/MUFG)
-    C1: 现价 < MA60 / C2: VOL > MA20×1.2 / C3: 无宏观事件(LLM层判定) / C4: 现价 ≤ H20×0.98
+    美股进攻策略信号计算 (QQQ/IVV/MUFG/BOTZ)
+    C1: 现价 < MA20 / C2: VOL > MA20×1.2 / C3: 无宏观事件(LLM层判定) / C4: 现价 ≤ H20×0.98
+    (r33.96: C1锚线 MA60→MA20 — 回测MA60累计+228%→MA20+252%，回撤−28.1%→−27.5%)
     """
-    ma60 = get_ind(ind, "MA60")
+    ma20 = get_ind(ind, "MA20")
     h20 = get_ind(ind, "H20")
     vol_ratio = get_ind(ind, "VOL_RATIO")
     price = info.get("price_realtime") or info.get("close_tushare")
     c4_factor = params["c4_factor"]
     
-    if ma60 is None or h20 is None or price is None:
+    if ma20 is None or h20 is None or price is None:
         return {"error": "指标缺失"}
     
     c4 = round(h20 * c4_factor, 4)
@@ -150,10 +151,10 @@ def compute_offense_us(sym, info, ind, params):
     gap_pct = pct_diff(price, c4)
     
     conditions = {}
-    conditions["C1_below_MA60"] = {
-        "met": price < ma60,
-        "value": f"现价{price} vs MA60={ma60}",
-        "detail": {"price": price, "ma60": ma60}
+    conditions["C1_below_MA20"] = {
+        "met": price < ma20,
+        "value": f"现价{price} vs MA20={ma20}",
+        "detail": {"price": price, "ma20": ma20}
     }
     conditions["C2_volume_above_120"] = {
         "met": vol_ratio is not None and vol_ratio > 1.2,
@@ -358,6 +359,18 @@ def _get_macd_bar(ind):
     return bar, bar_prev
 
 
+def _get_macd_full(ind):
+    """取 MACD 全字段：DIF/DEA/BAR/BAR_prev。兼容大小写。"""
+    macd = ind.get("MACD", {})
+    if not isinstance(macd, dict):
+        return None, None, None, None
+    diff = macd.get("diff", macd.get("DIF"))
+    dea = macd.get("dea", macd.get("DEA"))
+    bar = macd.get("bar", macd.get("BAR"))
+    bar_prev = macd.get("bar_prev", macd.get("BAR_PREV", 0))
+    return diff, dea, bar, bar_prev
+
+
 def compute_momentum(sym, info, ind, params):
     """
     独立动量跟随策略 (FLIN/SMIN/EWY/VNM)
@@ -410,6 +423,13 @@ def _dir_is_up(d):
     return d in ("up", "↑")
 
 
+def _dir_is_flat(d):
+    """方向值双兼容：flat 可能传 'flat'（英文）或 '→'（箭头）"""
+    if d is None:
+        return False
+    return d in ("flat", "→")
+
+
 def compute_golden_shield(sym, info, ind, params):
     """
     金盾策略信号计算 (IAU/518880) — V1.6
@@ -424,7 +444,9 @@ def compute_golden_shield(sym, info, ind, params):
     """
     ma40_dir = get_ind_dir(ind, "MA40")
     ma40_5d_chg = get_ind(ind, "MA40_5D_CHG")
+    ma40_5d_up_streak = get_ind(ind, "MA40_5D_UP_STREAK")
     macd_bar, macd_bar_prev = _get_macd_bar(ind)
+    macd_diff, macd_dea, _, _ = _get_macd_full(ind)
     rsi = get_ind(ind, "RSI14")
     atr = get_ind(ind, "ATR14")
     price = info.get("price_realtime") or info.get("close_tushare")
@@ -439,8 +461,24 @@ def compute_golden_shield(sym, info, ind, params):
     ma40_up = _dir_is_up(ma40_dir) is True
     ma40_down = _dir_is_up(ma40_dir) is False
 
-    # 5日MA40变化率绝对值 ≤ 0.1% → 走平
+    # 死区判定本身会返回 'flat'（ATR 自适应死区），这是"走平"的权威口径
+    # ⚠️ 双兼容：上游 bridge_format 可能归一化为箭头 '→'
+    ma40_dir_flat = _dir_is_flat(ma40_dir)
+
+    # 5日MA40变化率绝对值 ≤ 0.1% → 走平（金盾V1.6走平过渡态用此口径）
     ma40_flat = (ma40_5d_chg is not None and abs(ma40_5d_chg) <= 0.1)
+
+    # 🔵 连续符号确认（方案B — 2026-08-20焊入，2026-08-20收紧）：
+    # 死区判定（ma40_dir）用 ATR 自适应阈值，在黄金（ATR≈1.8%）上会把
+    # MA40 的真实上翘"吞"进 flat。连续符号确认独立于死区——MA40 5日变化率
+    # 连续 ≥3 日 > 0，即视为真实上翘，不受 ATR 死区影响。
+    # ⚠️ 收紧：连续符号确认仅在死区 flat 态启用。down 态（明确下行）不被短线
+    #    反抽越过——死区判定保持 down 不覆盖，避免把"下跌中继反弹"误判为反转。
+    ma40_up_streak_confirmed = (
+        ma40_5d_up_streak is not None and ma40_5d_up_streak >= 3
+    )
+    # C2 有效上翘 = 死区判定 up，或（死区 flat 且 连续符号确认）
+    ma40_up_effective = ma40_up or (ma40_dir_flat and ma40_up_streak_confirmed)
 
     # C1 双顺风硬前置：DXY MA20↓（宏观层供弹）。数据缺失 → 不满足（保守）
     c1_dxy_down = _dir_is_up(dxy_dir) is False if dxy_dir is not None else False
@@ -451,13 +489,16 @@ def compute_golden_shield(sym, info, ind, params):
         "value": f"DXY MA20方向={dxy_dir if dxy_dir else '缺失(需宏观层供弹)'}"
     }
     conditions["C2_MA40_up"] = {
-        "met": ma40_up,
-        "value": f"MA40方向={ma40_dir}"
+        "met": ma40_up_effective,
+        "value": f"MA40方向={ma40_dir}(死区), 连续上翘{ma40_5d_up_streak}日"
     }
-    macd_golden = macd_bar is not None and macd_bar > 0 and (macd_bar_prev or 0) <= 0
+    macd_golden = (
+        macd_diff is not None and macd_dea is not None
+        and macd_diff > 0 and macd_diff > macd_dea
+    )
     conditions["C3_MACD_golden"] = {
         "met": macd_golden,
-        "value": f"MACD BAR={macd_bar}, BAR_prev={macd_bar_prev}"
+        "value": f"MACD DIF={macd_diff}, DEA={macd_dea}, BAR={macd_bar} (0轴上金叉)"
     }
     conditions["C4_RSI_vol"] = {
         "met": rsi < 70,
@@ -486,6 +527,8 @@ def compute_golden_shield(sym, info, ind, params):
         "conditions": conditions,
         "ma40_flat": ma40_flat,
         "ma40_5d_chg": ma40_5d_chg,
+        "ma40_5d_up_streak": ma40_5d_up_streak,
+        "ma40_up_streak_confirmed": ma40_up_streak_confirmed,
         "orthodox_triggered": orthodox_all,
         "transitional_triggered": transitional,
         "ema150_deviation": ema150_deviation,

@@ -329,10 +329,25 @@ def judge_counterpunch_r0_r2(ticker, data, special):
     if ticker in R05_EXEMPT:
         result["r05"] = True
         result["r05_exempt"] = True
-    else:
-        ma40_dir = safe_float(data, "ma40_dir")
-        result["r05"] = ma40_dir is not None and ma40_dir >= 0
+    elif ticker == "510300":
+        # r33.97 — 510300（沪深300）回退至「MA40方向向上」过滤。
+        # 回测硬数据（含4×ATR止损+120日强制离场）：
+        #   均收益 +5.36% / 胜率62% / 最大回撤-30.6%（MA40向上）
+        #   vs +1.79% / 49% / -86.8%（底部序列）
+        # MA40向上过滤在510300上全面优于底部序列，故单独回退。
+        result["r05"] = data.get("ma40_dir") == "up"
         result["r05_exempt"] = False
+        result["r05_filter"] = "ma40_dir"
+    else:
+        # r33.96 — 非豁免标的（159915）改用「底部序列」过滤替代 MA40 方向。
+        # 根因：MA40方向向上 = 已经涨回来，与均值回归本质矛盾，导致V型底不做信号。
+        # 底部序列（恐慌日+止跌日）才是下跌末端确认信号。
+        # r33.97 — 159915回测硬数据：均收益+10.44%/胜率57%（底部序列）
+        #   vs -1.07%/41%（MA40向上），底部序列碾压，维持不变。
+        bottom_seq = data.get("bottom_seq")
+        result["r05"] = bool(bottom_seq)
+        result["r05_exempt"] = False
+        result["r05_filter"] = "bottom_seq"
 
     # R1: C1=False ∨ C2=False（非双False）
     ema = judge_ema_diversion(ticker, data)

@@ -20,6 +20,7 @@ import json
 import sys
 import os
 import importlib
+import importlib.util
 import subprocess
 from datetime import datetime
 
@@ -42,6 +43,30 @@ def _load_module(name):
         return mod
     except Exception as e:
         return None
+
+
+def _enforce_intraday_gate():
+    """🔴 盘中现价新鲜度闸门（2026-08-17 焊入 — 512100 ¥2.864 事故根因修复）
+
+    在 fetch_all() 之后立即调用，盘中时段校验腾讯实时数据新鲜度，
+    防止拿 TickFlow 日线收盘价/旧缓存冒充现价。
+
+    判定失败直接抛 RuntimeError 中断 pipeline——报告无法生成，
+    LLM 无法绕过（不走脚本就没有报告，走了脚本必过闸）。
+    """
+    gate_mod = _load_module("output_gate")
+    if gate_mod is None:
+        # output_gate 不可用 → 不阻断（降级为无闸门，但不静默——打印告警）
+        import sys as _sys
+        print("[⚠️ intraday gate] output_gate 模块加载失败，盘中现价新鲜度闸门失效", file=_sys.stderr)
+        return
+
+    gate = gate_mod.check_intraday_price()
+    if gate.get("status") == "BLOCK":
+        raise RuntimeError(
+            "🔴 盘中现价新鲜度闸门拦截: " + gate.get("summary", "现价数据疑似过期，禁止生成报告")
+        )
+    # PASS 时静默通过，不打断 pipeline 输出
 
 # ══════════════════════════════════════════════════════════════
 # 第零层：配置
@@ -135,6 +160,11 @@ def run_pipeline(scope="all"):
             capture_output=True, text=True, timeout=120
         )
         market_data = _parse_json(md.stdout)
+
+    # Step 1.5: 🔴 盘中现价新鲜度闸门（2026-08-17 焊入 — 512100 ¥2.864 事故根因修复）
+    # 盘中时段若缓存过期/现价=日线收盘价，直接中断 pipeline，禁止生成报告。
+    # 此闸门在 fetch_all() 之后立即触发，LLM 无法跳过——只要跑脚本就必过闸。
+    _enforce_intraday_gate()
 
     # Step 2: 格式桥接 — 扁平→嵌套（fire_signal.py 期望的格式）
     bridged = bridge_format(market_data)
@@ -276,6 +306,9 @@ def bridge_format(market_data):
         # MA40 5日变化率（金盾V1.6走平过渡态判定）
         if "ma40_5d_chg" in data and data["ma40_5d_chg"] is not None:
             ind["MA40_5D_CHG"] = {"value": data["ma40_5d_chg"]}
+        # MA40 5日连续上翘天数（连续符号确认，独立于死区判定）
+        if "ma40_5d_up_streak" in data and data["ma40_5d_up_streak"] is not None:
+            ind["MA40_5D_UP_STREAK"] = {"value": data["ma40_5d_up_streak"]}
         
         # 市场分类
         market = "us" if ticker not in ["588000","513180","513910","510500","518880","512100","510880","159530","510300","159915","513770","159545"] else "cn"
@@ -625,8 +658,8 @@ def _render_counterpunch(routes, mkt, macro, scores):
     lines = [
         "## 反击候选",
         "",
-        "| 排名 | 标的 | 现价 | 买入区间 | 距区间 | MACD BAR | 加仓过热 | 机会得分 | 开火 |",
-        "|:---:|:---|:---:|:---|:---:|:---|:---|:---:|:---:|",
+        "| 排名 | 标的 | 现价 | 买入区间 | 距区间 | MACD BAR | 底部序列 | 加仓过热 | 机会得分 | 开火 |",
+        "|:---:|:---|:---:|:---|:---:|:---|:---|:---|:---:|:---:|",
     ]
     
     # 收集数据行
@@ -644,17 +677,24 @@ def _render_counterpunch(routes, mkt, macro, scores):
         buy_zone_high = cp.get("buy_zone_high")
         diff_pct = cp.get("diff_pct")  # 正数=距区间上沿
         triggered = cp.get("triggered", False)
-        r05 = cp.get("r05", {})
-        r05_blocked = r05.get("blocked", False) if isinstance(r05, dict) else False
-        
+        # r33.96 — r05 为布尔值（True=放行），非豁免标的改用底部序列过滤。
+        r05 = cp.get("r05", True)
+        r05_exempt = cp.get("r05_exempt", False)
+        r05_filter = cp.get("r05_filter", "ma40_dir")
+        r05_blocked = (not r05) and (not r05_exempt)
+
+        # 底部序列状态（仅非豁免标的展示）
+        bottom_seq = md.get("bottom_seq")
+        bottom_stop_days = md.get("bottom_stop_days")
+
         # MACD BAR
         macd = md.get("macd", {})
         macd_bar = macd.get("bar") if isinstance(macd, dict) else None
-        
+
         # 港股标的 C3.1 降级
         hk_tickers = {"513910", "BBJP", "VNM"}
         is_hk = ticker in hk_tickers
-        
+
         # 开火判定
         if triggered and not r05_blocked:
             if is_hk and hk_downgraded:
@@ -662,17 +702,27 @@ def _render_counterpunch(routes, mkt, macro, scores):
             else:
                 fire = "🟢"
         elif triggered and r05_blocked:
-            fire = "⛔R0.5"
+            fire = "⛔MA40未向上" if r05_filter == "ma40_dir" else "⛔底部序列"
         else:
             fire = "—"
-        
+
         gap_s = f"{diff_pct:+.2f}%" if isinstance(diff_pct, (int, float)) else "—"
         macd_s = f"{macd_bar:+.3f}" if isinstance(macd_bar, (int, float)) else "—"
-        
+
+        # 过滤状态列（跟随 R0.5 过滤逻辑动态展示）
+        if r05_exempt:
+            seq_s = "豁免"
+        elif r05_filter == "ma40_dir":
+            seq_s = f"{'🟢' if r05 else '⛔'}MA40{'↑' if r05 else '↓'}"
+        elif bottom_seq:
+            seq_s = f"✅({bottom_stop_days}d前)" if isinstance(bottom_stop_days, (int, float)) else "✅"
+        else:
+            seq_s = "⏳等止跌"
+
         score = score_map.get(ticker)
         score_s = f"{score:+.2f}" if isinstance(score, (int, float)) else "—"
-        
-        rows.append((ticker, price, buy_zone_high, diff_pct, macd_bar, "✅正常", fire, score))
+
+        rows.append((ticker, price, buy_zone_high, diff_pct, macd_bar, seq_s, "✅正常", fire, score))
     
     # 排序：按机会得分降序，无分按距区间近的排
     rows.sort(key=lambda r: (
@@ -680,13 +730,13 @@ def _render_counterpunch(routes, mkt, macro, scores):
         r[3] if r[3] is not None else 999
     ))
     
-    for i, (ticker, price, buy_zone, diff, macd_bar, overheat, fire, score) in enumerate(rows, 1):
+    for i, (ticker, price, buy_zone, diff, macd_bar, seq_s, overheat, fire, score) in enumerate(rows, 1):
         price_s = _fmt_price(price, ticker, "cn" if ticker.isdigit() else "us")
         buy_s = f"≤{_fmt_price(buy_zone, ticker, 'cn' if ticker.isdigit() else 'us')}" if buy_zone else "—"
         gap_s = f"-{diff:.2f}%" if isinstance(diff, (int, float)) else "—"
         macd_s = f"{macd_bar:+.3f}" if isinstance(macd_bar, (int, float)) else "—"
         score_s = f"{score:+.2f}" if isinstance(score, (int, float)) else "—"
-        lines.append(f"| {i} | {ticker} | {price_s} | {buy_s} | {gap_s} | {macd_s} | {overheat} | {score_s} | {fire} |")
+        lines.append(f"| {i} | {ticker} | {price_s} | {buy_s} | {gap_s} | {macd_s} | {seq_s} | {overheat} | {score_s} | {fire} |")
     
     lines.append("")
     return lines
@@ -721,7 +771,7 @@ def _render_offense_us(signals, mkt, macro, scores):
         price = (mkt.get(ticker, {}) or {}).get("price")
         c4 = sig.get("c4")
         gap = sig.get("gap_pct")
-        macd = sig.get("conditions", {}).get("C1_below_MA60", {}).get("detail", {})
+        macd = sig.get("conditions", {}).get("C1_below_MA20", {}).get("detail", {})
         macd_bar = "—"
         ind = (mkt.get(ticker, {}) or {})
         if "macd" in ind and ind["macd"]:
@@ -860,6 +910,11 @@ def _render_golden_shield(signals, mkt, macro):
         ind = mkt.get(ticker, {})
         if ind:
             ma40_dir = ind.get("ma40_dir", "—")
+            # 连续上翘天数（方案B：独立于死区判定）
+            up_streak = sig.get("ma40_5d_up_streak")
+            if up_streak is not None:
+                streak_tag = "↑翘" if up_streak >= 3 else ("→" if up_streak > 0 else "↓跌")
+                ma40_dir = f"{ma40_dir}/{streak_tag}{up_streak}日"
             if ind.get("macd"):
                 bar_val = ind['macd'].get('bar', ind['macd'].get('BAR', 0))
                 bar_str = f"{bar_val:+.2f}" if isinstance(bar_val, (int, float)) else str(bar_val)

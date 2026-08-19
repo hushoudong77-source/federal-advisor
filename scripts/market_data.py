@@ -152,6 +152,28 @@ def _calc_ma(close, period):
     if len(close) < period: return None
     return round(float(close.iloc[-period:].mean()), 4)
 
+
+def _ma_dir(ma_now, ma_ago, volatility_eps=None):
+    """均线方向三态判定（斜率死区 ε 波动率自适应）。
+    r33.95 修复：原二值判定（> 则 up 否则 down）把走平区间误判为下降。
+    r33.96 修复（守东裁决②）：死区从固定 0.3% 改为波动率自适应——
+    ε = max(0.3% 地板, ATR14/价格)。高波动标的（如 EWY ATR≈5%）走平会被
+    固定 0.3% 死区误判为 down；自适应死区让「走平」真正落到 flat 态。
+    返回 'up' / 'flat' / 'down'。"""
+    if ma_now is None or ma_ago is None or ma_now <= 0 or ma_ago <= 0:
+        return None
+    chg = (ma_now - ma_ago) / ma_ago
+    # 地板 0.3% 兜底；有波动率则用 max(0.3%, ATR/价格)
+    eps = 0.003
+    if volatility_eps is not None and volatility_eps > 0:
+        eps = max(0.003, volatility_eps)
+    if chg > eps:
+        return "up"
+    elif chg < -eps:
+        return "down"
+    else:
+        return "flat"
+
 def _calc_ema(close, period):
     if len(close) < period: return None
     return round(float(close.ewm(span=period, adjust=False).mean().iloc[-1]), 4)
@@ -264,6 +286,55 @@ def _calc_obv(close, volume):
     except:
         return None
 
+def _calc_bottom_seq_full(open_, high, low, close, volume):
+    """底部序列检测（完整版，含 open 序列）。
+
+    返回 (bool 当前确认状态, int 最近恐慌日距今天数, int 最近止跌日距今天数)。
+    确认条件（AND）:
+      ① 近20个交易日内存在恐慌日（跌幅>3% 且 量比>1.5）
+      ② 恐慌日之后存在止跌日（|close-open|<0.3×ATR14 且 量比<0.8）
+    """
+    try:
+        close = pd.Series(close).astype(float).reset_index(drop=True)
+        open_ = pd.Series(open_).astype(float).reset_index(drop=True)
+        high = pd.Series(high).astype(float).reset_index(drop=True)
+        low = pd.Series(low).astype(float).reset_index(drop=True)
+        volume = pd.Series(volume).astype(float).reset_index(drop=True)
+    except Exception:
+        return (False, None, None)
+
+    if len(close) < 25:
+        return (False, None, None)
+
+    pc = close.shift(1)
+    tr = pd.concat([high - low, (high - pc).abs(), (low - pc).abs()], axis=1).max(axis=1)
+    atr14 = tr.rolling(14).mean()
+    vol_ma20 = volume.rolling(20).mean()
+    vol_ratio = volume / vol_ma20
+    pct_chg = close.pct_change() * 100
+    body_ratio = (close - open_).abs() / atr14
+
+    n = len(close)
+    window_start = max(0, n - 20)
+    panic_idx = None
+    # ① 找近20日内最近的恐慌日
+    for i in range(window_start, n):
+        if pd.isna(pct_chg.iloc[i]) or pd.isna(vol_ratio.iloc[i]):
+            continue
+        if pct_chg.iloc[i] < -3 and vol_ratio.iloc[i] > 1.5:
+            panic_idx = i
+            # ② 恐慌日之后找止跌日
+            for j in range(i + 1, n):
+                if pd.isna(body_ratio.iloc[j]) or pd.isna(vol_ratio.iloc[j]):
+                    continue
+                if body_ratio.iloc[j] < 0.3 and vol_ratio.iloc[j] < 0.8:
+                    days_panic = n - 1 - i
+                    days_stop = n - 1 - j
+                    return (True, days_panic, days_stop)
+            break  # 最近的恐慌日之后无止跌日 → 不满足
+    return (False, None, None)
+
+
 def fetch_tickflow_all():
     """TickFlow批量拉取全池25标日线 + 自算全部技术指标。
     batch() 一次调用完成，~0.6秒。
@@ -347,30 +418,48 @@ def fetch_tickflow_all():
         dev_ma60 = round((close.iloc[-1] / ma60 - 1) * 100, 2) if ma60 and ma60 > 0 else None
         dev_ma150 = round((close.iloc[-1] / ma150 - 1) * 100, 2) if ma150 and ma150 > 0 else None
 
-        # MA60 方向（20日变化）
+        # ATR（先于 MA 方向判定计算，供波动率自适应死区用）
+        atr14 = _calc_atr(high, low, close)
+        atr_pct = round(atr14 / close.iloc[-1] * 100, 2) if atr14 and close.iloc[-1] > 0 else None
+
+        # MA60 方向（20日变化，含波动率自适应死区三态判定 — r33.96）
         ma60_dir = None
         if ma60 and len(close) >= 20:
             ma60_20d_ago = _calc_ma(close.iloc[:-20], 60)
             if ma60_20d_ago and ma60_20d_ago > 0:
-                ma60_dir = "up" if ma60 > ma60_20d_ago else "down"
+                eps60 = (atr_pct / 100.0) if atr_pct else None
+                ma60_dir = _ma_dir(ma60, ma60_20d_ago, eps60)
 
-        # MA40 方向（20日变化，金盾V1.6用）
+        # MA40 方向（20日变化，金盾V1.6用，同含波动率自适应死区）
         ma40_dir = None
         if ma40 and len(close) >= 20:
             ma40_20d_ago = _calc_ma(close.iloc[:-20], 40)
             if ma40_20d_ago and ma40_20d_ago > 0:
-                ma40_dir = "up" if ma40 > ma40_20d_ago else "down"
+                eps40 = (atr_pct / 100.0) if atr_pct else None
+                ma40_dir = _ma_dir(ma40, ma40_20d_ago, eps40)
 
         # MA40 5日变化率（金盾V1.6走平过渡态判定用）
         ma40_5d_chg = None
+        ma40_5d_up_streak = None
         if ma40 and len(close) >= 5:
             ma40_5d_ago = _calc_ma(close.iloc[:-5], 40)
             if ma40_5d_ago and ma40_5d_ago > 0:
                 ma40_5d_chg = round((ma40 / ma40_5d_ago - 1) * 100, 4)
+            # 连续符号确认：MA40 5日变化率连续 N 日 > 0 的真实上翘天数
+            # （独立于死区判定，解决"MA40上翘被ATR死区吞掉"的问题）
+            up_streak = 0
+            for i in range(5, 0, -1):
+                if len(close) < 40 + i:
+                    continue
+                ma_now = _calc_ma(close.iloc[:-i], 40)
+                ma_prev = _calc_ma(close.iloc[:-i-5], 40)
+                if ma_now and ma_prev and ma_prev > 0 and ma_now > ma_prev:
+                    up_streak += 1
+                else:
+                    break
+            ma40_5d_up_streak = up_streak
 
-        # ATR / RSI / MACD / H20
-        atr14 = _calc_atr(high, low, close)
-        atr_pct = round(atr14 / close.iloc[-1] * 100, 2) if atr14 and close.iloc[-1] > 0 else None
+        # ATR / RSI / MACD / H20（atr14/atr_pct 已在 MA 方向判定前计算）
         rsi14 = _calc_rsi(close)
         macd = _calc_macd(close)
         h20 = round(float(close.iloc[-20:].max()), 4) if len(close) >= 20 else None
@@ -389,6 +478,10 @@ def fetch_tickflow_all():
         # 20日回撤（轨道二用）
         drawdown_20d = round((close.iloc[-1] / close.iloc[-20] - 1) * 100, 2) if len(close) >= 20 else None
 
+        # 底部序列（r33.77 — 反击R0.5过滤替代MA40方向）
+        bottom_seq, bottom_panic_days, bottom_stop_days = _calc_bottom_seq_full(
+            df["open"], high, low, close, volume)
+
         results[fed] = {
             "latest_date": latest_date,
             "rows": len(close),
@@ -405,6 +498,7 @@ def fetch_tickflow_all():
             # 方向
             "ma60_dir": ma60_dir, "ma40_dir": ma40_dir,
             "ma40_5d_chg": ma40_5d_chg,
+            "ma40_5d_up_streak": ma40_5d_up_streak,
             # 波动率
             "atr14": atr14, "atr_pct": atr_pct,
             # 动量
@@ -422,6 +516,10 @@ def fetch_tickflow_all():
             "obv": obv,
             # 轨道二
             "drawdown_20d": drawdown_20d,
+            # 底部序列（r33.96）
+            "bottom_seq": bottom_seq,
+            "bottom_panic_days": bottom_panic_days,
+            "bottom_stop_days": bottom_stop_days,
             # 数据源
             "data_source": "tickflow",
             "tf_symbol": tf_symbol,

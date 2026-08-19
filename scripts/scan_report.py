@@ -69,6 +69,38 @@ def ticker_market(ticker):
 # 第一层：运行流水线
 # ══════════════════════════════════════════════════════════════
 
+def _enforce_intraday_gate():
+    """🔴 盘中现价新鲜度闸门（2026-08-17 焊入 — 512100 ¥2.864 事故根因修复）
+
+    在 market_data.py 拉取之后立即调用，盘中时段校验腾讯实时数据新鲜度，
+    防止拿 TickFlow 日线收盘价/旧缓存冒充现价。
+    失败抛 RuntimeError 中断 pipeline——报告无法生成，LLM 无法绕过。
+    """
+    try:
+        proc = subprocess.run(
+            ["python3", os.path.join(SCRIPT_DIR, "output_gate.py"), "--check", "intraday"],
+            capture_output=True, text=True, timeout=15
+        )
+        out = proc.stdout.strip()
+        try:
+            gate = json.loads(out)
+        except Exception:
+            # output_gate 返回非 JSON → 不阻断（降级，但打印告警）
+            print(f"[⚠️ intraday gate] output_gate 返回非JSON: {out[:200]}", file=sys.stderr)
+            return
+        if gate.get("gate") == "BLOCK":
+            summary = ""
+            for c in gate.get("checks", []):
+                if c.get("status") == "BLOCK":
+                    summary = c.get("summary", "")
+                    break
+            raise RuntimeError("🔴 盘中现价新鲜度闸门拦截: " + (summary or "现价数据疑似过期"))
+    except RuntimeError:
+        raise
+    except Exception as e:
+        print(f"[⚠️ intraday gate] 闸门执行异常（降级放行）: {e}", file=sys.stderr)
+
+
 def run_pipeline(scope="all"):
     """跑扫描流水线，返回结构化数据"""
     
@@ -78,6 +110,9 @@ def run_pipeline(scope="all"):
         capture_output=True, text=True, timeout=120
     )
     market_data = _parse_json(md.stdout)
+
+    # Step 1.5: 🔴 盘中现价新鲜度闸门（2026-08-17 焊入 — 512100 ¥2.864 事故根因修复）
+    _enforce_intraday_gate()
     
     # Step 2: route_engine.py
     re_result = subprocess.run(
@@ -394,9 +429,26 @@ def _infer_action(ticker, rt, md):
     elif route == "offensive_candidate":
         return "等待恢复"
     elif route == "counterpunch":
-        if "触发" in status:
-            return "🟢开火候选"
-        return "等待买入区间"
+        cp = rt.get("counterpunch", {})
+        r05_filter = cp.get("r05_filter", "ma40_dir")
+        # r33.96/33.97 — 非豁免标的用底部序列(159915)或MA40方向(510300)过滤
+        if cp.get("r05_exempt"):
+            # 豁免标的：不看过滤，直接按触发状态
+            if "触发" in status:
+                return "🟢开火候选"
+            return "等待买入区间"
+        # 非豁免标的：按各自过滤逻辑
+        if cp.get("r05"):
+            if "触发" in status:
+                if r05_filter == "ma40_dir":
+                    return "🟢反击触发(MA40↑)"
+                return "🟢反击触发(底部序列✅)"
+            if r05_filter == "ma40_dir":
+                return "待MA40转向上(价格到位)"
+            return "待底部序列(价格到位)"
+        if r05_filter == "ma40_dir":
+            return "🔒MA40未向上"
+        return "🔒底部序列未确认(等止跌日)"
     elif route == "momentum":
         momentum = rt.get("momentum", {})
         if momentum.get("track_one"):
@@ -560,13 +612,17 @@ def _collect_suggestions(routes, mkt, positions, macro):
         elif route == "counterpunch" and "触发" in status:
             cp = rt.get("counterpunch", {})
             buy_zone_high = cp.get("buy_zone_high")
-            r05_blocked = cp.get("r05_blocked", False)
+            # r33.96/33.97 — r05 为布尔值（True=放行），非豁免标的按各自过滤
+            r05 = cp.get("r05", True)
+            r05_exempt = cp.get("r05_exempt", False)
+            r05_filter = cp.get("r05_filter", "ma40_dir")
+            r05_blocked = (not r05) and (not r05_exempt)
             if r05_blocked:
                 suggestions.append({
                     "priority": "🔴禁止", "ticker": ticker,
                     "action": "暂停", "qty": "—",
                     "condition": "—",
-                    "note": "R0.5拦截"
+                    "note": "MA40未向上" if r05_filter == "ma40_dir" else "底部序列未确认"
                 })
             else:
                 suggestions.append({

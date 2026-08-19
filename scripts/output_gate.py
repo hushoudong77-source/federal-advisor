@@ -91,6 +91,9 @@ def _load_gate_rules():
                         key, val = parts
                         key = key.strip()
                         val = val.strip()
+                        # 剥离行内注释（# 之后的内容）
+                        if "#" in val:
+                            val = val.split("#", 1)[0].strip()
                         # 尝试类型转换
                         if val.replace(".", "").isdigit():
                             val = float(val) if "." in val else int(val)
@@ -629,21 +632,29 @@ def check_intraday_price(tickers=None):
 
     # ── Layer 2：现价=日线收盘价 陷阱检测 ──
     # 今天的事故：A股周一盘中拿 TickFlow 日线 close（08-14）冒充现价。
-    # 检测逻辑：只对「正在交易的市场」检测——
-    #   A股盘中 → 只查 A股标的；美股盘中 → 只查美股标的。
-    # 若某标的「腾讯现价 price」==「TickFlow 日线 close」且 latest_date < 今天
-    # → 说明拿的是过期日线价，不是实时价。
+    # 检测逻辑：只对「A股盘中」的 A股标的检测。
+    #   ⚠️ r33.96 修复（2026-08-18）：原逻辑对美股盘中也检测，但美股 TickFlow
+    #   是 T+1 入库（美股盘中时 tf_latest 必然 < 今天），且美股刚开盘瞬间
+    #   腾讯实时价 ≈ 昨日收盘价（尚未明显偏离），两条件必然同时命中 → 100% 误报。
+    #   美股盘中的「现价==日线close」是正常现象，不是陷阱。
+    #   真实陷阱只存在于 A股盘中：A股 TickFlow 当日收盘后入库，若现价==昨收日线
+    #   close 且 latest<今天，才说明拿的是过期日线价。
     today = datetime.now().strftime("%Y-%m-%d")
     prices = payload.get("_prices", {}) if isinstance(payload, dict) else {}
     closes = payload.get("_close", {}) if isinstance(payload, dict) else {}
     latest_by_ticker = payload.get("_tickflow_latest", {}) if isinstance(payload, dict) else {}
 
-    # 仅检测正在交易的市场类型（FULL_POOL 的 type 字段：us/a）
-    active_types = []
-    if ms["a_stock"]:
-        active_types.append("a")
-    if ms["us_stock"]:
-        active_types.append("us")
+    # 仅对「A股盘中」检测 A股标的。
+    #   美股盘中（TickFlow T+1）不适用此陷阱检测——美股盘中 tf_latest<今天 是常态。
+    if not ms["a_stock"]:
+        result["status"] = "PASS"
+        result["summary"] = (
+            f"非 A股盘中（美股盘中 TickFlow T+1，现价=昨收属正常），"
+            f"腾讯实时 {round(result['realtime_age_seconds'])} 秒前拉取，跳过日线close陷阱检测。"
+        )
+        return result
+
+    active_types = ["a"]
 
     for ticker, price in prices.items():
         # 跳过非活跃市场（如美股休市时市场，其现价=日线close 属正常）
@@ -1291,6 +1302,165 @@ def check_fire_invoked(max_age_seconds=None):
 
 
 # ══════════════════════════════════════════════════════════════
+# 🔴 tech 校验 — /技术 数字一致性 + 脑补字段拦截（2026-08-19 焊入）
+# 根因：BOTZ /技术 报告中，LLM 将 MA60 ($37.07) 错当 C4 输出为「C4 $37.06」——
+#       而 /技术 JSON 根本没有 C4/H20 字段，是 LLM 在叙事层脑补出来的。
+# 逻辑：真值 = tech_report.py <ticker> --json 的扁平单标 JSON。
+#       ① 扫描 LLM 文本中的 $/¥ 货币值 + 百分比，必须能在真值中找到（容差 0.5%）
+#       ② 专门的「脑补字段拦截」：LLM 若提及 C4/H20/buy_zone 等 JSON 未输出的字段 → BLOCK
+# ══════════════════════════════════════════════════════════════
+def check_tech_consistency(ticker, llm_text=""):
+    """
+    /技术 报告数字校验。用法:
+    ├── python3 output_gate.py --check tech BOTZ /tmp/tech_llm.txt   （文本文件）
+    └── echo '{"ticker":"BOTZ","llm_text":"..."}' | output_gate.py --check tech -   （管道）
+    """
+    result = {
+        "check": "/技术 数字一致性校验(tech)",
+        "status": "PENDING",
+        "ticker": None,
+        "truth": {},
+        "mismatches": [],
+        "summary": ""
+    }
+
+    # ── 解析输入：ticker + llm_text ──
+    llm_input = llm_text
+    if ticker == "-":
+        # 管道模式：stdin 提供 {ticker, llm_text}
+        try:
+            payload = json.load(sys.stdin)
+            ticker = payload.get("ticker")
+            llm_input = payload.get("llm_text", "")
+        except Exception as e:
+            result["status"] = "ERROR"
+            result["summary"] = f"stdin JSON 解析失败: {e}"
+            return result
+
+    ticker = (ticker or "").strip().upper()
+    result["ticker"] = ticker
+
+    if not ticker:
+        result["status"] = "ERROR"
+        result["summary"] = "缺少标的代码"
+        return result
+
+    # ── 获取真值：tech_report.py <ticker> --json ──
+    try:
+        from tech_report_json import tech_json  # 复用既有的 JSON 输出
+    except ImportError:
+        result["status"] = "ERROR"
+        result["summary"] = "无法导入 tech_report_json 模块"
+        return result
+
+    import io
+    from contextlib import redirect_stdout
+    buf = io.StringIO()
+    try:
+        with redirect_stdout(buf):
+            tech_json(ticker)
+        truth = json.loads(buf.getvalue())
+    except SystemExit:
+        result["status"] = "ERROR"
+        result["summary"] = f"tech_report.py 对 {ticker} 执行失败（可能不在全池）"
+        return result
+    except Exception as e:
+        result["status"] = "ERROR"
+        result["summary"] = f"tech_report.py 执行异常: {e}"
+        return result
+
+    if "error" in truth:
+        result["status"] = "ERROR"
+        result["summary"] = truth["error"]
+        return result
+
+    result["truth"] = truth
+
+    if not llm_input:
+        result["status"] = "PASS"
+        result["summary"] = "无 LLM 文本待校验，真值已获取"
+        return result
+
+    mismatches = []
+
+    # ── 收集真值数值 ──
+    price_fields = ["price", "open", "high", "low", "close",
+                    "ma5", "ma20", "ma60", "ma120", "ma250",
+                    "atr14"]
+    truth_prices = set()
+    for f in price_fields:
+        v = truth.get(f)
+        if isinstance(v, (int, float)):
+            truth_prices.add(round(float(v), 3))
+
+    truth_pcts = set()
+    for f in ["change_pct", "atr_pct", "dev_ma60", "entity_pct", "rsi14", "adx14"]:
+        v = truth.get(f)
+        if isinstance(v, (int, float)):
+            truth_pcts.add(round(float(v), 2))
+
+    # ── ① LLM 文本中的货币值 vs 真值价格 ──
+    money_pattern = re.findall(r'[¥$](\d{1,3}(?:,\d{3})*(?:\.\d+)?)', llm_input)
+    tolerance = float(GATE_RULES.get("consistency", {}).get("tolerance_pct", 0.5)) / 100
+    for m in money_pattern:
+        try:
+            val = round(float(m.replace(",", "")), 3)
+            near = any(abs(val - t) / max(t, 0.01) < tolerance for t in truth_prices if t > 0)
+            if not near and truth_prices:
+                mismatches.append({
+                    "type": "price",
+                    "field": "currency_value",
+                    "llm_value": val,
+                    "nearest_truth": min(truth_prices, key=lambda t: abs(val - t)),
+                })
+        except ValueError:
+            pass
+
+    # ── ①b 百分比值 vs 真值百分比（仅当 LLM 明确标注 %）──
+    pct_pattern = re.findall(r'([+-]?\d+(?:\.\d+)?)\s*%', llm_input)
+    for m in pct_pattern:
+        try:
+            val = round(float(m), 2)
+            # 百分比容差放宽到 1 个点（避免 RSI/ADX 等非百分比指标误伤）
+            near = any(abs(val - t) <= 1.0 for t in truth_pcts)
+            if not near and truth_pcts:
+                mismatches.append({
+                    "type": "pct",
+                    "field": "pct_value",
+                    "llm_value": val,
+                    "nearest_truth": min(truth_pcts, key=lambda t: abs(val - t)),
+                })
+        except ValueError:
+            pass
+
+    # ── ② 脑补字段拦截：/技术 JSON 不存在的字段，LLM 提及即判脑补 ──
+    #    C4/H20/buy_zone 是美股进攻字段，不属于 /技术 报告；出现即说明 LLM 编造
+    fabricated_patterns = [
+        (r'(?i)\bC4\b', "C4（买入线，/技术不输出）"),
+        (r'(?i)\bH20\b', "H20（20日最高，/技术不输出）"),
+        (r'(?i)(买入区间|buy_zone)', "买入区间（/技术不输出）"),
+    ]
+    for pat, label in fabricated_patterns:
+        for m in re.finditer(pat, llm_input):
+            mismatches.append({
+                "type": "fabricated_field",
+                "field": label,
+                "llm_value": m.group(0),
+                "nearest_truth": None,
+            })
+
+    if mismatches:
+        result["status"] = "BLOCK"
+        result["mismatches"] = mismatches[:20]
+        result["summary"] = f"发现 {len(mismatches)} 处数字/字段不一致或脑补"
+    else:
+        result["status"] = "PASS"
+        result["summary"] = "/技术 报告数字与脚本真值一致"
+
+    return result
+
+
+# ══════════════════════════════════════════════════════════════
 # 主入口
 # ══════════════════════════════════════════════════════════════
 
@@ -1409,6 +1579,25 @@ def main():
         fi = check_fire_invoked()
         results.append(fi)
         if fi["status"] == "BLOCK":
+            all_pass = False
+
+    if check_type == "tech":
+        # 🔴 /技术 数字一致性 + 脑补字段拦截（2026-08-19 焊入）
+        ticker_arg = args[idx + 2] if idx + 2 < len(args) and not args[idx + 2].startswith("--") else None
+        text_arg = args[idx + 3] if idx + 3 < len(args) and not args[idx + 3].startswith("--") else None
+        if not ticker_arg:
+            print(json.dumps({"gate": "ERROR", "error": "tech校验需要标的代码: --check tech BOTZ [文本文件路径 或 -]"}, indent=2, ensure_ascii=False))
+            sys.exit(1)
+        llm_input = ""
+        if text_arg and text_arg != "-":
+            try:
+                llm_input = read_file(text_arg)
+            except Exception as e:
+                print(json.dumps({"gate": "ERROR", "error": f"读取LLM文本失败: {e}"}, indent=2, ensure_ascii=False))
+                sys.exit(1)
+        tc = check_tech_consistency(ticker_arg, llm_input)
+        results.append(tc)
+        if tc["status"] == "BLOCK":
             all_pass = False
     
     if check_type == "all":

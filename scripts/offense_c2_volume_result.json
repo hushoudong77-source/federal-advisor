@@ -1,0 +1,131 @@
+{
+  "generated_at": "2026-08-19 22:36:07",
+  "results": {
+    "A": {
+      "QQQ": {
+        "ticker": "QQQ",
+        "n": 22,
+        "win_rate": 77.3,
+        "avg": 12.7,
+        "cum": 953.08,
+        "max_win": 36.74,
+        "max_loss": -23.41,
+        "profit_factor": 4.61
+      },
+      "IVV": {
+        "ticker": "IVV",
+        "n": 20,
+        "win_rate": 5.0,
+        "avg": 43.79,
+        "cum": 327.71,
+        "max_win": 964.24,
+        "max_loss": -12.55,
+        "profit_factor": 10.9
+      },
+      "MUFG": {
+        "ticker": "MUFG",
+        "n": 31,
+        "win_rate": 32.3,
+        "avg": 5.2,
+        "cum": 23.98,
+        "max_win": 50.0,
+        "max_loss": -38.36,
+        "profit_factor": 1.48
+      },
+      "BOTZ": {
+        "ticker": "BOTZ",
+        "n": 2,
+        "win_rate": 50.0,
+        "avg": 71.88,
+        "cum": 141.44,
+        "max_win": 145.34,
+        "max_loss": -1.59,
+        "profit_factor": 91.41
+      }
+    },
+    "B": {
+      "QQQ": {
+        "ticker": "QQQ",
+        "n": 16,
+        "win_rate": 81.2,
+        "avg": 14.28,
+        "cum": 667.68,
+        "max_win": 25.42,
+        "max_loss": -14.65,
+        "profit_factor": 9.48
+      },
+      "IVV": {
+        "ticker": "IVV",
+        "n": 16,
+        "win_rate": 6.2,
+        "avg": 43.16,
+        "cum": 309.7,
+        "max_win": 763.02,
+        "max_loss": -8.11,
+        "profit_factor": 10.52
+      },
+      "MUFG": {
+        "ticker": "MUFG",
+        "n": 36,
+        "win_rate": 36.1,
+        "avg": 6.11,
+        "cum": 66.2,
+        "max_win": 50.0,
+        "max_loss": -32.67,
+        "profit_factor": 1.54
+      },
+      "BOTZ": {
+        "ticker": "BOTZ",
+        "n": 2,
+        "win_rate": 50.0,
+        "avg": 71.3,
+        "cum": 140.33,
+        "max_win": 144.19,
+        "max_loss": -1.58,
+        "profit_factor": 91.26
+      }
+    },
+    "C": {
+      "QQQ": {
+        "ticker": "QQQ",
+        "n": 23,
+        "win_rate": 69.6,
+        "avg": 12.12,
+        "cum": 907.59,
+        "max_win": 36.74,
+        "max_loss": -23.41,
+        "profit_factor": 4.09
+      },
+      "IVV": {
+        "ticker": "IVV",
+        "n": 20,
+        "win_rate": 5.0,
+        "avg": 44.5,
+        "cum": 310.53,
+        "max_win": 984.22,
+        "max_loss": -12.55,
+        "profit_factor": 10.45
+      },
+      "MUFG": {
+        "ticker": "MUFG",
+        "n": 37,
+        "win_rate": 32.4,
+        "avg": 4.58,
+        "cum": 0.32,
+        "max_win": 50.0,
+        "max_loss": -34.26,
+        "profit_factor": 1.39
+      },
+      "BOTZ": {
+        "ticker": "BOTZ",
+        "n": 2,
+        "win_rate": 50.0,
+        "avg": 71.3,
+        "cum": 140.31,
+        "max_win": 144.19,
+        "max_loss": -1.59,
+        "profit_factor": 90.69
+      }
+    }
+  }
+}

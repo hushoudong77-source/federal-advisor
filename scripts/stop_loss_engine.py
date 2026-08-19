@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 """
-止损/止盈计算引擎 V1.0
+止损/止盈计算引擎 V2.0
 输入标的代码 → 输出完整止损止盈状态
 覆盖：美股进攻/反击/A股进攻/固定层/金盾/独立动量/CANE
+
+🔴 V2.0 代码化硬化（2026-08-20 — MUFG 现价搞错事故根因修复）：
+  1. 数据源从 Tushare（已退役）切换到 TickFlow（日线/技术指标）+ 腾讯实时（现价）
+  2. 现价强制走 market_data.fetch_tencent_realtime()，LLM 无权改现价
+  3. 持仓读取修正 bug：positions.json 顶层是 {"positions":{"accounts":{...}}}
+  4. 现价新鲜度：注入 invoked_at 时间戳，output_gate 校验
 """
 
 import json
@@ -10,12 +16,7 @@ import sys
 import os
 from datetime import datetime, date, timedelta
 from pathlib import Path
-import pandas as pd
 import numpy as np
-
-# Tushare
-import tushare as ts
-pro = ts.pro_api()
 
 # ─── 路径 ───
 SCRIPTS_DIR = Path(__file__).parent
@@ -23,6 +24,10 @@ WORKSPACE = SCRIPTS_DIR.parent
 POSITIONS_FILE = SCRIPTS_DIR / "positions.json"
 PARAMS_FILE = SCRIPTS_DIR / "params.json"
 DECISION_LOG_DIR = WORKSPACE / "knowledge" / "analysis" / "decision-log"
+
+# 引入 market_data 的腾讯实时 + TickFlow 拉取
+sys.path.insert(0, str(SCRIPTS_DIR))
+from market_data import fetch_tencent_realtime, fetch_tickflow_all
 
 # ─── 参数矩阵 ───
 # 反击止损：买入区间下沿 − stop_mult × ATR14
@@ -82,10 +87,21 @@ FIXED_LAYER = {"VTI", "VEA"}
 
 
 def load_positions():
-    """加载持仓数据 — 展平 accounts 结构"""
+    """加载持仓数据 — 展平 accounts 结构。
+
+    🔴 V2.0 修正：positions.json 顶层结构为 {"positions": {"accounts": {...}}}，
+    需先剥掉外层 "positions" key。此前直接 data.get("accounts") 读不到，
+    导致 has_position: false（MUFG 事故的持仓缺失根因之一）。
+    """
     try:
         with open(POSITIONS_FILE, 'r') as f:
             data = json.load(f)
+        
+        # 兼容两种结构：{"positions": {...}} 或 直接 {...}
+        if "positions" in data and isinstance(data["positions"], dict):
+            data = data["positions"]
+        if "positions" in data and isinstance(data["positions"], dict):
+            data = data["positions"]
         
         # 展平嵌套结构: {"accounts": {"B": {"holdings": {"MUFG": {...}}}}}
         positions = {}
@@ -106,84 +122,86 @@ def load_positions():
         return {}
 
 
-def get_tushare_daily(ticker, is_a_share=False):
-    """获取日线数据"""
-    start_date = (datetime.now() - timedelta(days=400)).strftime('%Y%m%d')
-    end_date = datetime.now().strftime('%Y%m%d')
+def get_market_data(ticker, ticker_type):
+    """获取行情数据 + 技术指标（V2.0 — TickFlow日线 + 腾讯实时现价）
+
+    🔴 V2.0 核心硬化：现价强制走腾讯实时 API，LLM 无权改现价。
+    - 现价 = fetch_tencent_realtime() 返回的 price（盘中实时 / 盘后T+0收盘）
+    - 技术指标 = fetch_tickflow_all() 返回的 TickFlow 日线自算值
+    """
+    # 1. TickFlow 全池日线 → 技术指标（MA/EMA/ATR/MACD/RSI等）
+    tf_data = fetch_tickflow_all()
     
-    try:
-        if is_a_share:
-            df = pro.fund_daily(ts_code=ticker, start_date=start_date, end_date=end_date)
+    # 2. 腾讯实时 → 现价
+    rt = fetch_tencent_realtime()
+    
+    # 3. 定位该标的的 TickFlow 数据
+    tickers_map = tf_data.get("tickers", {}) if isinstance(tf_data, dict) else {}
+    
+    tf_ticker = ticker
+    _, is_a = normalize_ticker(ticker, ticker_type)
+    if is_a:
+        if ticker.startswith(("5", "6")):
+            tf_ticker = f"{ticker}.SH"
         else:
-            ts_code = ticker if '.' in ticker else ticker
-            df = pro.us_daily(ts_code=ts_code, start_date=start_date, end_date=end_date)
-        
-        if df is not None and len(df) > 0:
-            df = df.sort_values('trade_date').reset_index(drop=True)
-            df['close'] = df['close'].astype(float)
-            df['high'] = df['high'].astype(float)
-            df['low'] = df['low'].astype(float)
-            df['vol'] = df['vol'].astype(float)
-            return df
-        return None
-    except Exception as e:
-        print(f"  ⚠️ Tushare拉取失败: {e}", file=sys.stderr)
-        return None
-
-
-def calc_indicators(df):
-    """计算技术指标"""
-    if df is None or len(df) < 60:
-        return {}
+            tf_ticker = f"{ticker}.SZ"
     
-    close = df['close'].values
-    high = df['high'].values
-    low = df['low'].values
-    vol = df['vol'].values
+    raw = None
+    for candidate in (ticker, tf_ticker, ticker.replace(".SH", "").replace(".SZ", "")):
+        if candidate in tickers_map:
+            raw = tickers_map[candidate]
+            break
     
-    # ATR14
-    tr = np.maximum(high[1:] - low[1:], 
-                    np.abs(high[1:] - close[:-1]),
-                    np.abs(low[1:] - close[:-1]))
-    atr14 = np.mean(tr[-14:]) if len(tr) >= 14 else np.mean(tr)
+    if raw is None and isinstance(tf_data, dict):
+        for candidate in (ticker, tf_ticker):
+            if candidate in tf_data and isinstance(tf_data[candidate], dict):
+                raw = tf_data[candidate]
+                break
+        if raw is None:
+            for k, v in tf_data.items():
+                if isinstance(v, dict) and v.get("ticker") in (ticker, tf_ticker):
+                    raw = v
+                    break
     
-    # MA/EMA
-    ma20 = np.mean(close[-20:]) if len(close) >= 20 else close[-1]
-    ma40 = np.mean(close[-40:]) if len(close) >= 40 else close[-1]
-    ma60 = np.mean(close[-60:]) if len(close) >= 60 else close[-1]
+    if raw is None:
+        return {"error": f"TickFlow 无 {ticker} 日线数据", "ticker": ticker}
     
-    # MA60方向（20日斜率）
-    if len(close) >= 80:
-        ma60_20d_ago = np.mean(close[-80:-60])
-        ma60_dir = "↑" if ma60 > ma60_20d_ago else "↓"
-    else:
-        ma60_dir = "?"
+    def _num(v, default=0.0):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return default
     
-    # H20
-    h20 = np.max(high[-20:]) if len(high) >= 20 else high[-1]
-    
-    # VOL_MA20
-    vol_ma20 = np.mean(vol[-20:]) if len(vol) >= 20 else vol[-1]
-    
-    # 20日回撤
-    if len(close) >= 20:
-        drawdown_20d = (close[-1] / close[-21] - 1) if close[-21] > 0 else 0
-    else:
-        drawdown_20d = 0
-    
-    return {
-        "close": close[-1],
-        "atr14": atr14,
-        "ma20": ma20,
-        "ma40": ma40,
-        "ma60": ma60,
-        "ma60_dir": ma60_dir,
-        "h20": h20,
-        "vol_ma20": vol_ma20,
-        "drawdown_20d": drawdown_20d,
-        "latest_date": df['trade_date'].iloc[-1],
-        "n_rows": len(df),
+    indicators = {
+        "close": _num(raw.get("close")),
+        "atr14": _num(raw.get("atr14")),
+        "ma20": _num(raw.get("ma20")),
+        "ma40": _num(raw.get("ma40")),
+        "ma60": _num(raw.get("ma60")),
+        "ma60_dir": raw.get("ma60_dir", "?"),
+        "h20": _num(raw.get("h20")),
+        "vol_ma20": _num(raw.get("vol_ma20")),
+        "drawdown_20d": _num(raw.get("drawdown_20d")),
+        "latest_date": raw.get("latest_date") or raw.get("date", ""),
+        "n_rows": raw.get("n_rows", 0),
     }
+    
+    # 4. 腾讯实时现价覆写 close（🔴 关键：现价必须走实时 API）
+    if isinstance(rt, dict) and "_error" not in rt and ticker in rt:
+        live_price = rt[ticker].get("price")
+        if live_price and live_price > 0:
+            indicators["close"] = live_price
+            indicators["price_source"] = "tencent_realtime"
+            indicators["invoked_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            indicators["invoked_epoch"] = datetime.now().timestamp()
+        else:
+            indicators["price_source"] = "tickflow_close"
+    elif isinstance(rt, dict) and "_error" in rt:
+        indicators["price_source"] = f"tencent_error: {rt['_error']}"
+    else:
+        indicators["price_source"] = "tickflow_close"
+    
+    return indicators
 
 
 def get_ticker_type(ticker):
@@ -217,14 +235,6 @@ def normalize_ticker(ticker, ticker_type):
     elif ticker.endswith((".SH", ".SZ")):
         return ticker, True
     return ticker, False
-
-
-def get_market_data(ticker, ticker_type):
-    """获取行情数据 + 技术指标"""
-    ts_ticker, is_a = normalize_ticker(ticker, ticker_type)
-    df = get_tushare_daily(ts_ticker, is_a)
-    indicators = calc_indicators(df)
-    return indicators
 
 
 def check_add_heat(ticker, ticker_type):
@@ -262,6 +272,8 @@ def compute_stop_loss(ticker, indicators):
         "ticker": ticker,
         "type": ticker_type,
         "price": round(current_price, 4),
+        "price_source": indicators.get("price_source", "unknown"),
+        "invoked_at": indicators.get("invoked_at", ""),
         "atr14": round(atr14, 4),
         "latest_date": indicators["latest_date"],
         "has_position": ticker in positions,
@@ -520,7 +532,9 @@ def format_output(result):
     lines.append(f"  {result['ticker']} 止损/止盈分析")
     lines.append(f"{'='*60}")
     lines.append(f"  类型: {result['type']} | 现价: {result['price']} | ATR14: {result['atr14']}")
-    lines.append(f"  数据日期: {result.get('latest_date', 'N/A')}")
+    src = result.get('price_source', 'unknown')
+    inv = result.get('invoked_at', '')
+    lines.append(f"  现价来源: {src}{' @ ' + inv if inv else ''} | 数据日期: {result.get('latest_date', 'N/A')}")
     
     if result.get("position"):
         pos = result["position"]

@@ -176,7 +176,9 @@ def load_positions() -> dict:
     """加载当前 positions.json"""
     if os.path.exists(POSITIONS_PATH):
         with open(POSITIONS_PATH, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+        # positions.json 顶层结构为 {"positions": {...}}，统一剥掉外层取 positions
+        return data.get("positions", data)
     # 空模板
     return {
         "_meta": {
@@ -317,8 +319,9 @@ def update_checksum(data: dict):
 def save_positions(data: dict):
     """写入 positions.json（自动更新防篡改校验和）"""
     update_checksum(data)
+    # 写回时包回 positions 外层，与现有文件结构 {"positions": {...}} 保持一致
     with open(POSITIONS_PATH, "w") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+        json.dump({"positions": data}, f, indent=2, ensure_ascii=False)
 
 
 def format_diff(old_data: dict, new_data: dict, account: str) -> list[str]:

@@ -19,6 +19,29 @@
 ### Lesson
 凡涉及"某段代码是否正常/某BUG是否存在/某验证是否通过"，必须先跑真实命令贴返回值，禁止凭"读代码印象"下结论。字段契约类 BUG 应统一走兼容函数，避免大小写/嵌套层级不一致。
 
+## [LRN-20260820-001] correction — MUFG止盈现价用T+1旧缓存，未走实时API
+
+**Logged**: 2026-08-20T04:47+08:00
+**Priority**: critical
+**Status**: applied
+**Area**: data_freshness / code_path
+
+### Summary
+`/止盈 MUFG` 输出现价 $22.72（T+1旧收盘价），据此算出浮盈+13.8%并编造"反包+5.4%"虚假叙事。守东纠正：今日MUFG大跌，现价$21.56，浮盈实际+8.0%。根因：现价字段走Tushare T+1旧值而非腾讯实时，且脚本`has_position:false`读不到持仓，逼LLM去读positions.json+用记忆缓存填补现价缺口，触发硬锁一（脑补）+规则M.4违规。
+
+### Root Cause
+1. 现价没强制走腾讯实时API，LLM在信息缺口处用旧缓存价填充
+2. `load_positions()` 未剥`positions`外层key → `has_position:false`，持仓注入失败，多出LLM自由发挥口子
+
+### Fix Applied
+- stop_loss_engine.py 数据源切到 腾讯实时(fetch_tencent_realtime) + TickFlow 日线，弃用Tushare
+- 修 load_positions() 正确解析 positions.json，has_position恢复true
+- 现价从脚本API返回值直接取，LLM只做解读不改数字
+- 验证：MUFG现价$21.56(腾讯实时@04:47:15) 浮盈+8.01%；510500 ¥7.804腾讯实时正常
+
+### Lesson
+现价/持仓这类关键字段必须代码化焊死，不能交给LLM记忆缓存。"规则M.4+硬锁十二都写了但照样跳过"说明：靠自觉管不住脑补，必须把取数步骤从LLM手里拿走，让LLM只能读脚本确定性输出。
+
 ## [LRN-20260619-001] correction — Tushare误判为token失效（懒政路径）
 
 **Logged**: 2026-06-19T12:05+08:00

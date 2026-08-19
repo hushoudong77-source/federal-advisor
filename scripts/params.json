@@ -303,7 +303,7 @@
       "note": "r33.39固定止盈TP+10% / r33.41止损修正"
     },
     "159530": {
-      "name": "中证红利ETF",
+      "name": "机器人ETF",
       "k": 1.4,
       "stop_mult": 4.0,
       "cooldown": 30,
@@ -380,22 +380,68 @@
     },
     "MUFG": {
       "name": "三菱日联金融",
+      "strategy": "deep_dip",
+      "entry": {
+        "type": "deep_dip",
+        "threshold": "-15%",
+        "basis": "滚动高点",
+        "note": "2026-08-19守东确权焊入：从滚动高点回撤≥15%才入场，替代原C4=H20×0.98回踩低吸"
+      },
       "stop_mult": 7.0,
+      "stop_loss": {
+        "type": "pct",
+        "threshold": "-8%",
+        "note": "2026-08-19守东确权：8%硬止损，锁死单笔最大亏损−8%，去极端累计仍+156%"
+      },
+      "hold_days": 40,
       "take_profit": {
         "type": "fixed",
         "threshold": "+50%",
         "note": "r33.46全量止盈回测 + 2026-07-15守东指令上调（霍尔木兹）"
       },
-      "note": "霍尔木兹油价跳升利好日本银行贸易融资"
+      "backtest": {
+        "period": "2018-2026",
+        "trades": 27,
+        "win_rate": "63.0%",
+        "avg_return": "+5.23%",
+        "profit_loss_ratio": 1.83,
+        "cum_incl_extreme": "+240%",
+        "cum_ex_extreme": "+156%",
+        "note": "去极端后仍稳定转正，9个年度7正收益，非幸存者偏差"
+      },
+      "note": "霍尔木兹油价跳升利好日本银行贸易融资 | 深跌抄底框架（去极端+156% vs 原回踩−49%）"
     },
     "BOTZ": {
       "name": "机器人AI ETF",
-      "stop_mult": 2.0,
-      "take_profit": {
-        "type": "stop_only",
-        "note": "趋势跟随，复杂止盈无增量收益"
+      "strategy": "deep_dip",
+      "entry": {
+        "type": "deep_dip",
+        "threshold": "-30%",
+        "basis": "滚动高点",
+        "note": "2026-08-19守东确权焊入：从滚动高点回撤≥30%才入场。BOTZ为主题ETF波动率极高，15%/20%浅回调为正常呼吸，30%深崩盘才是错杀。去极端累计+128.94%，四标最强"
       },
-      "note": "r33.46全量止盈回测"
+      "stop_mult": 2.0,
+      "stop_loss": {
+        "type": "pct",
+        "threshold": "-8%",
+        "note": "8%硬止损，锁死单笔最大亏损−8%。BOTZ 2022年主题股深跌续跌为结构性风险，30%深阈值已过滤大半"
+      },
+      "hold_days": 40,
+      "take_profit": {
+        "type": "dynamic_drawdown",
+        "activation": "+20%",
+        "drawdown_mult": 2.5,
+        "note": "维持原BOTZ动态回撤止盈（浮盈≥20%激活2.5×ATR）"
+      },
+      "backtest": {
+        "period": "2014-2026",
+        "trades": 20,
+        "win_rate": "55.0%",
+        "profit_loss_ratio": 2.61,
+        "cum_ex_extreme": "+128.94%",
+        "note": "30%阈值最优，越深越好。去极端+128.94%/盈亏比2.61，四标最强"
+      },
+      "note": "深跌抄底框架（30%深阈值，主题股特性）| 动态回撤止盈维持"
     }
   },
   "a_share_offensive": {
@@ -576,16 +622,17 @@
     },
     "runtime_state": {
       "_meta": "运行时状态单一真源。峰值/批次/锚定日期等易变字段只在这里维护，禁止散落在MEMORY.md或对话缓存",
-      "rolling_peak": 11.11,
-      "peak_date": "2026-08-13",
-      "peak_source": "守东锚定(8/13盘中新高)",
+      "rolling_peak": 11.135,
+      "peak_date": "2026-08-18",
+      "peak_source": "TickFlow收盘价口径(2026-08-18 close 11.135) 守东确认按收盘价算",
       "batch_progress": 2,
       "batch_total": 5,
       "last_batch_date": "2026-07-09",
-      "next_batch_trigger": 10.5545,
+      "next_batch_trigger": 10.578,
       "resonance_sugar_ratio": 42.5,
       "resonance_sugar_ratio_threshold": 40,
-      "updated_at": "2026-08-14"
+      "updated_at": "2026-08-18",
+      "peak_basis": "close"
     }
   },
   "runtime_state": {
@@ -634,7 +681,15 @@
       "dca_execute_day": "每月第一个交易日",
       "note": "24个月定投，与金盾策略分开管理"
     },
-    "updated_at": "2026-08-14"
+    "updated_at": "2026-08-20",
+    "MUFG": {
+      "name": "三菱日联金融",
+      "jgb10y_alert": 3.0,
+      "jgb10y_alert_note": "日本10Y国债收益率破3.0%=债仓浮亏二次发酵信号，届时评估是否锁盈",
+      "stop_loss_pct": "-8%",
+      "stop_loss_source": "深跌抄底框架硬止损",
+      "note": "2026-08-20守东会话焊入：盯JGB 10Y 3.0%关口"
+    }
   },
   "macro_thresholds": {
     "vix": {

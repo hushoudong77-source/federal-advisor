@@ -20,7 +20,9 @@ POSITIONS_PATH = os.path.join(os.path.dirname(__file__), "positions.json")
 
 def load():
     with open(POSITIONS_PATH, "r") as f:
-        return json.load(f)
+        data = json.load(f)
+    # positions.json 顶层结构为 {"positions": {...}}，统一剥掉外层取 positions
+    return data.get("positions", data)
 
 def get_holding(data, ticker):
     """返回 (account, holding_dict) 或 (None, None)"""

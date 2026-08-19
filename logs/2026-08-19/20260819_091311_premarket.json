@@ -1,0 +1,72 @@
+{
+  "log_id": "20260819_091311_premarket",
+  "command": "premarket",
+  "scope": {
+    "scope": "macro"
+  },
+  "timestamp": "2026-08-19 09:13:11",
+  "success": true,
+  "elapsed_ms": 17.296504259109497,
+  "gate_result": null,
+  "data": {
+    "timestamp": "2026-08-19T09:12:54.295684",
+    "global_gravity": {
+      "ES_NQ": {
+        "value": null,
+        "source": "web_search_pending",
+        "raw": "## Search Results (3 results, 1677ms)\n\n### 1. S&P 500 E-Mini Futures Chart — ES Futures Quotes — TradingView\n- **URL**: https://www.tradingview.com/symbols/CME_MINI-ES1!/\n- So mostly it's up to you, but if you look for some certain calculations to take into account, you can study technical analysis for S&P 500 E-mini Futures. Today its technical rating is buy, but remember that market conditions change all the time, so it's always crucial to do your own research. Watch S&P 500 E-mini Futures pri"
+      },
+      "DXY": {
+        "value": 99.97,
+        "source": "AnySearch",
+        "raw": "## Search Results (3 results, 281ms)\n\n### 1. DXY US Dollar Index - Investing.com\n- **URL**: https://www.investing.com/indices/usdollar\n- DXY US Dollar Index - Investing.com Advertisement Advertisement # US Dollar Index (DXY) Real-time derived | Symbol | | Exchange | | Currency | | --- | --- | --- | --- | --- | | USDIDX | · | Derived | · | USD | Real-time | | DXY | · | NYSE | · | USD | Delayed | Currency in USD Add to Watchlist 99.63 -0.03(-0.03%) Real-time Data·20:54:55 Day's Range 99.59 99.67 5"
+      },
+      "US10Y": {
+        "value": 4.0,
+        "source": "AnySearch",
+        "raw": "## Search Results (3 results, 274ms)\n\n### 1. United States 10-Year Bond Yield - Investing.com PH\n- **URL**: https://ph.investing.com/rates-bonds/u.s.-10-year-bond-yield\n- United States 10-Year Bond Yield - Investing.com PH Advertisement Advertisement # United States 10-Year Bond Yield NYSE Currency in USD Add to Watchlist 4.681 -0.017(-0.36%) Real-time Data·22:48:30 Day's Range 4.666 4.736 52 wk Range 3.926 4.747 Day's Range 4.6664.736 52 wk Range 3.9264.747 Prev. Close 4.698 Day's Range4.666-4."
+      },
+      "VIX": {
+        "value": 15.19,
+        "source": "AnySearch",
+        "raw": "## Search Results (3 results, 1354ms)\n\n### 1. Check out CBOE MKT VOLATILITY IDX's stock price (.VIX) in real time\n- **URL**: https://www.cnbc.com/quotes/.VIX\n- Get CBOE Volatility Index (.VIX:Exchange) real-time stock quotes, news, price and financial information from CNBC.\n\n### 2. CBOE Volatility Index (^VIX) Charts, Data & News - Yahoo Finance\n- **URL**: https://finance.yahoo.com/quote/%5EVIX/\n- ^VIX · CBOE Volatility Index · 15.19 +6.60% Cboe Indices • USD · 15.19 +0.94 (+6.60%) At close: Aug"
+      },
+      "CRB": {
+        "value": 488.07,
+        "source": "AnySearch",
+        "raw": "## Search Results (3 results, 2100ms)\n\n### 1. Thomson Reuters/CoreCommodity CRB Total Return Index Today (TRCCRBTR) ...\n- **URL**: https://www.investing.com/indices/thomson-reuters-core-cmdty-crb\n- Find here information about the Thomson Reuters/CoreCommodity CRB Total Return index (TRCCRBTR). Assess the Thomson Reuters/CoreCommodity CRB Total Return stock price and overall performance. How Is The Thomson Reuters/CoreCommodity CRB Total Return Doing Today? The Thomson Reuters/CoreCommodity CRB T"
+      }
+    },
+    "china_pressure": {
+      "DR007": {
+        "value": 1.507,
+        "source": "AnySearch",
+        "raw": "## Search Results (3 results, 55ms)\n\n### 1. DR007走势图，最新值1.507，变动4.79BP - 2026年02月 - 行业研究数据 - 小牛行研\n- **URL**: https://www.hangyan.co/charts/3840951463836649079\n- DR007走势图，最新值1.507，变动4.79BP - 2026年02月 - 行业研究数据 - 小牛行研 图表加载中...图片加载失败重新加载 # DR007走势图，最新值1.507，变动4.79BP 阅读研究报告 最后更新: 2026-02-26 ## 相关行业研究图表 --- 美元指数走势图，最新值97.66，变动-0.24% 图表加载中...图片加载失败重新加载 当日尾盘净流入资金挂名前三行业为电子、机械设备、医药生物 图表加载中...图片加载失败重新加载 张铁隔排名前二主题为稀十、稀有金属精选、磷化工 图表加载中...图片加载失败重新加载 市场换手率变化，最新值为4.55% 图表加载中...图片加载失败重新加载 DR007走势图，最新值1.507，变动4.79"
+      },
+      "USDCNY": {
+        "value": null,
+        "source": "web_search_pending",
+        "raw": "## Search Results (3 results, 1950ms)\n\n### 1. 中国银行网站_金融市场_外汇牌价\n- **URL**: https://www.boc.cn/sourcedb/whpj/\n- 当前位置：首页 > 金融市场 > 外汇牌价 · 网银登录 · 个人客户网银登录 · 个人贵宾网银登录 · iGTB企业网银登录 · 中国银行外汇牌价 · 打印 · 共10页\n\n### 2. 美元 人民币 | 美元汇率 | USD CNY\n- **URL**: https://cn.investing.com/currencies/usd-cny\n- 智通财经APP讯，小熊电器(002959.SZ)发布2026年半年度报告，报告期内，公司实现营业收入23.49亿元，同比下降7.... 智通财经APP获悉，8月17日，国新办就2026年7月份国民经济运行情况举行新闻发布会。国家统计局新闻发言人、国民经济综合统计司... 央行发布2026年二季度货币政策执行报告：适度宽松持续加力 金融服务实体质效提升 智通财经APP获悉，央行发布2026年第二季度中国货币政策执行报告，继续实"
+      },
+      "leverage_percentile": {
+        "value": null,
+        "source": "weekly_only"
+      }
+    },
+    "gamma": {
+      "value": null,
+      "source": "web_search_pending",
+      "raw": "## Search Results (3 results, 2175ms)\n\n### 1. SPX GEX +$102.3B Long, Max Pain 7360 - Live Today | FlashAlpha\n- **URL**: https://flashalpha.com/stock/spx\n- SPX snapshot (Aug 13, 2026 1:31 PM ET): Price $7,766.75. ATM IV 9.4%. HV20 14.0%. Net GEX 102.3B. Gamma regime: positive_gamma (dealers long gamma - moves dampened). Gamma flip: $7,718. Call wall: $8,000. Put wall: $7,000. This page provides real-time options analytics for SPX, including: Implied Volatility (IV) - ATM IV, 20-day and 60-day his"
+    },
+    "sources": {
+      "ES_NQ": "AnySearch",
+      "DXY": "AnySearch",
+      "US10Y": "AnySearch",
+      "VIX": "AnySearch",
+      "CRB": "AnySearch",
+      "DR007": "AnySearch",
+      "USDCNY": "AnySearch",
+      "Gamma": "AnySearch (周一/周五)"
+    }
+  }
+}
