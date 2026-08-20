@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-19T15:40:28.367983",
+  "updated_at": "2026-08-20T09:10:21.618732",
   "tasks": {
     "ed3fb6c0": {
       "id": "ed3fb6c0",
@@ -70,7 +70,7 @@
       "name": "经济日历自动抓取",
       "enabled": true,
       "created_at": "2026-08-06T16:13:11.950328",
-      "updated_at": "2026-08-17T06:10:04.697696",
+      "updated_at": "2026-08-20T06:10:12.137922",
       "schedule": {
         "type": "cron",
         "expression": "0 6 * * 1,4"
@@ -85,7 +85,7 @@
         "notify_session_id": "session_page-mpnba6fv-nbge_95149",
         "silent": true
       },
-      "next_run_at": "2026-08-20T06:00:00"
+      "next_run_at": "2026-08-24T06:00:00"
     },
     "c4679a8b": {
       "id": "c4679a8b",
@@ -113,7 +113,7 @@
       "name": "美股行情每日增量备份",
       "enabled": true,
       "created_at": "2026-08-14T21:59:56.024499",
-      "updated_at": "2026-08-19T06:40:01.212192",
+      "updated_at": "2026-08-20T06:40:13.735336",
       "schedule": {
         "type": "cron",
         "expression": "30 6 * * 1-5"
@@ -127,7 +127,28 @@
         "channel_type": "weixin",
         "notify_session_id": "session_page-mpnba6fv-nbge_95149"
       },
-      "next_run_at": "2026-08-20T06:30:00"
+      "next_run_at": "2026-08-21T06:30:00"
+    },
+    "b957e1e9": {
+      "id": "b957e1e9",
+      "name": "JGB10Y监控提醒",
+      "enabled": true,
+      "created_at": "2026-08-20T04:56:30.075602",
+      "updated_at": "2026-08-20T09:10:21.609068",
+      "schedule": {
+        "type": "cron",
+        "expression": "0 9 * * 1-5"
+      },
+      "action": {
+        "type": "send_message",
+        "content": "MUFG监控：日本10Y国债收益率是否突破3.0%？若破3.0%且继续上行=债仓浮亏二次发酵，评估MUFG是否锁盈（当前持仓1,644股@$21.2784，浮盈+8%，硬止损-8%）",
+        "receiver": "session_page-mpnba6fv-nbge_95149",
+        "receiver_name": "未知",
+        "is_group": false,
+        "channel_type": "weixin",
+        "notify_session_id": "session_page-mpnba6fv-nbge_95149"
+      },
+      "next_run_at": "2026-08-21T09:00:00"
     }
   }
 }

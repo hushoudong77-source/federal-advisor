@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-20T04:56:30.087106",
+  "updated_at": "2026-08-20T09:35:22.927710",
   "tasks": {
     "ed3fb6c0": {
       "id": "ed3fb6c0",
@@ -49,7 +49,7 @@
       "name": "510500止损盯盘提醒",
       "enabled": true,
       "created_at": "2026-07-13T20:15:53.858673",
-      "updated_at": "2026-08-19T09:35:10.013437",
+      "updated_at": "2026-08-20T09:35:22.917886",
       "schedule": {
         "type": "cron",
         "expression": "25 9 * * 1-5"
@@ -63,14 +63,14 @@
         "channel_type": "weixin",
         "notify_session_id": "session__status_95149"
       },
-      "next_run_at": "2026-08-20T09:25:00"
+      "next_run_at": "2026-08-21T09:25:00"
     },
     "bd40ee3c": {
       "id": "bd40ee3c",
       "name": "经济日历自动抓取",
       "enabled": true,
       "created_at": "2026-08-06T16:13:11.950328",
-      "updated_at": "2026-08-17T06:10:04.697696",
+      "updated_at": "2026-08-20T06:10:12.137922",
       "schedule": {
         "type": "cron",
         "expression": "0 6 * * 1,4"
@@ -85,7 +85,7 @@
         "notify_session_id": "session_page-mpnba6fv-nbge_95149",
         "silent": true
       },
-      "next_run_at": "2026-08-20T06:00:00"
+      "next_run_at": "2026-08-24T06:00:00"
     },
     "c4679a8b": {
       "id": "c4679a8b",
@@ -113,7 +113,7 @@
       "name": "美股行情每日增量备份",
       "enabled": true,
       "created_at": "2026-08-14T21:59:56.024499",
-      "updated_at": "2026-08-19T06:40:01.212192",
+      "updated_at": "2026-08-20T06:40:13.735336",
       "schedule": {
         "type": "cron",
         "expression": "30 6 * * 1-5"
@@ -127,14 +127,14 @@
         "channel_type": "weixin",
         "notify_session_id": "session_page-mpnba6fv-nbge_95149"
       },
-      "next_run_at": "2026-08-20T06:30:00"
+      "next_run_at": "2026-08-21T06:30:00"
     },
     "b957e1e9": {
       "id": "b957e1e9",
       "name": "JGB10Y监控提醒",
       "enabled": true,
       "created_at": "2026-08-20T04:56:30.075602",
-      "updated_at": "2026-08-20T04:56:30.075609",
+      "updated_at": "2026-08-20T09:10:21.609068",
       "schedule": {
         "type": "cron",
         "expression": "0 9 * * 1-5"
@@ -148,7 +148,7 @@
         "channel_type": "weixin",
         "notify_session_id": "session_page-mpnba6fv-nbge_95149"
       },
-      "next_run_at": "2026-08-20T09:00:00"
+      "next_run_at": "2026-08-21T09:00:00"
     }
   }
 }
