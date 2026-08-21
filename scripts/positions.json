@@ -7,7 +7,7 @@
       "update_rule": "仅守东通过 /输入 指令确权后才可修改此文件。自动脚本不修改。",
       "checksum": "a6c7190f8c792c5c",
       "checksum_algo": "sha256_16",
-      "checksum_updated": "2026-08-13T22:52:22+08:00"
+      "checksum_updated": "2026-08-21T00:45:00+08:00"
     },
     "accounts": {
       "A": {
@@ -138,9 +138,10 @@
             "note": "零止损底仓，等深跌补仓"
           },
           "IAU": {
-            "shares": 100,
-            "cost": 82.415,
-            "confirmed": "2026-08-13"
+            "shares": 206,
+            "cost": 83.6314,
+            "confirmed": "2026-08-21",
+            "note": "8/13建仓100股@82.415 + 8/21加仓106股@84.779，加权均价"
           }
         },
         "cash_approx": 124000,

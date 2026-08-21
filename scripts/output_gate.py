@@ -1384,11 +1384,22 @@ def check_tech_consistency(ticker, llm_text=""):
     mismatches = []
 
     # ── 收集真值数值 ──
-    price_fields = ["price", "open", "high", "low", "close",
-                    "ma5", "ma20", "ma60", "ma120", "ma250",
-                    "atr14"]
+    # 🔴 r33.98.1（2026-08-20 焊入）：现价容差盲区修复。
+    #   原逻辑把所有均线都放进 price_fields，导致旧现价（如 ¥9.081）落在 MA5 的
+    #   0.5% 容差内被「放行」——LLM 用过期现价写报告时闸门抓不到。
+    #   修复：现价类字段（price/open/high/low/close）与均线类字段分开——
+    #   现价必须精确匹配 price（容差收紧到 0.1%），均线类才用 0.5% 容差。
+    price_fields_exact = ["price", "open", "high", "low", "close"]
+    ma_fields = ["ma5", "ma20", "ma60", "ma120", "ma250", "atr14"]
+
+    truth_price_exact = set()
+    for f in price_fields_exact:
+        v = truth.get(f)
+        if isinstance(v, (int, float)):
+            truth_price_exact.add(round(float(v), 3))
+
     truth_prices = set()
-    for f in price_fields:
+    for f in ma_fields:
         v = truth.get(f)
         if isinstance(v, (int, float)):
             truth_prices.add(round(float(v), 3))
@@ -1402,17 +1413,26 @@ def check_tech_consistency(ticker, llm_text=""):
     # ── ① LLM 文本中的货币值 vs 真值价格 ──
     money_pattern = re.findall(r'[¥$](\d{1,3}(?:,\d{3})*(?:\.\d+)?)', llm_input)
     tolerance = float(GATE_RULES.get("consistency", {}).get("tolerance_pct", 0.5)) / 100
+    exact_tolerance = 0.1 / 100  # 现价类字段精确匹配容差 0.1%
     for m in money_pattern:
         try:
             val = round(float(m.replace(",", "")), 3)
+            # 先尝试精确匹配现价类字段（price/open/high/low/close，0.1%）
+            near_exact = any(abs(val - t) / max(t, 0.01) < exact_tolerance for t in truth_price_exact if t > 0)
+            if near_exact:
+                continue
+            # 再尝试匹配均线类字段（0.5%）
             near = any(abs(val - t) / max(t, 0.01) < tolerance for t in truth_prices if t > 0)
-            if not near and truth_prices:
-                mismatches.append({
-                    "type": "price",
-                    "field": "currency_value",
-                    "llm_value": val,
-                    "nearest_truth": min(truth_prices, key=lambda t: abs(val - t)),
-                })
+            if near:
+                continue
+            # 两者都不匹配 → 该货币值无法在真值中找到 → 记为不一致
+            all_truth = list(truth_price_exact) + list(truth_prices)
+            mismatches.append({
+                "type": "price",
+                "field": "currency_value",
+                "llm_value": val,
+                "nearest_truth": min(all_truth, key=lambda t: abs(val - t)) if all_truth else None,
+            })
         except ValueError:
             pass
 
@@ -1432,6 +1452,29 @@ def check_tech_consistency(ticker, llm_text=""):
                 })
         except ValueError:
             pass
+
+    # ── ①c 🔴 现价语义锚定强制校验（r33.98.1 — 2026-08-20 焊入）──
+    #   根因：测试5暴露——LLM 把 MA5 的值（¥9.0602）当「现价」写进报告，
+    #   数值池匹配无法区分「这是当现价用还是当均线用」。现价是 /技术 报告
+    #   的锚点，必须精确等于脚本 price 字段，不能靠数值池匹配放行。
+    #   规则：「现价/当前价/最新价/价格」等语义标签后紧跟的货币值，强制 == price（0.1%）
+    price_label_pattern = re.findall(
+        r'(?:现价|当前价|最新价|收盘价|价格|报)\s*[:：]?\s*[¥$](\d{1,3}(?:,\d{3})*(?:\.\d+)?)',
+        llm_input)
+    true_price = truth.get("price")
+    if true_price is not None:
+        for m in price_label_pattern:
+            try:
+                val = round(float(m.replace(",", "")), 3)
+                if abs(val - float(true_price)) / max(float(true_price), 0.01) >= 0.1 / 100:
+                    mismatches.append({
+                        "type": "price_label",
+                        "field": "现价语义锚定",
+                        "llm_value": val,
+                        "nearest_truth": round(float(true_price), 3),
+                    })
+            except ValueError:
+                pass
 
     # ── ② 脑补字段拦截：/技术 JSON 不存在的字段，LLM 提及即判脑补 ──
     #    C4/H20/buy_zone 是美股进攻字段，不属于 /技术 报告；出现即说明 LLM 编造

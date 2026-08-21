@@ -432,9 +432,11 @@ def _dir_is_flat(d):
 
 def compute_golden_shield(sym, info, ind, params):
     """
-    金盾策略信号计算 (IAU/518880) — V1.6
+    金盾策略信号计算 (IAU/518880) — V1.7
     正统满仓四条件（AND）:
-      C1 双顺风硬前置: DXY MA20↓ (宏观层供弹) + 美元走弱
+      C1 双顺风硬前置（V1.7锚点分离 2026-08-21）:
+        518880 = USDCNY MA20↓（人民币贬值）— 人民币金价=国际金价×USDCNY，汇率一阶驱动
+        IAU    = DXY MA20↓（美元走弱）
       C2 锚线方向: MA40方向↑ (V1.6: MA60→MA40)
       C3 MACD金叉
       C4 RSI<70 且 波动率正常
@@ -452,8 +454,19 @@ def compute_golden_shield(sym, info, ind, params):
     price = info.get("price_realtime") or info.get("close_tushare")
     ema150 = get_ind(ind, "EMA150")
 
-    # 宏观层数据（DXY方向）由 LLM/宏观层供弹，代码层尝试从 info 读取
+    # 宏观层数据（汇率/美元方向）由 LLM/宏观层供弹，代码层尝试从 info 读取
+    # V1.7锚点分离：518880 用 USDCNY，IAU 用 DXY
     dxy_dir = info.get("dxy_ma20_dir") or params.get("dxy_ma20_dir")
+    usdcny_dir = info.get("usdcny_ma20_dir") or params.get("usdcny_ma20_dir")
+
+    # 按标的确定 C1 汇率/美元锚点
+    is_cny_gold = (sym or "").upper() in ("518880", "518880.SH", "159934")
+    if is_cny_gold:
+        c1_anchor_dir = usdcny_dir
+        c1_anchor_name = "USDCNY MA20"
+    else:
+        c1_anchor_dir = dxy_dir
+        c1_anchor_name = "DXY MA20"
 
     if ma40_dir is None or rsi is None:
         return {"error": "指标缺失", "ma40_dir": ma40_dir, "rsi": rsi}
@@ -480,13 +493,13 @@ def compute_golden_shield(sym, info, ind, params):
     # C2 有效上翘 = 死区判定 up，或（死区 flat 且 连续符号确认）
     ma40_up_effective = ma40_up or (ma40_dir_flat and ma40_up_streak_confirmed)
 
-    # C1 双顺风硬前置：DXY MA20↓（宏观层供弹）。数据缺失 → 不满足（保守）
-    c1_dxy_down = _dir_is_up(dxy_dir) is False if dxy_dir is not None else False
+    # C1 双顺风硬前置（V1.7）：518880=USDCNY MA20↓，IAU=DXY MA20↓。数据缺失 → 不满足（保守）
+    c1_anchor_down = _dir_is_up(c1_anchor_dir) is False if c1_anchor_dir is not None else False
 
     conditions = {}
     conditions["C1_dual_tailwind"] = {
-        "met": c1_dxy_down,
-        "value": f"DXY MA20方向={dxy_dir if dxy_dir else '缺失(需宏观层供弹)'}"
+        "met": c1_anchor_down,
+        "value": f"{c1_anchor_name}方向={c1_anchor_dir if c1_anchor_dir else '缺失(需宏观层供弹)'}"
     }
     conditions["C2_MA40_up"] = {
         "met": ma40_up_effective,
@@ -515,7 +528,7 @@ def compute_golden_shield(sym, info, ind, params):
     orthodox_all = all(c["met"] for c in conditions.values())
 
     # MA40走平过渡态（⅓仓先行）：走平 + C1双顺风 + C3金叉
-    transitional = ma40_flat and c1_dxy_down and conditions["C3_MACD_golden"]["met"]
+    transitional = ma40_flat and c1_anchor_down and conditions["C3_MACD_golden"]["met"]
 
     # EMA150约束
     ema150_deviation = pct_diff(price, ema150) if ema150 and price else None
@@ -523,7 +536,7 @@ def compute_golden_shield(sym, info, ind, params):
 
     return {
         "strategy": "golden_shield",
-        "version": "V1.6",
+        "version": "V1.7",
         "conditions": conditions,
         "ma40_flat": ma40_flat,
         "ma40_5d_chg": ma40_5d_chg,

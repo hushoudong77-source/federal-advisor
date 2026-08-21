@@ -679,7 +679,9 @@
       "dca_plan_total": 200000,
       "dca_plan_months": 25,
       "dca_execute_day": "每月第一个交易日",
-      "note": "24个月定投，与金盾策略分开管理"
+      "note": "24个月定投，与金盾策略分开管理",
+      "ma250_p0": 9.194,
+      "ma250_p0_date": "2026-08-20"
     },
     "updated_at": "2026-08-20",
     "MUFG": {
